@@ -1,3 +1,5 @@
+# path - is a string to desired path location. The file does
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
