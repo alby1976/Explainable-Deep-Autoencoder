@@ -1,3 +1,5 @@
+# path - is a string to desired path location. The file does
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -6,12 +8,16 @@ from sklearn import preprocessing
 from sklearn.ensemble import RandomForestRegressor
 import shap
 
+PATH_TO_DATA = './data.txt'    #path to cleaned data (after quality control)
+PATH_TO_AE_RESULT = './AE_199.txt'    #path to AutoEncoder results, alwarys the last epoch result
+PATH_TO_SAVE = './shap.txt'.          #path to save shap results
+
 RNA_name = 'BRCA' #data file name
 compress_num = '4000' #AutoEncoder compress rate
 num = 5  #number of columns of AutoEncoder results
 total_value = 0
-gene = pd.read_csv('/export/home/yang.yu2/UK_Biobank_data/TumorOnly_QC/'+RNA_name+'_TumorOnly_QC.csv',index_col=0)
-hidden_vars = pd.read_csv('/export/home/yang.yu2/UK_Biobank_code/pytorch_projects/compress'+compress_num+'/'+RNA_name+'_'+compress_num+'_199_NEW.csv',header = None)
+gene = pd.read_csv(PATH_TO_DATA,index_col=0)
+hidden_vars = pd.read_csv(PATH_TO_AE_RESULT,header = None)
 
 for i in range(num):
   X_train, X_test, Y_train, Y_test = train_test_split(gene,
@@ -25,7 +31,7 @@ for i in range(num):
   print(shap_values_sum)
   total_value = total_value + shap_values_sum
 
-gene_id = pd.read_csv('/export/home/yang.yu2/UK_Biobank_data/TumorOnly_QC/'+RNA_name+'_TumorOnly_QC.csv',index_col=0,header=None)
+gene_id = pd.read_csv(PATH_TO_DATA,index_col=0,header=None)
 gene_id = gene_id.iloc[0]
 gene_id = gene_id.to_numpy()
 
@@ -35,4 +41,4 @@ enrich_analysis = enrich_analysis[np.argsort(enrich_analysis[:,1])]
 enrich_analysis = np.flip(enrich_analysis,0)
 enrich_analysis = pd.DataFrame(enrich_analysis)
 
-enrich_analysis.to_csv('/export/home/yang.yu2/UK_Biobank_code/figure/'+RNA_name+'_'+compress_num+'_enrich_analysis.txt',header = 0, index = 0, sep = '\t')
+enrich_analysis.to_csv(PATH_TO_SAVE,header = 0, index = 0, sep = '\t')
