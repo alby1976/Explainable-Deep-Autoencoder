@@ -1,4 +1,4 @@
-# path - is a string to desired path location. The file does
+# path - is a string to desired path location. 
 
 import numpy as np
 import pandas as pd
