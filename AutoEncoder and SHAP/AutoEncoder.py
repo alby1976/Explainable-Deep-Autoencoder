@@ -1,3 +1,4 @@
+# path - is a string to desired path location.
 
 import pandas as pd
 import numpy as np
@@ -12,16 +13,19 @@ import pickle
 import os
 import time
 
+PATH_TO_DATA = './data.txt'    #path to data (before quality control)
+PATH_TO_SAVE = './AE.txt'.          #path to save AutoEncoder results
+
 model_name = 'Linear_AE_Geno'
-save_dir = './pytorch_projects/' + model_name + '/'
+save_dir = PATH_TO_SAVE
 if not os.path.exists(save_dir):
     cmd = 'mkdir -p ' + save_dir
     os.system(cmd)
 
 RNA_name = 'BRCA'
-geno = pd.read_csv('/export/home/yang.yu2/UK_Biobank_data/TumorOnly/BRCA_TumorOnly.csv',index_col=0)
+geno = pd.read_csv(PATH_TO_DATA, index_col=0)
 geno_var = geno.var()
-for i in range(len(geno_var)-1,-1,-1):
+for i in range(len(geno_var)-1,-1,-1):      #data quality control
   if geno_var[i]<1:
     del geno[geno.columns[i]]
 geno = np.array(geno)
@@ -123,8 +127,7 @@ for epoch in range(num_epochs):
         # ===========log============
         coder_np = np.array(output_coder_list)
         temp = round(smallest_layer / 1000)
-        #        coder_file = save_dir + chr_name + '.' + str(temp) + 'K.' + str(epoch) + '.csv'
-        coder_file = save_dir + RNA_name + '_20000_' + str(epoch) + '.csv'
+        coder_file = save_dir + RNA_name + str(epoch) + '.csv'
         np.savetxt(fname=coder_file, X=coder_np, fmt='%f', delimiter=',')
         print('epoch[{}/{}],loss:{:.4f}'.format(epoch + 1, num_epochs, sum_loss))
         average_precision = sum(
