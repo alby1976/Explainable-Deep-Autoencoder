@@ -8,7 +8,7 @@ from sklearn import preprocessing
 from sklearn.ensemble import RandomForestRegressor
 import shap
 
-PATH_TO_DATA = './data.txt'    #path to data
+PATH_TO_DATA = './data_QC.txt'    #path to cleaned data (after quatlity control)
 PATH_TO_AE_RESULT = './AE_199.txt'    #path to AutoEncoder results, alwarys the last epoch result
 PATH_TO_SAVE_FIGURE = '.figure.pdf'     #path to save SHAP figure
 RNA_name = 'BRCA'
