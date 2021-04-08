@@ -1,8 +1,14 @@
+# path - is a string to desired path location. The file does
+
 import numpy as np
 import pandas as pd
-Tumor = pd.read_csv('/export/home/yang.yu2/UK_Biobank_data/TumorOnly/BRCA_TumorOnly.csv',index_col=0)
+
+PATH_TO_DATA = './data.txt'    #path to data (before quality control)
+PATH_TO_SAVE = './data_QC.txt'.          #path to save data after quality control
+
+Tumor = pd.read_csv(PATH_TO_DATA,index_col=0)
 Tumor_var = Tumor.var()
 for i in range(len(Tumor_var)-1,-1,-1):
   if Tumor_var[i]<1:
     del Tumor[Tumor.columns[i]]
-Tumor.to_csv('/export/home/yang.yu2/UK_Biobank_data/TumorOnly_QC/BRCA_TumorOnly_QC.csv')
+Tumor.to_csv(PATH_TO_SAVE)
