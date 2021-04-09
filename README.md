@@ -57,7 +57,7 @@ https://github.com/slundberg/shap#citations
   - smallest_layer (the number that you want to compress gene data, by changing smallest_layer, you need to change the compress rate inside the **AutoEncoder Neural Network** correspondly.)
   - number_epochs (the number of round that you want data to be ran)
 
-**Besides, you might change the number of hidden layer, which is so-called the depth of AutoEncoder.**
+**<ins>Besides, you might change the number of hidden layer, which is so-called the depth of AutoEncoder.</ins>**
 
 ### 3.SHAP explanation
 
@@ -107,13 +107,6 @@ SOFTWARE.
 
 ## Author Info
 
-- Yang Yu: Developed and tested the scripts.
-- 
-
-
-## Citations
-_If you find these scripts helpful in your own transmission analyses, please cite:_
-
-
+- Yang Yu, Pathum Kossinna, Qing Li, Wenyuan Liao & Qingrun Zhang.
 
 [Back To The Top](#table-of-contents)
