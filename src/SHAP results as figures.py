@@ -14,16 +14,20 @@ PATH_TO_SAVE_FIGURE = '.figure.pdf'     #path to save SHAP figure
 RNA_name = 'BRCA'
 gene = pd.read_csv(PATH_TO_DATA ,index_col=0)
 hidden_vars = pd.read_csv(PATH_TO_AE_RESULT,header = None)
+total_value = 0
 
-X_train, X_test, Y_train, Y_test = train_test_split(gene,
-                                                hidden_vars[0],
-                                                test_size=0.1,
+
+for i in range():
+  X_train, X_test, Y_train, Y_test = train_test_split(gene, 
+                                                hidden_vars[i], 
+                                                test_size=0.2,
                                                 random_state=42)
-
-my_model = RandomForestRegressor(bootstrap=True, oob_score=False, max_depth=20, random_state=42, n_estimators=100)
-
-my_model.fit(X_train, Y_train)
-shap_values = shap.TreeExplainer(my_model).shap_values(X_test)
+  my_model = RandomForestRegressor(bootstrap=True, oob_score=False,max_depth=20, random_state=42, n_estimators=100)
+  my_model.fit(X_train, Y_train) 
+  shap_values = shap.TreeExplainer(my_model).shap_values(X_test)
+  shap_values_sum = np.sum(shap_values,axis=0)
+  print(shap_values_sum)
+  total_value = total_value + shap_values_sum
 
 shap.summary_plot(shap_values, X_test, plot_type="bar")
 plt.savefig(PATH_TO_SAVE_FIGURE, format='pdf')
