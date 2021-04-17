@@ -60,7 +60,7 @@ geno_test_set_loader = DataLoader(dataset=geno_test_set, batch_size=batch_size, 
 input_features = int(snp)
 output_features = input_features
 smallest_layer = int(snp / 20000)
-
+hidden_layer = int(smallest_layer/2)
 
 class Auto_Geno_shallow(nn.Module):
     def __init__(self):
@@ -68,17 +68,17 @@ class Auto_Geno_shallow(nn.Module):
 
         # def the encoder function
         self.encoder = nn.Sequential(
-            nn.Linear(input_features, int(snp / 10000)),
+            nn.Linear(input_features, hidden_layer),
             nn.ReLU(True),
-            nn.Linear(int(snp / 10000), int(smallest_layer)),
+            nn.Linear(hidden_layer, smallest_layer),
             nn.ReLU(True),
         )
 
         # def the decoder function
         self.decoder = nn.Sequential(
-            nn.Linear(smallest_layer, int(snp / 10000)),
+            nn.Linear(smallest_layer, hidden_layer),
             nn.ReLU(True),
-            nn.Linear(int(snp / 10000), output_features),
+            nn.Linear(hidden_layer, output_features),
             nn.Sigmoid()
         )
 
