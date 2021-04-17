@@ -70,7 +70,7 @@ class Auto_Geno_shallow(nn.Module):
         self.encoder = nn.Sequential(
             nn.Linear(input_features, int(snp / 10000)),
             nn.ReLU(True),
-            nn.Linear(int(snp / 10000), int(snp / 20000)),
+            nn.Linear(int(snp / 10000), int(smallest_layer)),
             nn.ReLU(True),
         )
 
