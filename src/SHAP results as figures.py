@@ -15,9 +15,9 @@ RNA_name = 'BRCA'
 gene = pd.read_csv(PATH_TO_DATA ,index_col=0)
 hidden_vars = pd.read_csv(PATH_TO_AE_RESULT,header = None)
 total_value = 0
-colum_num = len(hidden_vars.columns)
+column_num = len(hidden_vars.columns)
 
-for i in range(colum_num):
+for i in range(column_num):
   X_train, X_test, Y_train, Y_test = train_test_split(gene, 
                                                 hidden_vars[i], 
                                                 test_size=0.2,
