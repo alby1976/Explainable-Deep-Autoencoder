@@ -60,7 +60,7 @@ geno_test_set_loader = DataLoader(dataset=geno_test_set, batch_size=batch_size, 
 input_features = int(snp)
 output_features = input_features
 smallest_layer = int(snp / 20000)
-hidden_layer = int(smallest_layer/2)
+hidden_layer = int(2*smallest_layer)
 
 class Auto_Geno_shallow(nn.Module):
     def __init__(self):
