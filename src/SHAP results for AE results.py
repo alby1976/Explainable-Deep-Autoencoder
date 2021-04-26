@@ -14,12 +14,12 @@ PATH_TO_SAVE = './shap.txt'.          #path to save shap results
 
 RNA_name = 'BRCA' #data file name
 compress_num = '4000' #AutoEncoder compress rate
-num = 5  #number of columns of AutoEncoder results
 total_value = 0
 gene = pd.read_csv(PATH_TO_DATA,index_col=0)
 hidden_vars = pd.read_csv(PATH_TO_AE_RESULT,header = None)
+column_num = len(hidden_vars.columns)
 
-for i in range(num):
+for i in range(column_num):
   X_train, X_test, Y_train, Y_test = train_test_split(gene,
                                                 hidden_vars[i],
                                                 test_size=0.2,
