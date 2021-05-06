@@ -13,7 +13,7 @@ PATH_TO_AE_RESULT = './AE_199.txt'    #path to AutoEncoder results, alwarys the 
 PATH_TO_SAVE = './shap.txt'.          #path to save shap results
 
 RNA_name = 'BRCA' #data file name
-compress_num = '4000' #AutoEncoder compress rate
+compress_num = '1' #AutoEncoder compress number
 total_value = 0
 gene = pd.read_csv(PATH_TO_DATA,index_col=0)
 hidden_vars = pd.read_csv(PATH_TO_AE_RESULT,header = None)
