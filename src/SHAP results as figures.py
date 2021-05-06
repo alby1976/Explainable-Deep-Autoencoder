@@ -29,5 +29,5 @@ for i in range(column_num):
   print(shap_values_sum)
   total_value = total_value + shap_values_sum
 shap.summary_plot(shap_values, X_test)  #initial chart summary plot
-# shap.summary_plot(shap_values, X_test, plot_type="bar")  #bar chart summary plot
+shap.summary_plot(shap_values, X_test, plot_type="bar")  #bar chart summary plot
 plt.savefig(PATH_TO_SAVE_FIGURE, format='pdf')
