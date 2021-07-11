@@ -1,3 +1,5 @@
+## Use Python to plot SHAP scatter chart
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -10,8 +12,7 @@ PATH_TO_DATA = './data_QC.txt'    #path to cleaned data (after quatlity control)
 PATH_TO_AE_RESULT = './AE_199.txt'    #path to AutoEncoder results, alwarys the last epoch result
 PATH_TO_SAVE_FIGURE = '.figure.pdf'     #path to save SHAP figure
 
-RNA_name = 'BRCA'
-compress_num = '12'
+
 gene = pd.read_csv(PATH_TO_DATA)
 hidden_vars = pd.read_csv(PATH_TO_AE_RESULT)
 column_num = len(hidden_vars.columns)
@@ -24,7 +25,7 @@ for i in range(column_num):
   my_model = RandomForestRegressor(bootstrap=True, oob_score=False,max_depth=20, random_state=42, n_estimators=100)
   my_model.fit(X_train, Y_train)
   explainer = shap.TreeExplainer(my_model)
-  #explainer = shap.KernelExplainer(my_model.predict,data = X_test)
+  #explainer = shap.KernelExplainer(my_model.predict,data = X_test) # different SHAP explainer could be used
   shap_values = explainer.shap_values(X_test)
   shap.summary_plot(shap_values, X_test, plot_size = (10,10))
   plt.savefig(PATH_TO_SAVE_FIGURE, format='pdf')
