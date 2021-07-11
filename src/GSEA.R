@@ -1,7 +1,7 @@
 ## R code for Gene Set Enrichment Analysis
 
 library(WebGestaltR)
-compress_num = 512
+compress_num <- 512 # number of files need to be tested
 
 str1 <- '' # first section of file (gene module) name
 str2 <- '' # second section of file (gene module) name
