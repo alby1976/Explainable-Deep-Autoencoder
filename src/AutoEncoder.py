@@ -1,4 +1,5 @@
-# path - is a string to desired path location.
+## Use Python to run Deep Autoencoder (feature selection)
+## path - is a string to desired path location.
 
 import pandas as pd
 import numpy as np
@@ -13,8 +14,8 @@ import pickle
 import os
 import time
 
-PATH_TO_DATA = './data.txt'    #path to data (before quality control)
-PATH_TO_SAVE = './AE.txt'.          #path to save AutoEncoder results
+PATH_TO_DATA = './data.txt'      #path to data (before quality control)
+PATH_TO_SAVE = './AE.txt'.       #path to save AutoEncoder results
 
 model_name = 'AE_Geno'
 save_dir = PATH_TO_SAVE
