@@ -8,11 +8,11 @@ from sklearn import preprocessing
 from sklearn.ensemble import RandomForestRegressor
 import shap
 
-PATH_TO_DATA = './data_QC.txt'    # path to cleaned data with gene id (not gene name) (after quality control)
+PATH_TO_DATA_GENE_ID = './gene_id_QC.txt'    # path to cleaned data with gene id (not gene name) (after quality control)
 PATH_TO_AE_RESULT = './AE_199.txt'    # path to AutoEncoder results, alwarys the last epoch result
 PATH_TO_SAVE = './shap.txt'.          # path to save gene module
 
-gene_id = pd.read_csv(PATH_TO_DATA, index_col=0)
+gene_id = pd.read_csv(PATH_TO_DATA_GENE_ID, index_col=0)
 hidden_vars = pd.read_csv(PATH_TO_AE_RESULT, header = None)
 column_num = len(hidden_vars.columns)       # column number of AE results
 sample_num = len(gene_id.index)             # sample number of data
