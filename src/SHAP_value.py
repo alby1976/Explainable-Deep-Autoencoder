@@ -8,21 +8,18 @@ from sklearn import preprocessing
 from sklearn.ensemble import RandomForestRegressor
 import shap
 
-PATH_TO_DATA = './data_QC.txt'    #path to cleaned data (after quatlity control)
+PATH_TO_DATA = './data_QC.txt'    #path to cleaned data (after quality control)
 PATH_TO_AE_RESULT = './AE_199.txt'    #path to AutoEncoder results, alwarys the last epoch result
-PATH_TO_SAVE = 'gene_module.txt'     #path to save gene module
+PATH_TO_SAVE = './shap.txt'.          #path to save gene module
 
-gene = pd.read_csv(PATH_TO_DATA, index_col=0)
+gene_id = pd.read_csv(PATH_TO_DATA, index_col=0)
 hidden_vars = pd.read_csv(PATH_TO_AE_RESULT, header = None)
-column_num = len(hidden_vars.columns)
-sample_num = len(gene.index)
-top_num = int((1/20)*len(gene.columns))
-gene_id = pd.read_csv('/export/home/yang.yu2/UK_Biobank_data/TumorOnly_QC/BRCA_TumorOnly_QC.csv',index_col=0,header=None)
-gene_id = gene_id.iloc[0]
-gene_id = gene_id.to_numpy()
+column_num = len(hidden_vars.columns)       # column number of AE results
+sample_num = len(gene_id.index)             # sample number of data
+top_num = int((1/20)*len(gene_id.columns))  # threshold for row number of gene module
 
 for i in range(column_num):
-  X_train, X_test, Y_train, Y_test = train_test_split(gene,
+  X_train, X_test, Y_train, Y_test = train_test_split(gene_id,
                                                 hidden_vars[i],
                                                 test_size=0.2,
                                                 random_state=42)
