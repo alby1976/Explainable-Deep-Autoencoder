@@ -12,7 +12,7 @@ PATH_TO_DATA_GENE_NAME = './gene_name_QC.txt'    # path to cleaned data with gen
 PATH_TO_AE_RESULT = './AE_199.txt'    # path to AutoEncoder results, alwarys the last epoch result
 PATH_TO_SAVE_FIGURE = '.figure.pdf'     # path to save SHAP figure
 
-gene = pd.read_csv(PATH_TO_DATA, index_col=0)
+gene = pd.read_csv(PATH_TO_DATA_GENE_NAME, index_col=0)
 hidden_vars = pd.read_csv(PATH_TO_AE_RESULT, header = None)
 column_num = len(hidden_vars.columns)
 
