@@ -8,9 +8,12 @@ from sklearn import preprocessing
 from sklearn.ensemble import RandomForestRegressor
 import shap
 
+PATH_TO_DATA = './data_QC.txt'    #path to cleaned data (after quatlity control)
+PATH_TO_AE_RESULT = './AE_199.txt'    #path to AutoEncoder results, alwarys the last epoch result
+PATH_TO_SAVE_FIGURE = '.figure.pdf'     #path to save SHAP figure
 
-gene = pd.read_csv( ,index_col=0)
-hidden_vars = pd.read_csv(,header = None)
+gene = pd.read_csv(PATH_TO_DATA, index_col=0)
+hidden_vars = pd.read_csv(PATH_TO_AE_RESULT, header = None)
 column_num = len(hidden_vars.columns)
 
 for i in range(column_num):
@@ -24,5 +27,5 @@ for i in range(column_num):
   #explainer = shap.KernelExplainer(my_model.predict, data = X_test) # different SHAP explainer could be used
   shap_values = explainer.shap_values(X_test)
   shap.summary_plot(shap_values, X_test, plot_size = (10,10), plot_type='bar')
-  plt.savefig(, format='pdf')
+  plt.savefig(PATH_TO_SAVE_FIGURE, format='pdf')
   plt.close()
