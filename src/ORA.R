@@ -1,12 +1,12 @@
 ## R code for Over-Representation Analysis
 
 library(WebGestaltR)
-compress_num = 512
+compress_num <- 512 # number of files need to be tested
 
 str1 <- '' # first section of file (gene module) name
 str2 <- '' # second section of file (gene module) name
 str3 <- '' # path to save ORA results
-pathway_num = 10 # the minimum number of pathways to save
+pathway_num <- 10 # the minimum number of pathways to save
 
 for (i in 1:compress_num){
   skip_to_next <- FALSE
