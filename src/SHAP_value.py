@@ -8,9 +8,9 @@ from sklearn import preprocessing
 from sklearn.ensemble import RandomForestRegressor
 import shap
 
-PATH_TO_DATA = './data_QC.txt'    #path to cleaned data (after quality control)
-PATH_TO_AE_RESULT = './AE_199.txt'    #path to AutoEncoder results, alwarys the last epoch result
-PATH_TO_SAVE = './shap.txt'.          #path to save gene module
+PATH_TO_DATA = './data_QC.txt'    # path to cleaned data with gene id (not gene name) (after quality control)
+PATH_TO_AE_RESULT = './AE_199.txt'    # path to AutoEncoder results, alwarys the last epoch result
+PATH_TO_SAVE = './shap.txt'.          # path to save gene module
 
 gene_id = pd.read_csv(PATH_TO_DATA, index_col=0)
 hidden_vars = pd.read_csv(PATH_TO_AE_RESULT, header = None)
@@ -26,11 +26,11 @@ for i in range(column_num):
   my_model = RandomForestRegressor(bootstrap=True, oob_score=False,max_depth=20, random_state=42, n_estimators=100)
   my_model.fit(X_train, Y_train)
   explainer = shap.TreeExplainer(my_model)
-  #explainer = shap.KernelExplainer(my_model.predict, data = X_test.iloc[0:10])
+  # explainer = shap.KernelExplainer(my_model.predict, data = X_test.iloc[0:10])
   shap_values = explainer.shap_values(X_test)
-  ## generate gene module
+  # generate gene module
   shap_values_mean = np.sum(abs(shap_values),axis=0)/sample_num
-  shap_values_ln = np.log(shap_values_mean) ##calculate ln^|shap_values_mean|
+  shap_values_ln = np.log(shap_values_mean) ## calculate ln^|shap_values_mean|
   gene_module = np.stack((gene_id,shap_values_ln),axis=0)
   gene_module = gene_module.T
   gene_module = gene_module[np.argsort(gene_module[:,1])]
