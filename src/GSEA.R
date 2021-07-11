@@ -6,7 +6,7 @@ compress_num = 512
 str1 <- '' # first section of file (gene module) name
 str2 <- '' # second section of file (gene module) name
 str3 <- '' # path to save GSEA results
-pathway_num = 5 # the minimum number of pathways to save
+pathway_num <- 5 # the minimum number of pathways to save
 
 for (i in 1:compress_num){
   skip_to_next <- FALSE
