@@ -8,12 +8,12 @@ from sklearn import preprocessing
 from sklearn.ensemble import RandomForestRegressor
 import shap
 
-RNA_name = 'BRCA' #data file name
-compress_num = '256' #AutoEncoder compress rate
-explainer_name = 'Tree' #SHAP explainer name
+PATH_TO_DATA = './data_QC.txt'    #path to cleaned data (after quatlity control)
+PATH_TO_AE_RESULT = './AE_199.txt'    #path to AutoEncoder results, alwarys the last epoch result
+PATH_TO_SAVE = 'gene_module.txt'     #path to save gene module
 
-gene = pd.read_csv('/export/home/yang.yu2/UK_Biobank_data/gene_name_QC.csv' ,index_col=0)
-hidden_vars = pd.read_csv('/export/home/yang.yu2/UK_Biobank_code/figure/AE_hidden_vars/BRCA_'+compress_num+'.csv',header = None)
+gene = pd.read_csv(PATH_TO_DATA, index_col=0)
+hidden_vars = pd.read_csv(PATH_TO_AE_RESULT, header = None)
 column_num = len(hidden_vars.columns)
 sample_num = len(gene.index)
 top_num = int((1/20)*len(gene.columns))
@@ -42,4 +42,4 @@ for i in range(column_num):
   gene_module = gene_module.head(top_num)
   gene_module = gene_module[(gene_module[[1]]!= -np.inf).all(axis=1)]
   if len(gene_module.index) > (0.10)*top_num:
-      gene_module.to_csv('/export/home/yang.yu2/UK_Biobank_code/figure/BRCA_'+compress_num+'_'+str(i+1)+'_gene_module_'+explainer_name+'top1000.txt',header = 0, index = 0, sep = '\t')
+      gene_module.to_csv(PATH_TO_SAVE, header = 0, index = 0, sep = '\t')
