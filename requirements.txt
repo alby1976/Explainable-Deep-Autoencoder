@@ -13,3 +13,5 @@ shap==0.37.0
 sklearn==0.23.1
 torch==1.6.0
 torchvision==0.7.0
+R==4.1.0
+WebGestaltR==0.4.4
