@@ -2,18 +2,18 @@
 
 ## Preamble
 
-Deep neural networks are emerging tools in learning representations of high-dimensional biological data including gene expressions. However, they usually lead to “black-boxes” difficult to interpret, hindering downstream experimental validations and clinical translation. To bridge the gap between complicated models and the needs of biological researchers, we developed a tool integrating autoencoder (AE) and SHapley Additive exPlanations (SHAP), a flagship technique in explainable AI (XAI). It quantitatively evaluates the contributions of each gene to the hidden structure learned by AE, substantially improving the expandability of AE models. By applying our tool to gene expression data, we revealed intriguing pathways including DNA reparation underlying breast cancer. This tool will enable researchers and practitioners to analyze high-dimensional genomic data intuitively, paving the way towards practical use of deep learning in broader biological and clinical applications.
+Deep learning has performed well and led the third wave of artificial intelligence. Most of the current top-performing applications use deep learning, and the big hit AlphaGo uses deep learning. Modern machine learning methods have been extensively utilized in gene expression data pro-cessing. In particular, autoencoders (AE) have been employed in processing noisy and hetero-genous RNA-Seq data. However, AEs usually lead to “black-box” hidden variables difficult to inter-pret, hindering downstream experimental validations and clinical translation. To bridge the gap be-tween complicated models and the biological interpretations, we developed a tool, XAE4Exp (eX-plainable AutoEncoder for Expression data), which integrates AE and SHapley Additive exPlana-tions (SHAP), a flagship technique in the field of eXplainable AI (XAI). It quantitatively evaluates the contributions of each gene to the hidden structure learned by an AE, substantially improving the expandability of AE outcomes. This tool will enable researchers and practitioners to analyze high-dimensional expression data intuitively, paving the way towards broader uses of deep learning.
+
 
 ---
 
 ## Table of Contents
 
 - [AutoEncoder and SHAP](#autoencoder-and-shap)
-- [Prerequisites](#Prerequisites)
+- [Prerequisites](#prerequisites)
 - [Procedure](#procedure)
 - [License](#license)
 - [Authors](#author-info)
-- [Citations](#citations)
 ---
 ## AutoEncoder and SHAP
 
@@ -33,25 +33,36 @@ https://github.com/slundberg/shap#citations
 
 - **Required Software**
   - Python 3.8.3 and above
+  - R 1.4.0 and above
 
 - **Python Libraries**
   - numpy
   - pandas
-  - pickle
   - shap
   - sklearn
   - torch
   - matplotlib
 
+- **R Libraries**
+  - WebGestaltR
+
 ## Procedure
+
+### 0.Data acquisition
+
+- To demonstrate the use of XAE4Exp, we applied it to The Cancer Genome Atlas (TCGA) breast cancer data (sample size N= 1041, number of genes M= 56497). I would like to thank TCGA for their data support!
 
 ### 1.Data preparation
 
-- According to **data quality control.py**. Before runing **AutoEncoder.py**, we need to do gene data quality control to make sure the the variance of each gene is less than 1, which denoise the gene data.
+- (optional) To make the following feature importance figure more clear, we converted the data column of gene id to column of gene name by gene_annotation.R.
+
+- According to **data quality control.py**. Before runing **AutoEncoder.py** (This script already contains data quality control coding, so basically you can just ran **AutoEncoder.py**), we need to do gene data quality control to make sure the the variance of each gene is less than 1, which denoises the gene data.
 
 ### 2.Representation learning by Deep AutoEncoder
 
-- According to **AutoEncoder.py** (This script already contains data quality control). After gene quality control, we proceed to representation learning. By tuning the parameters in AutoEncoder.py, we would have representations in different precision level. Because we don't have a certain rule to tuning parameter, we always compare the results and find the best combination. Following is the parameter that would affect the results:
+- According to **AutoEncoder.py** (This script already contains data quality control). After gene quality control, we proceed to representation learning. By tuning the parameters in AutoEncoder.py, we would have representations in different precision level. In this Deep AE, a three-hidden-layer (exclude input and output layer) structure is used, and loss function is designed by Mean Square Error (MSE).
+
+- Because we don't have a certain rule to tuning parameter, we always compare the results and find the best combination. Following is the parameter that would affect the results:
   - batch_size (number of data cloumns that computer runs each time)
   - test_size (train test split rate)
   - smallest_layer (the number that you want to compress gene data, by changing smallest_layer, you need to change the compress rate inside the **AutoEncoder Neural Network** correspondly.)
@@ -61,23 +72,21 @@ https://github.com/slundberg/shap#citations
 
 ### 3.SHAP explanation
 
-- SHAP is a strong deep learning explainer, by SHAP, you are able to get figures of distribution of each gene contribution and exact number of each gene contribution. 
-- For figures, please run **SHAP results as figures.py**
-  - Example figure
-    [shap_BRCA.pdf](https://github.com/yancy001/Explainable-Deep-Autoencoder/files/6283423/shap_BRCA.pdf)
+- According to **SHAP_combo.py**. SHAP is a strong deep learning explainer, by SHAP, you are able to get figures of distribution of each gene contribution and exact number of each gene contribution. Based on the flow of SHAP, a pre-designed prediction model and an explainer are need. Here we used a randon forest with 100 decision trees with maximun depth of 20 as the prediction model, and TreeExplainer as the explainer.
 
-- For weights, please run **SHAP results for AE results.py**
+- The **SHAP_combo.py** results contains all feature importance in txt form (two columns with first column of gene name and second column of feature importance), top 20 global interpretation figure and top 20 feature importance figure. Separately, **SHAP_value.py** generates feature importance in txt file, **SHAP_figure_scatter.py** generates top 20 global interpretation figure, **SHAP_figure_bar.py** generates top 20 feature importance figure.
 
-### 4.（Optional) SHAP value (weights) filtering
+- SHAP figures:
+  - Example for Global interpretation figure (**SHAP_figure_scatter.py**):
+    <img width="613" alt="scatter6" src="https://user-images.githubusercontent.com/81887269/127747163-d6a1765c-b9b3-4313-ae0f-62d2a6f08327.png">
+  - Example for Feature importance figure (**SHAP_figure_bar.py**):
+    <img width="679" alt="bar6" src="https://user-images.githubusercontent.com/81887269/127747164-757099b9-8e23-4cd6-8755-9e83080cb8f2.png">
 
-- According to **threshold for SHAP results.py.** Before Enrichment Analysis, too many SHAP value might generate a huge amount of related pathway and it could be less accurate. To solve this problem, setup a threshold to filter the top gene id would be helpful. It is important to note that if the threshold you setup is too large, the gene number might be not enough to do Enrichment Analysis.
+### 4.Enrichment Analysis
 
-### 5.Enrichment Analysis
+- According to **ORA.R** and **GSEA.R**. The enrichment analysis is preceeded by WebGestaltR package in R. ORA stands for Over-Representation Analysis and GSEA stands for Gene Set Enrichment Analysis. A **.csv** should be generated in this step.
 
-- WebGestalt provides online Enrichment Analysis service with clear figures. They provide Over-Representation Analysis (ORA), Gene Set Enrichment Analysis (GSEA) and Network Topology-based Analysis (NTA). Here is the website: http://www.webgestalt.org/#
-- Example for Enrichment Analysis figure:
-
-  <img width="1192" alt="Screen Shot 2021-04-09 at 12 11 21 AM" src="https://user-images.githubusercontent.com/81887269/114136557-2796af80-98c8-11eb-9bd7-11c77d7abbf7.png">
+- (optional) WebGestalt also provides online Enrichment Analysis service with clear figures. They provide Over-Representation Analysis (ORA), Gene Set Enrichment Analysis (GSEA) and Network Topology-based Analysis (NTA). Here is the website: http://www.webgestalt.org/#
 
 
 ## License
