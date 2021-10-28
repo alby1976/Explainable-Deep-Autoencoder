@@ -3,7 +3,7 @@
 library(WebGestaltR)
 compress_num <- 512 # number of files need to be tested
 
-gene_module <- '' # fold gene module name
+gene_module <- '' # gene module name without number
 PATH_TO_SAVE <- '' # path to save ORA results
 pathway_num <- 10 # the minimum number of pathways to save
 
@@ -26,7 +26,7 @@ for (i in 1:compress_num){
   )
   if (skip_to_next) {next}
   else if (!is.null(ORA) && nrow(ORA) >= pathway_num) {
-    path_to_save <- paste(str3, str1, num,'.csv', sep = '')
+    path_to_save <- paste(PATH_TO_SAVE, i,'.csv', sep = '')
     write.csv(ORA, path_to_save)
   } else { next}
 }
