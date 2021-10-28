@@ -8,9 +8,12 @@ from sklearn import preprocessing
 from sklearn.ensemble import RandomForestRegressor
 import shap
 
+#Input
 PATH_TO_DATA_GENE_NAME = './gene_name_QC.txt'    # path to cleaned data with gene annotation (not gene id) (after quatlity control)
 PATH_TO_DATA_GENE_ID = './gene_id_QC.txt'    # path to cleaned data with gene id (not gene name) (after quality control)
 PATH_TO_AE_RESULT = './AE_199.txt'    # path to AutoEncoder results, alwarys the last epoch result
+
+#Output
 PATH_TO_SAVE_BAR = 'bar.pdf'      # path to save SHAP bar chart
 PATH_TO_SAVE_SCATTER = 'scatter.pdf'     # path to save SHAP scatter chart
 PATH_TO_SAVE_GENE_MODULE = './shap.txt'  # path to save gene module
