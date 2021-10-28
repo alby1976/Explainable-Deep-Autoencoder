@@ -16,6 +16,7 @@ import time
 
 PATH_TO_DATA = './data.txt'      #path to data (before quality control)
 PATH_TO_SAVE = './AE.txt'      #path to save AutoEncoder results
+PATH_TO_SAVE_QC = './data_QC.txt'.       #path to save data after quality control
 
 model_name = 'AE_Geno'
 save_dir = PATH_TO_SAVE
@@ -28,6 +29,7 @@ geno_var = geno.var()
 for i in range(len(geno_var)-1,-1,-1):      #data quality control
   if geno_var[i]<1:
     del geno[geno.columns[i]]
+geno.to_csv(PATH_TO_SAVE)
 geno = np.array(geno)
 snp = int(len(geno[0]))
 
