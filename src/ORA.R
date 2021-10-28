@@ -3,16 +3,15 @@
 library(WebGestaltR)
 compress_num <- 512 # number of files need to be tested
 
-str1 <- '' # first section of file (gene module) name
-str2 <- '' # second section of file (gene module) name
-str3 <- '' # path to save ORA results
+gene_module <- '' # fold gene module name
+PATH_TO_SAVE <- '' # path to save ORA results
 pathway_num <- 10 # the minimum number of pathways to save
 
 for (i in 1:compress_num){
   skip_to_next <- FALSE
   tryCatch({
     num <- as.character(i)
-    file_name <- paste(str1, num, str2, sep="")
+    file_name <- paste0(gene_module, i, ".csv")
     curr_data <- read.csv(file_name, sep="\t", header = FALSE)
     ORA <- WebGestaltR(interestGene = (curr_data$V1),
                         enrichMethod = "ORA",
