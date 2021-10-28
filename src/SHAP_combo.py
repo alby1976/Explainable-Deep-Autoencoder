@@ -14,9 +14,9 @@ PATH_TO_DATA_GENE_ID = './gene_id_QC.txt'    # path to cleaned data with gene id
 PATH_TO_AE_RESULT = './AE_199.txt'    # path to AutoEncoder results, alwarys the last epoch result
 
 #Output
-PATH_TO_SAVE_BAR = 'bar.pdf'      # path to save SHAP bar chart
-PATH_TO_SAVE_SCATTER = 'scatter.pdf'     # path to save SHAP scatter chart
-PATH_TO_SAVE_GENE_MODULE = './shap.txt'  # path to save gene module
+PATH_TO_SAVE_BAR = './shap/bar'      # path to save SHAP bar chart
+PATH_TO_SAVE_SCATTER = './shap/scatter'     # path to save SHAP scatter chart
+PATH_TO_SAVE_GENE_MODULE = './shap/gene_module'  # path to save gene module
 
 gene = pd.read_csv(PATH_TO_DATA_GENE_NAME, index_col=0)
 hidden_vars = pd.read_csv(PATH_TO_AE_RESULT, header = None)
@@ -49,12 +49,12 @@ for i in range(column_num):
   gene_module = gene_module.head(top_num)
   gene_module = gene_module[(gene_module[[1]]!= -np.inf).all(axis=1)]
   if len(gene_module.index) > (1/4)*top_num:
-      gene_module.to_csv(PATH_TO_SAVE_GENE_MODULE, header = 0, index = 0, sep = '\t')
+      gene_module.to_csv(PATH_TO_SAVE_GENE_MODULE+str(i)+'.csv', header = 0, index = 0, sep = '\t')
   ## generate bar chart
   shap.summary_plot(shap_values, X_test, plot_type='bar', plot_size = (15,10))
-  plt.savefig(PATH_TO_SAVE_BAR, dpi=100, format='png')
+  plt.savefig(PATH_TO_SAVE_BAR+str(i)+'.png', dpi=100, format='png')
   plt.close()
   ## generate scatter chart
   shap.summary_plot(shap_values, X_test, plot_size = (15,10))
-  plt.savefig(PATH_TO_SAVE_SCATTER, dpi=100, format='png')
+  plt.savefig(PATH_TO_SAVE_SCATTER+str(i)+'.png', dpi=100, format='png')
   plt.close()
