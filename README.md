@@ -76,6 +76,8 @@ https://github.com/slundberg/shap#citations
 
 - The **SHAP_combo.py** results contains all feature importance in txt form (two columns with first column of gene name and second column of feature importance), top 20 global interpretation figure and top 20 feature importance figure. Separately, **SHAP_value.py** generates feature importance in txt file, **SHAP_figure_scatter.py** generates top 20 global interpretation figure, **SHAP_figure_bar.py** generates top 20 feature importance figure.
 
+- Basically, you can just run **SHAP_combo.py**, or you can run **SHAP_value.py**, **SHAP_figure_scatter.py** and **SHAP_figure_bar.py** one-by-one seperately.
+
 - SHAP figures:
   - Example for Global interpretation figure (**SHAP_figure_scatter.py**):
     <img width="613" alt="scatter6" src="https://user-images.githubusercontent.com/81887269/127747163-d6a1765c-b9b3-4313-ae0f-62d2a6f08327.png">
