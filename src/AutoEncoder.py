@@ -15,7 +15,7 @@ import os
 import time
 
 PATH_TO_DATA = './data.txt'      #path to data (before quality control)
-PATH_TO_SAVE = './AE.txt'.       #path to save AutoEncoder results
+PATH_TO_SAVE = './AE.txt'      #path to save AutoEncoder results
 
 model_name = 'AE_Geno'
 save_dir = PATH_TO_SAVE
