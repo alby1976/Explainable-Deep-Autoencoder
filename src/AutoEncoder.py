@@ -20,10 +20,9 @@ PATH_TO_SAVE = './AE.txt'      #path to save AutoEncoder results
 model_name = 'AE_Geno'
 save_dir = PATH_TO_SAVE
 if not os.path.exists(save_dir):
-    cmd = 'mkdir -p ' + save_dir
-    os.system(cmd)
+    os.mkdir(save_dir)
 
-RNA_name = 'BRCA'
+RNA_name = 'AEResult'
 geno = pd.read_csv(PATH_TO_DATA, index_col=0)
 geno_var = geno.var()
 for i in range(len(geno_var)-1,-1,-1):      #data quality control
