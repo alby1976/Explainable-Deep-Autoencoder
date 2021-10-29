@@ -14,26 +14,27 @@ import pickle
 import os
 import time
 
-PATH_TO_DATA = './data.txt'      #path to data (before quality control)
-PATH_TO_SAVE = './AE.txt'      #path to save AutoEncoder results
-PATH_TO_SAVE_QC = './data_QC.txt'.       #path to save data after quality control
+PATH_TO_DATA = 'data_example.csv'      #path to original data 
+PATH_TO_SAVE_AE = 'AE.csv'      #path to save AutoEncoder results
+PATH_TO_SAVE_QC = 'data_QC.csv'       #path to save original data after quality control
 
 model_name = 'AE_Geno'
-save_dir = PATH_TO_SAVE
+save_dir = PATH_TO_SAVE_AE
 if not os.path.exists(save_dir):
     os.mkdir(save_dir)
 
 RNA_name = 'AEResult'
 geno = pd.read_csv(PATH_TO_DATA, index_col=0)
 geno_var = geno.var()
+
 for i in range(len(geno_var)-1,-1,-1):      #data quality control
   if geno_var[i]<1:
     del geno[geno.columns[i]]
-geno.to_csv(PATH_TO_SAVE)
+geno.to_csv(PATH_TO_SAVE_QC)
 geno = np.array(geno)
 snp = int(len(geno[0]))
 
-batch_size = 4096
+batch_size = 100
 geno_train, geno_test = train_test_split(geno, test_size=0.1, random_state=42)
 
 
@@ -61,7 +62,7 @@ geno_test_set = GPDataSet(geno_test)
 geno_test_set_loader = DataLoader(dataset=geno_test_set, batch_size=batch_size, shuffle=False, num_workers=8)
 input_features = int(snp)
 output_features = input_features
-smallest_layer = int(snp / 20000)
+smallest_layer = int(snp / 200)
 hidden_layer = int(2*smallest_layer)
 
 class Auto_Geno_shallow(nn.Module):
