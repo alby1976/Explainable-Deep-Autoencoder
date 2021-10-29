@@ -15,15 +15,14 @@ import os
 import time
 
 PATH_TO_DATA = 'data_example.csv'      #path to original data 
-PATH_TO_SAVE_AE = 'AE.csv'      #path to save AutoEncoder results
-PATH_TO_SAVE_QC = 'data_QC.csv'       #path to save original data after quality control
+PATH_TO_SAVE_AE = '/example/'      #path to save AutoEncoder results
+PATH_TO_SAVE_QC = 'data_example_QC.csv'       #path to save original data after quality control
 
-model_name = 'AE_Geno'
 save_dir = PATH_TO_SAVE_AE
 if not os.path.exists(save_dir):
     os.mkdir(save_dir)
 
-RNA_name = 'AEResult'
+RNA_name = 'breast_cancer'
 geno = pd.read_csv(PATH_TO_DATA, index_col=0)
 geno_var = geno.var()
 
@@ -94,7 +93,7 @@ class Auto_Geno_shallow(nn.Module):
 
 model = Auto_Geno_shallow().cuda()
 distance = nn.MSELoss()  # for regression, 0, 0.5, 1
-optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
+optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 do_train = True
 do_test = True
 num_epochs = 200
@@ -129,7 +128,7 @@ for epoch in range(num_epochs):
             optimizer.step()
         # ===========log============
         coder_np = np.array(output_coder_list)
-        temp = round(smallest_layer / 1000)
+        temp = round(smallest_layer / 100)
         coder_file = save_dir + RNA_name + str(epoch) + '.csv'
         np.savetxt(fname=coder_file, X=coder_np, fmt='%f', delimiter=',')
         print('epoch[{}/{}],loss:{:.4f}'.format(epoch + 1, num_epochs, sum_loss))
