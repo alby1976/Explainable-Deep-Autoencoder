@@ -9,9 +9,9 @@ from sklearn.ensemble import RandomForestRegressor
 import shap
 
 #Input
-PATH_TO_DATA_GENE_NAME = './gene_name_QC.txt'    # path to cleaned data with gene annotation (not gene id) (after quatlity control)
-PATH_TO_DATA_GENE_ID = './gene_id_QC.txt'    # path to cleaned data with gene id (not gene name) (after quality control)
-PATH_TO_AE_RESULT = './AE_199.txt'    # path to AutoEncoder results, alwarys the last epoch result
+PATH_TO_DATA_GENE_NAME = 'data_example_QC_name.csv'    # path to cleaned data with gene annotation (not gene id) (after quatlity control)
+PATH_TO_DATA_GENE_ID = 'data_example_QC.csv'    # path to cleaned data with gene id (not gene name) (after quality control)
+PATH_TO_AE_RESULT = '/example/breast_cancer199.csv'    # path to AutoEncoder results, alwarys the last epoch result
 
 #Output
 PATH_TO_SAVE_BAR = './shap/bar'      # path to save SHAP bar chart
