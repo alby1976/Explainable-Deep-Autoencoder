@@ -1,8 +1,8 @@
 ## Use R package to change gene id to gene name (only used on SHAP plot)
 library(data.table)
 
-PATH_TO_DATA_GENE_NAME = './gene_name_QC.txt'    # path to cleaned data with gene annotation (not gene id) (after quatlity control)
-PATH_TO_DATA_GENE_ID = './gene_id_QC.txt'    # path to cleaned data with gene id (not gene name) (after quality control)
+PATH_TO_DATA_GENE_NAME = 'data_example_QC_name.txt'    # path to cleaned data with gene annotation (gene name) (after quatlity control)
+PATH_TO_DATA_GENE_ID = 'data_example_QC.csv'    # path to cleaned data with gene id (after quality control)
 
 if (!requireNamespace("BiocManager", quietly = TRUE))
   install.packages("BiocManager")
