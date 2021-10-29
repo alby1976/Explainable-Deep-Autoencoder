@@ -48,17 +48,17 @@ https://github.com/slundberg/shap#citations
 
 ## Procedure
 
-### 0.Data acquisition
+### 0. Data acquisition
 
 - To demonstrate the use of XAE4Exp, we applied it to The Cancer Genome Atlas (TCGA) breast cancer data (sample size N= 1041, number of genes M= 56497). I would like to thank TCGA for their data support!
 
-### 1.Data preparation
+### 1. Data preparation
 
 - (optional) To make the following feature importance figure more clear, we converted the data column of gene id to column of gene name by gene_annotation.R.
 
 - According to **data quality control.py**. Before runing **AutoEncoder.py** (This script already contains data quality control coding, so basically you can just ran **AutoEncoder.py**), we need to do gene data quality control to make sure the the variance of each gene is less than 1, which denoises the gene data.
 
-### 2.Representation learning by Deep AutoEncoder
+### 2. Representation learning by Deep AutoEncoder
 
 - According to **AutoEncoder.py** (This script already contains data quality control). After gene quality control, we proceed to representation learning. By tuning the parameters in AutoEncoder.py, we would have representations in different precision level. In this Deep AE, a three-hidden-layer (exclude input and output layer) structure is used, and loss function is designed by Mean Square Error (MSE).
 
@@ -70,7 +70,7 @@ https://github.com/slundberg/shap#citations
 
 **<ins>Besides, you might change the number of hidden layer, which is so-called the depth of AutoEncoder.</ins>**
 
-### 3.SHAP explanation
+### 3. SHAP explanation
 
 - According to **SHAP_combo.py**. SHAP is a strong deep learning explainer, by SHAP, you are able to get figures of distribution of each gene contribution and exact number of each gene contribution. Based on the flow of SHAP, a pre-designed prediction model and an explainer are need. Here we used a randon forest with 100 decision trees with maximun depth of 20 as the prediction model, and TreeExplainer as the explainer.
 
@@ -84,13 +84,13 @@ https://github.com/slundberg/shap#citations
   - Example for Feature importance figure (**SHAP_figure_bar.py**):
     <img width="679" alt="bar6" src="https://user-images.githubusercontent.com/81887269/127747164-757099b9-8e23-4cd6-8755-9e83080cb8f2.png">
 
-### 4.Enrichment Analysis
+### 4. Enrichment Analysis
 
 - According to **ORA.R** and **GSEA.R**. The enrichment analysis is preceeded by WebGestaltR package in R. ORA stands for Over-Representation Analysis and GSEA stands for Gene Set Enrichment Analysis. A **.csv** should be generated in this step.
 
 - (optional) WebGestalt also provides online Enrichment Analysis service with clear figures. They provide Over-Representation Analysis (ORA), Gene Set Enrichment Analysis (GSEA) and Network Topology-based Analysis (NTA). Here is the website: http://www.webgestalt.org/#
 
-### 5.Demonstration
+### 5. Demonstration
 
 - Example data: please find the example data at **data_example.csv**. Please note that the example data is fake and small size, the training result could be bad.
 - If you are confused about the process, feel free to check out the demonstration in the folder **example**.
