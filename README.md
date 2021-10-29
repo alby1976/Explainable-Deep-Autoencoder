@@ -90,6 +90,11 @@ https://github.com/slundberg/shap#citations
 
 - (optional) WebGestalt also provides online Enrichment Analysis service with clear figures. They provide Over-Representation Analysis (ORA), Gene Set Enrichment Analysis (GSEA) and Network Topology-based Analysis (NTA). Here is the website: http://www.webgestalt.org/#
 
+### 5.Demonstration
+
+- Example data: please find the example data at **data_example.csv**. Please note that the example data is fake and small size, the training result could be bad.
+- If you are confused about the process, feel free to check out the demonstration in the folder **example**.
+
 
 ## License
 **This project is licensed under the MIT License**
