@@ -14,22 +14,23 @@ import pickle
 import os
 import time
 
-PATH_TO_DATA = './data.txt'      #path to data (before quality control)
-PATH_TO_SAVE = './AE.txt'      #path to save AutoEncoder results
-PATH_TO_SAVE_QC = './data_QC.txt'.       #path to save data after quality control
+PATH_TO_DATA = './data.txt'      #path to original data
+PATH_TO_SAVE_AE = './AE.txt'      #path to save AutoEncoder results
+PATH_TO_SAVE_QC = './data_QC.txt'       #path to save original data after quality control
 
 model_name = 'AE_Geno'
-save_dir = PATH_TO_SAVE
+save_dir = PATH_TO_SAVE_AE
 if not os.path.exists(save_dir):
     os.mkdir(save_dir)
 
 RNA_name = 'AEResult'
 geno = pd.read_csv(PATH_TO_DATA, index_col=0)
 geno_var = geno.var()
+
 for i in range(len(geno_var)-1,-1,-1):      #data quality control
   if geno_var[i]<1:
     del geno[geno.columns[i]]
-geno.to_csv(PATH_TO_SAVE)
+geno.to_csv(PATH_TO_SAVE_QC)
 geno = np.array(geno)
 snp = int(len(geno[0]))
 
