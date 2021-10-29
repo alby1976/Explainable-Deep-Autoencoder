@@ -15,7 +15,7 @@ import os
 import time
 
 PATH_TO_DATA = './data.txt'      #path to original data
-PATH_TO_SAVE_AE = './AE.txt'      #path to save AutoEncoder results
+PATH_TO_SAVE_AE = './AE/'      #path to save AutoEncoder results
 PATH_TO_SAVE_QC = './data_QC.txt'       #path to save original data after quality control
 
 model_name = 'AE_Geno'
@@ -23,7 +23,6 @@ save_dir = PATH_TO_SAVE_AE
 if not os.path.exists(save_dir):
     os.mkdir(save_dir)
 
-RNA_name = 'AEResult'
 geno = pd.read_csv(PATH_TO_DATA, index_col=0)
 geno_var = geno.var()
 
