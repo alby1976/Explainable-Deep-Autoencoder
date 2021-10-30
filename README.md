@@ -101,7 +101,7 @@ https://github.com/slundberg/shap#citations
 
 MIT License
 
-Copyright (c) 2021 Yang Yu
+Copyright (c) 2021 Yang Yu, Qingrun Zhang, Wenyuan Liao, Pathum Kossinna & Qing Li.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -123,6 +123,11 @@ SOFTWARE.
 
 ## Author Info
 
-- Yang Yu, Pathum Kossinna, Qing Li, Wenyuan Liao & Qingrun Zhang.
+- Yang Yu, Qingrun Zhang, Wenyuan Liao, Pathum Kossinna & Qing Li.
+- Qingrun Zhang 
+  - Email: qingrun.zhang@ucalgary.ca
+- Yang Yu
+  - Email: yang.yu2@ucalgary.ca
+  
 
 [Back To The Top](#table-of-contents)
