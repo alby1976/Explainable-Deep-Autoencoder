@@ -22,13 +22,9 @@ save_dir = PATH_TO_SAVE_AE
 if not os.path.exists(save_dir):
     os.mkdir(save_dir)
 
-RNA_name = 'breast_cancer'
-geno = pd.read_csv(PATH_TO_DATA, index_col=0)
+geno = pd.read_csv(PATH_TO_DATA,index_col=0). #data quality control
 geno_var = geno.var()
-
-for i in range(len(geno_var)-1,-1,-1):      #data quality control
-  if geno_var[i]<1:
-    del geno[geno.columns[i]]
+geno.drop(geno_var[geno_var < 1].index.values, axis=1, inplace=True)
 geno.to_csv(PATH_TO_SAVE_QC)
 geno = np.array(geno)
 snp = int(len(geno[0]))
