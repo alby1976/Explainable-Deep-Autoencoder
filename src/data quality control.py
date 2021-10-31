@@ -6,10 +6,7 @@ import pandas as pd
 
 PATH_TO_DATA = './data.txt'           #path to data (before quality control)
 PATH_TO_SAVE = './data_QC.txt'       #path to save data after quality control
-
-Tumor = pd.read_csv(PATH_TO_DATA,index_col=0)
-Tumor_var = Tumor.var()
-for i in range(len(Tumor_var)-1,-1,-1):
-  if Tumor_var[i]<1:
-    del Tumor[Tumor.columns[i]]
-Tumor.to_csv(PATH_TO_SAVE)
+ 
+Tumor1 = pd.read_csv(PATH_TO_DATA,index_col=0)
+Tumor1_var = Tumor1.var()
+Tumor1.drop(Tumor1_var[Tumor1_var < 1].index.values, axis=1, inplace=True)
