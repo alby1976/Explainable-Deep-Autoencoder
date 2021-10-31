@@ -1,17 +1,15 @@
+# Python package required:
 conda==4.8.4
-future==0.18.2
 matplotlib==3.2.2
 numpy==1.18.5
-OS==Linux
 pandas==1.0.5
-pickle==4.0
-pip==20.1.1
-pytest==5.4.3
-python==3.8.3
-PyYAML==5.3.1
 shap==0.37.0
 sklearn==0.23.1
 torch==1.6.0
 torchvision==0.7.0
-R==4.1.0
+
+
+# R package required:
 WebGestaltR==0.4.4
+data.table==1.14.2
+biomaRt==2.50.0
