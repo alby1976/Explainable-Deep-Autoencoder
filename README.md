@@ -8,13 +8,18 @@ Deep learning has performed well and led the third wave of artificial intelligen
 ---
 
 ## Table of Contents
-
+- [Requirement](#requirement)
 - [AutoEncoder and SHAP](#autoencoder-and-shap)
 - [Prerequisites](#prerequisites)
 - [Procedure](#procedure)
 - [License](#license)
 - [Authors](#author-info)
 ---
+## Requirement
+- python3.8 -m venv XAI_venv
+- source XAI_venv/bin/activate
+- pip install -r requirements.txt
+
 ## AutoEncoder and SHAP
 
 **AutoEncoder**
