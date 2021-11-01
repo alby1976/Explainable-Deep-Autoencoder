@@ -8,19 +8,34 @@ Deep learning has performed well and led the third wave of artificial intelligen
 ---
 
 ## Table of Contents
-- [Dependencies](#dependencies)
+- [Prerequisites](#prerequisites)
 - [Data collection](#data-collection)
 - [AutoEncoder and SHAP](#autoencoder-and-shap)
-- [Prerequisites](#prerequisites)
 - [Procedure](#procedure)
 - [License](#license)
 - [Authors](#author-info)
 ---
-## Dependencies
-- python 3.8 
-- R 4.1.1
-- pip install -r requirements.txt
+## Prerequisites
 
+- **Required Software**
+  - Python 3.8.3 and above
+  - R 1.4.1 and above
+
+- **Python Libraries**
+  - numpy
+  - pandas
+  - shap
+  - sklearn
+  - torch
+  - torchvision
+  - matplotlib
+
+- **R Libraries**
+  - WebGestaltR
+  - data.table
+  - biomaRt
+  
+Check out **requirements.txt** for more details.
 ## Data collection
 Please follow the following steps to access the data source:
 - Go to https://portal.gdc.cancer.gov/
@@ -47,23 +62,6 @@ SHAP (SHapley Additive exPlanations) is a game theoretic approach to explain the
 For more details, please reach out to:
 
 https://github.com/slundberg/shap#citations
-
-## Prerequisites
-
-- **Required Software**
-  - Python 3.8.3 and above
-  - R 1.4.0 and above
-
-- **Python Libraries**
-  - numpy
-  - pandas
-  - shap
-  - sklearn
-  - torch
-  - matplotlib
-
-- **R Libraries**
-  - WebGestaltR
 
 ## Procedure
 
