@@ -9,6 +9,7 @@ Deep learning has performed well and led the third wave of artificial intelligen
 
 ## Table of Contents
 - [Dependencies](#dependencies)
+- [Data collection](#data-collection)
 - [AutoEncoder and SHAP](#autoencoder-and-shap)
 - [Prerequisites](#prerequisites)
 - [Procedure](#procedure)
@@ -19,6 +20,19 @@ Deep learning has performed well and led the third wave of artificial intelligen
 - python 3.8 
 - R 4.1.1
 - pip install -r requirements.txt
+
+## Data collection
+Please follow the following steps to access the data source:
+- Go to https://portal.gdc.cancer.gov/
+- Click on the Exploration tab
+- Check the “TCGA-BRCA” and “ductal and lobular neoplasms” options on the left.
+- Click “View files in Repository”
+- Under “Workflow Type” in the left, select “HTSeq-Counts”.
+- Click the “Add All Files to Cart” button on the right.
+- Then, go to “Cart” on the upper right-hand side of the top bar.
+- Download the sample sheet (this indicates the type of sample) and then click Download: Cart.
+
+Similar process for other cancers as well. Once downloaded, the compressed files need to be extracted and put in one folder (the ‘.count’ files). Then convert the count data to the TPM expression matrix by **data_collection1.R** and **data_collection2.R**. Please note that this still contains both tumor and normal samples. In this project, we just used tumor data.
 
 ## AutoEncoder and SHAP
 
