@@ -126,7 +126,7 @@ for epoch in range(num_epochs):
         # ===========log============
         coder_np = np.array(output_coder_list)
         temp = round(smallest_layer / 1000)
-        coder_file = save_dir + RNA_name + str(epoch) + '.csv'
+        coder_file = save_dir + model_name + str(epoch) + '.csv'
         np.savetxt(fname=coder_file, X=coder_np, fmt='%f', delimiter=',')
         print('epoch[{}/{}],loss:{:.4f}'.format(epoch + 1, num_epochs, sum_loss))
         average_precision = sum(

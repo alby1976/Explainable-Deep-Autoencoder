@@ -18,6 +18,7 @@ PATH_TO_DATA = 'data_example.csv'      #path to original data
 PATH_TO_SAVE_AE = '/example/'      #path to save AutoEncoder results
 PATH_TO_SAVE_QC = 'data_example_QC.csv'       #path to save original data after quality control
 
+model_name = 'AE_Geno'
 save_dir = PATH_TO_SAVE_AE
 if not os.path.exists(save_dir):
     os.mkdir(save_dir)
@@ -125,7 +126,7 @@ for epoch in range(num_epochs):
         # ===========log============
         coder_np = np.array(output_coder_list)
         temp = round(smallest_layer / 100)
-        coder_file = save_dir + RNA_name + str(epoch) + '.csv'
+        coder_file = save_dir + model_name + str(epoch) + '.csv'
         np.savetxt(fname=coder_file, X=coder_np, fmt='%f', delimiter=',')
         print('epoch[{}/{}],loss:{:.4f}'.format(epoch + 1, num_epochs, sum_loss))
         average_precision = sum(
