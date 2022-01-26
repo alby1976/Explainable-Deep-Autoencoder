@@ -23,7 +23,7 @@ save_dir = PATH_TO_SAVE_AE
 if not os.path.exists(save_dir):
     os.mkdir(save_dir)
 
-geno = pd.read_csv(PATH_TO_DATA,index_col=0). #data quality control
+geno = pd.read_csv(PATH_TO_DATA,index_col=0) #data quality control
 geno_var = geno.var()
 geno.drop(geno_var[geno_var < 1].index.values, axis=1, inplace=True)
 geno.to_csv(PATH_TO_SAVE_QC)
