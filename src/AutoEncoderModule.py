@@ -1,6 +1,6 @@
 import time
 from typing import Any
-
+import os
 from torch import nn
 from torch.autograd import Variable
 from torch.utils.data import Dataset
@@ -54,8 +54,14 @@ class AutoGenoShallow(nn.Module):
         return x, y
 
 
+def create_dir (save_dir: str):
+    if not os.path.exists(save_dir):
+        os.mkdir(save_dir)
+
+
 def run_ae (model_name, model, geno_train_set_loader, geno_test_set_loader, input_features, smallest_layer, optimizer,
             distance=nn.MSELoss(), num_epochs=200, batch_size=4096, do_train=True, do_test=True, save_dir='./'):
+    create_dir(save_dir)
     for epoch in range(num_epochs):
         start_time = time.time()
         batch_precision_list = []
@@ -90,7 +96,7 @@ def run_ae (model_name, model, geno_train_set_loader, geno_test_set_loader, inpu
             coder_np = np.array(output_coder_list)
             temp = round(smallest_layer / 1000)
             coder_file = f"{save_dir}{model_name}-{str(epoch)}.csv"
-            np.savetxt(fname=coder_file, x=coder_np, fmt='%f', delimiter=',')
+            np.savetxt(fname=coder_file, X=coder_np, fmt='%f', delimiter=',')
             average_precision = sum(
                 batch_precision_list) / current_batch  # precision_list is a list of [ave_pre_batch1, ave_pre_batch2,...]
         # ===========test==========
@@ -116,6 +122,6 @@ def run_ae (model_name, model, geno_train_set_loader, geno_test_set_loader, inpu
                 test_batch_precision_list.append(batch_average_precision)  # [ave_pre_batch1, ave_pre_batch2,...]
             test_average_precision = sum(
                 test_batch_precision_list) / test_current_batch  # precision_list is a list of [ave_pre_batch1, ave_pre_batch2,...]
-        print(f"epoch[{epoch +1}/{num_epochs}, loss: {sum_loss:.4f}, precision: {average_precision:.4f}, "
+        print(f"epoch[{epoch +1:3d}/{num_epochs}, loss: {sum_loss:.4f}, precision: {average_precision:.4f}, "
               f"test precision: {test_average_precision:.4f}")
 
