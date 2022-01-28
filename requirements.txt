@@ -4,7 +4,9 @@ matplotlib==3.2.2
 numpy==1.18.5
 pandas==1.0.5
 shap==0.37.0
-sklearn==0.23.1
+#sklearn==0.23.1
+scikit-learn=0.23.1
+pyensembl>=1.9.4
 torch==1.6.0
 torchvision==0.7.0
 
@@ -13,3 +15,4 @@ torchvision==0.7.0
 WebGestaltR==0.4.4
 data.table==1.14.2
 biomaRt==2.50.0
+
