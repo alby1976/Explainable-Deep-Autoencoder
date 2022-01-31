@@ -76,15 +76,19 @@ if __name__ == '__main__':
 
                 with open(job_file) as fh:
                     fh.writelines("#!/bin/bash\n")
-                    fh.writelines("#SBATCH --job-name=%s.job\n" % lizard)
-                    fh.writelines("#SBATCH --output=.out/%s.out\n" % lizard)
-                    fh.writelines("#SBATCH --error=.out/%s.err\n" % lizard)
-                    fh.writelines("#SBATCH --time=2-00:00\n")
-                    fh.writelines("#SBATCH --mem=12000\n")
-                    fh.writelines("#SBATCH --qos=normal\n")
+                    fh.writelines("# SBATCH --partition=gpu-v100\n")
+                    fh.writelines("# SBATCH --gres=gpu:1\n")
+                    fh.writelines("# SBATCH --time=7-0:0:0\n")
+                    fh.writelines("# SBATCH --mem=16GB\n")
+                    fh.writelines("#SBATCH --job-name=%x-job-%N-%j.slurm.job\n")
+                    fh.writelines("# SBATCH --out=%x-job-%N-%j.slurm.out\n")
+                    fh.writelines("# SBATCH --error=%x-job-%N-%j.slurm.error\n")
                     fh.writelines("#SBATCH --mail-type=ALL\n")
-                    fh.writelines("#SBATCH --mail-user=$USER@stanford.edu\n")
-                    fh.writelines("Rscript $HOME/project/LizardLips/run.R %s potato shiabato\n" % lizard_data)
+                    fh.writelines("#SBATCH --mail-user=$USER@ucalgary.ca\n")
+
+                    fh.writelines("\n####### Set environment variables ###############\n\n")
+                    fh.writelines("module load python/anaconda3-2018.12\n")
+                    fh.writelines("Rscript $HOME/project/LizardLips/run.R %s potato shiabato\n")
 
                 command = ['python AutoEncoder.py', ensembl_version, filename, pathway_data,
                            path_to_save_filtered_data, save_dir]
