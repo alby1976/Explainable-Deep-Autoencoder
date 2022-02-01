@@ -1,10 +1,14 @@
-## Use Python to run Deep Autoencoder (feature selection)
-## path - is a string to desired path location.
+# ** Use Python to run Deep Autoencoder (feature selection) **
+# ** path - is a string to desired path location. **
 import math
 import sys
+from typing import Union, Any
+
 import pandas as pd
 import numpy as np
 import torch
+from pandas import Series, DataFrame
+from pandas.io.parsers import TextFileReader
 from torch import nn
 from torch.utils.data import DataLoader
 from sklearn.model_selection import train_test_split
@@ -14,14 +18,15 @@ from src.AutoEncoderModule import run_ae
 
 
 if __name__ == '__main__':
-    model_name = sys.argv[1] # model name e.g AE_Geno
+    model_name = sys.argv[1]  # model name e.g AE_Geno
 
-    path_to_data = sys.arg[2]  # path to original data e.g. '../data_example.csv'
+    path_to_data = sys.argv[2]  # path to original data e.g. '../data_example.csv'
     path_to_save_qc = sys.argv[3]  # path to save original data after quality control e.g. '../data_QC.csv'
     path_to_save_ae = sys.argv[4]  # path to save AutoEncoder results e.g '../AE/'
 
-    geno = pd.read_csv(path_to_data, index_col=0)  # data quality control
-    geno_var = geno.var()
+    # data quality control
+    geno: Union[Union[TextFileReader, Series, DataFrame, None], Any] = pd.read_csv(path_to_data, index_col=0)
+    geno_var: Union[Series, int] = geno.var()
     geno.drop(geno_var[geno_var < 1].index.values, axis=1, inplace=True)
     geno.to_csv(path_to_save_qc)
     geno = np.array(geno)
@@ -30,7 +35,7 @@ if __name__ == '__main__':
     batch_size = 4096
     geno_train, geno_test = train_test_split(geno, test_size=0.1, random_state=42)
 
-    geno_train_set = GPDataSet(geno)
+    geno_train_set: GPDataSet = GPDataSet(geno)
     geno_train_set_loader = DataLoader(dataset=geno_train_set, batch_size=batch_size, shuffle=False, num_workers=8)
 
     geno_test_set = GPDataSet(geno_test)
