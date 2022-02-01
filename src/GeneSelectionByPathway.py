@@ -67,6 +67,8 @@ if __name__ == '__main__':
             output_data = output_dir.joinpath(f'{base_name}.csv')
             path_to_save_filtered_data = filtered_data_dir.joinpath(f'{base_name}.csv')
 
+            input_data.to_csv(path_to_save_filtered_data)
+
             # process filtered dataset
             with open(job_file) as fh:
                 fh.writelines("#!/bin/bash\n")
