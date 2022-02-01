@@ -53,49 +53,46 @@ if __name__ == '__main__':
         for index, gene_set in enumerate(pathways.All_Genes):
             pathway = pathways.iloc[index + 1, 0]
             input_data = geno[geno.columns.intersection(gene_set)]
-            output_dir = filename.parent.joinpath(f'{pathway}-{filename.stem}')
-            mkdir_p(output_dir)
-            # process filtered dataset
-            job_directory = "%s/.job" % os.getcwd()
-            scratch = os.environ['HOME']
-            data_dir = os.path.join(scratch, '/project/LizardLips')
+            base_name = f'{pathway}-{filename.stem}'
+            job_directory = Path(f'{os.getcwd()}/.job')
+            filtered_data_dir = path_to_save_filtered_data.joinpath(base_name)
+            output_dir = filename.parent.joinpath(base_name)
 
             # Make top level directories
             mkdir_p(job_directory)
-            mkdir_p(data_dir)
+            mkdir_p(filtered_data_dir)
+            mkdir_p(output_dir)
 
-            lizards = ["LizardA", "LizardB"]
+            job_file = job_directory.joinpath(base_name)
+            output_data = output_dir.joinpath(f'{base_name}.csv')
+            path_to_save_filtered_data = filtered_data_dir.joinpath(f'{base_name}.csv')
 
-            for lizard in lizards:
-                job_file = os.path.join(job_directory, "%s.job" % lizard)
-                lizard_data = os.path.join(data_dir, lizard)
+            # process filtered dataset
+            with open(job_file) as fh:
+                fh.writelines("#!/bin/bash\n")
+                fh.writelines("#SBATCH --partition=gpu-v100\n")
+                fh.writelines("#SBATCH --gres=gpu:1\n")
+                fh.writelines("#SBATCH --time=2:0:0\n")
+                fh.writelines("#SBATCH --mem=8GB\n")
+                fh.writelines("#SBATCH --job-name=%x-job-%N-%j.slurm.job\n")
+                fh.writelines("#SBATCH --out=%x-job-%N-%j.slurm.out\n")
+                fh.writelines("#SBATCH --error=%x-job-%N-%j.slurm.error\n")
+                fh.writelines("#SBATCH --mail-type=ALL\n")
+                fh.writelines("#SBATCH --mail-user=$USER@ucalgary.ca\n")
 
-                # Create lizard directories
-                mkdir_p(lizard_data)
+                fh.writelines("\n####### Set environment variables ###############\n\n")
+                fh.writelines("module load python/anaconda3-2018.12\n")
+                fh.writelines("conda activate XAI\n")
 
-                with open(job_file) as fh:
-                    fh.writelines("#!/bin/bash\n")
-                    fh.writelines("# SBATCH --partition=gpu-v100\n")
-                    fh.writelines("# SBATCH --gres=gpu:1\n")
-                    fh.writelines("# SBATCH --time=7-0:0:0\n")
-                    fh.writelines("# SBATCH --mem=16GB\n")
-                    fh.writelines("#SBATCH --job-name=%x-job-%N-%j.slurm.job\n")
-                    fh.writelines("# SBATCH --out=%x-job-%N-%j.slurm.out\n")
-                    fh.writelines("# SBATCH --error=%x-job-%N-%j.slurm.error\n")
-                    fh.writelines("#SBATCH --mail-type=ALL\n")
-                    fh.writelines("#SBATCH --mail-user=$USER@ucalgary.ca\n")
+                fh.writelines("\n####### Run script ##############################\n\n")
+                fh.writelines("echo \"python " + "${pwd} src\\AutoEncoder.py " + f'{base_name}_AE_Geno ' +
+                                                                                 f'{path_to_save_filtered_data} ' +
+                                                                                 f'{path_to_save_filtered_data.stem}' +
+                                                                                 f' _QC.csv {save_dir}\n')
 
-                    fh.writelines("\n####### Set environment variables ###############\n\n")
-                    fh.writelines("module load python/anaconda3-2018.12\n")
-                    fh.writelines("conda activate XAI\n")
+            output = subprocess.run([sys.executable, '-c', f'sbatch {job_file}'],
+                                    capture_output=True, text=True, check=True)
 
-                    fh.writelines("print python src\\AutoEncoder a b c\n")
-
-                command = ['python AutoEncoder.py', ensembl_version, filename, pathway_data,
-                           path_to_save_filtered_data, save_dir]
-                output = subprocess.run([sys.executable, '-c', f'sbatch {job_file}'],
-                                        capture_output=True, text=True, check=True)
-                print('####################')
-                print('Return code:', output.returncode)
-                # use decode function to convert to string
-                print('Output:', output.stdout)
+            print('####################')
+            print('Return code:', output.returncode)
+            print('Output:', output.stdout)
