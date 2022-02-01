@@ -1,7 +1,7 @@
 ## Use Python to run Deep Autoencoder (feature selection)
 ## path - is a string to desired path location.
 import math
-
+import sys
 import pandas as pd
 import numpy as np
 import torch
@@ -12,12 +12,13 @@ from src.AutoEncoderModule import GPDataSet
 from src.AutoEncoderModule import AutoGenoShallow
 from src.AutoEncoderModule import run_ae
 
-def main():
-    path_to_data = '../data_example.csv'  # path to original data
-    path_to_save_ae = '../AE/'  # path to save AutoEncoder results
-    path_to_save_qc = '../data_QC.csv'  # path to save original data after quality control
 
-    model_name = 'AE_Geno'
+if __name__ == '__main__':
+    model_name = sys.argv[1] # model name e.g AE_Geno
+
+    path_to_data = sys.arg[2]  # path to original data e.g. '../data_example.csv'
+    path_to_save_qc = sys.argv[3]  # path to save original data after quality control e.g. '../data_QC.csv'
+    path_to_save_ae = sys.argv[4]  # path to save AutoEncoder results e.g '../AE/'
 
     geno = pd.read_csv(path_to_data, index_col=0)  # data quality control
     geno_var = geno.var()
@@ -47,7 +48,3 @@ def main():
            smallest_layer=smallest_layer, geno_train_set_loader=geno_train_set_loader,
            geno_test_set_loader=geno_test_set_loader, distance=distance,
            optimizer=optimizer, do_train=True, do_test=True)
-
-
-if __name__ == '__main__':
-    main()
