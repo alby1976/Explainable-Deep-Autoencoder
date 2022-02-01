@@ -1,8 +1,7 @@
 # Filters Dataset by KEGG Pathway and uses PyEnsembl to get EnsemblID
-import pathlib
-
 from pyensembl import EnsemblRelease
 from pathlib import Path
+import pathlib
 import pandas as pd
 import numpy as np
 import subprocess
@@ -88,7 +87,9 @@ if __name__ == '__main__':
 
                     fh.writelines("\n####### Set environment variables ###############\n\n")
                     fh.writelines("module load python/anaconda3-2018.12\n")
-                    fh.writelines("Rscript $HOME/project/LizardLips/run.R %s potato shiabato\n")
+                    fh.writelines("conda activate XAI\n")
+
+                    fh.writelines("print python src\\AutoEncoder a b c\n")
 
                 command = ['python AutoEncoder.py', ensembl_version, filename, pathway_data,
                            path_to_save_filtered_data, save_dir]
