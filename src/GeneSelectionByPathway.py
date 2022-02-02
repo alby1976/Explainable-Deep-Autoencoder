@@ -27,12 +27,18 @@ def mkdir_p(directory: pathlib.Path):
 
 
 if __name__ == '__main__':
+    if len(sys.argv) < 5:
+        print('less than 5 command line arguments')
+        print('python GeneSelectionPathway.py ensemble_version filename_original_data '
+              'filename_pathway_data dir_filtered_data dir_AE_model')
+        sys.exit(-1)
+
     # data setup
     ensembl_version = int(sys.argv[1])  # Ensembl Release version e.g. 104
     path_to_original_data = Path(sys.argv[2])  # path to original data e.g. './data/input/'
     pathway_data = Path(sys.argv[3])  # pathway data e.g. './data/pathway.csv'
     path_to_save_filtered_data = Path(sys.argv[4])  # base dir to saved filtered original data e.g. './data/filter'
-    save_dir = Path(sys.argv[5])  # base directory to save AE models
+    save_dir = Path(sys.argv[5])  # base directory to save AE models e.g. '.data/filter/AE'
 
     if not (path_to_original_data.is_dir()):
         print(f'{path_to_original_data} is not a directory')
@@ -43,6 +49,7 @@ if __name__ == '__main__':
         sys.exit(-1)
 
     pathways = pd.read_csv(pathway_data)
+    display(pathways)
     for filename in path_to_original_data.cwd().glob('*.csv'):
         geno = pd.read_csv(filename, index_col=0)  # original data
         pathways.All_Genes = pathways.All_Genes.apply(lambda x:
