@@ -49,9 +49,9 @@ if __name__ == '__main__':
         sys.exit(-1)
 
     pathways = pd.read_csv(pathway_data)
-    pathways.All_Genes = pathways.All_Genes.map(lambda x:
-                                                get_gene_ids_from_string(ensembl_release=ensembl_version,
-                                                                         genes=x))
+    pathways['All_Genes'] = pathways['All_Genes'].map(lambda x:
+                                                      get_gene_ids_from_string(ensembl_release=ensembl_version,
+                                                                               genes=x))
     for filename in path_to_original_data.cwd().glob('*.csv'):
         geno = pd.read_csv(filename, index_col=0)  # original data
         # filter data
