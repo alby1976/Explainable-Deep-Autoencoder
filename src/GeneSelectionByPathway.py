@@ -49,13 +49,11 @@ if __name__ == '__main__':
         sys.exit(-1)
 
     pathways = pd.read_csv(pathway_data)
-    display(pathways)
+    pathways.All_Genes = pathways.All_Genes.apply(lambda x:
+                                                  get_gene_ids_from_string(ensembl_release=ensembl_version,
+                                                                           genes=x))
     for filename in path_to_original_data.cwd().glob('*.csv'):
         geno = pd.read_csv(filename, index_col=0)  # original data
-        pathways.All_Genes = pathways.All_Genes.apply(lambda x:
-                                                      get_gene_ids_from_string(ensembl_release=ensembl_version,
-                                                                               genes=x))
-
         # filter data
         for index, gene_set in enumerate(pathways.All_Genes):
             pathway = pathways.iloc[index + 1, 0]
