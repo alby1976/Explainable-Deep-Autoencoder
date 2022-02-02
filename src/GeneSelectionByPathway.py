@@ -49,9 +49,9 @@ if __name__ == '__main__':
         sys.exit(-1)
 
     pathways = pd.read_csv(pathway_data)
-    pathways.All_Genes = pathways.All_Genes.apply(lambda x:
-                                                  get_gene_ids_from_string(ensembl_release=ensembl_version,
-                                                                           genes=x))
+    pathways.All_Genes = pathways.All_Genes.map(lambda x:
+                                                get_gene_ids_from_string(ensembl_release=ensembl_version,
+                                                                         genes=x))
     for filename in path_to_original_data.cwd().glob('*.csv'):
         geno = pd.read_csv(filename, index_col=0)  # original data
         # filter data
@@ -68,7 +68,7 @@ if __name__ == '__main__':
             mkdir_p(filtered_data_dir)
             mkdir_p(output_dir)
 
-            job_file = job_directory.joinpath(base_name)
+            job_file = job_directory.joinpath(f'{base_name}.job')
             output_data = output_dir.joinpath(f'{base_name}.csv')
             path_to_save_filtered_data = filtered_data_dir.joinpath(f'{base_name}.csv')
 
