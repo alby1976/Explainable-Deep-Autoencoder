@@ -28,6 +28,7 @@ def get_gene_ids(ensembl_release: int, gene_list: np.ndarray) -> np.ndarray:
 
 def mkdir_p(directory: pathlib.Path):
     """make a directory (directory) if it doesn't exist"""
+    print(f'dir: {directory}')
     directory.mkdir(parents=True, exist_ok=True)
 
 
@@ -42,7 +43,7 @@ if __name__ == '__main__':
     ensembl_version = int(sys.argv[1])  # Ensembl Release version e.g. 104
     path_to_original_data = Path(sys.argv[2])  # path to original data e.g. './data/input/'
     pathway_data = Path(sys.argv[3])  # pathway data e.g. './data/pathway.csv'
-    path_to_save_filtered_data = Path(sys.argv[4])  # base dir to saved filtered original data e.g. './data/filter'
+    base_to_save_filtered_data = Path(sys.argv[4])  # base dir to saved filtered original data e.g. './data/filter'
     save_dir = Path(sys.argv[5])  # base directory to save AE models e.g. '.data/filter/AE'
     os.environ['PYENSEMBL_CACHE_DIR'] = '/scratch/' + sys.argv[6]
 
@@ -67,7 +68,7 @@ if __name__ == '__main__':
             input_data = geno[geno.columns.intersection(gene_set)]
             base_name = f'{pathway}-{filename.stem}'
             job_directory = Path(f'{os.getcwd()}/.job')
-            filtered_data_dir = path_to_save_filtered_data.joinpath(base_name)
+            filtered_data_dir = base_to_save_filtered_data.joinpath(base_name)
             output_dir = filename.parent.joinpath(base_name)
 
             # Make top level directories
