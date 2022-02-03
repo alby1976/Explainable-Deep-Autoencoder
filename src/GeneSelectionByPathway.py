@@ -82,7 +82,7 @@ if __name__ == '__main__':
             input_data.to_csv(path_to_save_filtered_data)
 
             # process filtered dataset
-            with open(job_file) as fh:
+            with open(job_file, "w") as fh:
                 fh.writelines("#!/bin/bash\n")
                 fh.writelines("#SBATCH --partition=gpu-v100\n")
                 fh.writelines("#SBATCH --gres=gpu:1\n")
