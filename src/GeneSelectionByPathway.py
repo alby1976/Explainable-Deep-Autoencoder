@@ -32,21 +32,8 @@ def mkdir_p(directory: pathlib.Path):
     directory.mkdir(parents=True, exist_ok=True)
 
 
-if __name__ == '__main__':
-    if len(sys.argv) < 6:
-        print('less than 6 command line arguments')
-        print('python GeneSelectionPathway.py ensemble_version dir_original_data '
-              'filename_pathway_data dir_filtered_data dir_AE_model session_id')
-        sys.exit(-1)
-
-    # data setup
-    ensembl_version = int(sys.argv[1])  # Ensembl Release version e.g. 104
-    path_to_original_data = Path(sys.argv[2])  # path to original data e.g. './data/input/'
-    pathway_data = Path(sys.argv[3])  # pathway data e.g. './data/pathway.csv'
-    base_to_save_filtered_data = Path(sys.argv[4])  # base dir to saved filtered original data e.g. './data/filter'
-    save_dir = Path(sys.argv[5])  # base directory to save AE models e.g. '.data/filter/AE'
-    os.environ['PYENSEMBL_CACHE_DIR'] = '/scratch/' + sys.argv[6]
-
+def main(ensembl_version: int, path_to_original_data: Path, pathway_data: Path, base_to_save_filtered_data: Path,
+         dir_to_model: Path):
     if not (path_to_original_data.is_dir()):
         print(f'{path_to_original_data} is not a directory')
         sys.exit(-1)
@@ -69,13 +56,16 @@ if __name__ == '__main__':
             base_name = f'{pathway}-{filename.stem}'
             job_directory = Path(f'{os.getcwd()}/.job')
             filtered_data_dir = base_to_save_filtered_data.joinpath(base_name)
+            save_dir = dir_to_model.joinpath(base_name)
 
             # Make top level directories
             mkdir_p(job_directory)
             mkdir_p(filtered_data_dir)
+            mkdir_p(save_dir)
 
             job_file = job_directory.joinpath(f'{base_name}.job')
             path_to_save_filtered_data = filtered_data_dir.joinpath(f'{base_name}.csv')
+            qc_file = filtered_data_dir.joinpath(f'{base_name}_QC.csv')
 
             input_data.to_csv(path_to_save_filtered_data)
 
@@ -98,10 +88,10 @@ if __name__ == '__main__':
                 fh.writelines("conda activate XAI\n")
 
                 fh.writelines("\n####### Run script ##############################\n")
-                fh.writelines("echo \"python " + "${pwd} src\\AutoEncoder.py " + f"{base_name}_AE_Geno " +
-                                                                                 f"{path_to_save_filtered_data} " +
-                                                                                 f"{path_to_save_filtered_data.stem}" +
-                                                                                 f"_QC.csv {save_dir}\"\n")
+                fh.writelines("echo \"python " + "src\\AutoEncoder.py " + f"{base_name}_AE_Geno " +
+                              f"{path_to_save_filtered_data} {qc_file} {save_dir}\"\n")
+                fh.writelines(f"python src\\AutoEncoder.py {base_name}_AE_Geno {path_to_save_filtered_data} " +
+                              f"{qc_file} {save_dir}\"\n")
 
                 fh.writelines("\n####### Clean up ################################\n")
                 fh.writelines("module unload python/anaconda3-2019.10-tensorflowgpu\n")
@@ -112,3 +102,21 @@ if __name__ == '__main__':
             print('####################')
             print('Return code:', output.returncode)
             print('Output:', output.stdout)
+
+
+if __name__ == '__main__':
+    if len(sys.argv) < 6:
+        print('less than 6 command line arguments')
+        print('python GeneSelectionPathway.py ensemble_version dir_original_data '
+              'filename_pathway_data dir_filtered_data dir_AE_model session_id')
+        print('\tensembl_version - Ensembl Release version e.g. 104')
+        print('\tdir_original_data - path to original data e.g. ./data/input/')
+        print('\tfilename_pathway_data - filename of pathway data e.g. ./data/pathway.csv')
+        print('\tdir_filtered_data - base dir to saved filtered original data e.g. ./data/filter')
+        print('\tdir_AE_model - base dir to saved AE models e.g. .data/filter/AE')
+        print('\tsession_id - slurm job id')
+        sys.exit(-1)
+
+    # data setup
+    os.environ['PYENSEMBL_CACHE_DIR'] = '/scratch/' + sys.argv[6]
+    main(int(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3]), Path(sys.argv[4]), Path(sys.argv[5]))
