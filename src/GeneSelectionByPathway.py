@@ -14,10 +14,15 @@ def get_gene_ids_from_string(ensembl_release: int, genes: str) -> np.ndarray:
 
 
 def get_gene_ids(ensembl_release: int, gene_list: np.ndarray) -> np.ndarray:
-    gene_data = EnsemblRelease(ensembl_release)
+    gene_data = EnsemblRelease(release=ensembl_release, species='human', server='ftp://ftp.ensembl.org/')
+    gene_data.download()
+    gene_data.index()
     ids = []
     for gene in gene_list:
-        ids.append(gene_data.gene_ids_of_gene_name(gene_name=gene)[0])
+        try:
+            ids.append(gene_data.gene_ids_of_gene_name(gene_name=gene)[0])
+        except ValueError:
+            ids.append(gene)
     return np.array(ids)
 
 
@@ -27,10 +32,10 @@ def mkdir_p(directory: pathlib.Path):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) < 5:
-        print('less than 5 command line arguments')
-        print('python GeneSelectionPathway.py ensemble_version filename_original_data '
-              'filename_pathway_data dir_filtered_data dir_AE_model')
+    if len(sys.argv) < 6:
+        print('less than 6 command line arguments')
+        print('python GeneSelectionPathway.py ensemble_version dir_original_data '
+              'filename_pathway_data dir_filtered_data dir_AE_model session_id')
         sys.exit(-1)
 
     # data setup
@@ -39,6 +44,7 @@ if __name__ == '__main__':
     pathway_data = Path(sys.argv[3])  # pathway data e.g. './data/pathway.csv'
     path_to_save_filtered_data = Path(sys.argv[4])  # base dir to saved filtered original data e.g. './data/filter'
     save_dir = Path(sys.argv[5])  # base directory to save AE models e.g. '.data/filter/AE'
+    os.environ['PYENSEMBL_CACHE_DIR'] = sys.argv[6]
 
     if not (path_to_original_data.is_dir()):
         print(f'{path_to_original_data} is not a directory')
@@ -52,6 +58,7 @@ if __name__ == '__main__':
     pathways['All_Genes'] = pathways['All_Genes'].map(lambda x:
                                                       get_gene_ids_from_string(ensembl_release=ensembl_version,
                                                                                genes=x))
+    pathways.to_csv(pathway_data.parent.joinpath('pathways_geneids.csv'))
     for filename in path_to_original_data.cwd().glob('*.csv'):
         geno = pd.read_csv(filename, index_col=0)  # original data
         # filter data
