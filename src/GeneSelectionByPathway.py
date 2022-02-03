@@ -69,15 +69,12 @@ if __name__ == '__main__':
             base_name = f'{pathway}-{filename.stem}'
             job_directory = Path(f'{os.getcwd()}/.job')
             filtered_data_dir = base_to_save_filtered_data.joinpath(base_name)
-            output_dir = filename.parent.joinpath(base_name)
 
             # Make top level directories
             mkdir_p(job_directory)
             mkdir_p(filtered_data_dir)
-            mkdir_p(output_dir)
 
             job_file = job_directory.joinpath(f'{base_name}.job')
-            output_data = output_dir.joinpath(f'{base_name}.csv')
             path_to_save_filtered_data = filtered_data_dir.joinpath(f'{base_name}.csv')
 
             input_data.to_csv(path_to_save_filtered_data)
