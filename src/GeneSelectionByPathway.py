@@ -97,13 +97,13 @@ if __name__ == '__main__':
                 fh.writelines("source ~/.bash_profile\n")
                 fh.writelines("conda activate XAI\n")
 
-                fh.writelines("\n####### Run script ##############################\n\n")
-                fh.writelines("echo \"python " + "${pwd} src\\AutoEncoder.py " + f'{base_name}_AE_Geno ' +
-                                                                                 f'{path_to_save_filtered_data} ' +
-                                                                                 f'{filtered_data_dir}' +
-                                                                                 f'_QC.csv {save_dir}\n')
+                fh.writelines("\n####### Run script ##############################\n")
+                fh.writelines("echo \"python " + "${pwd} src\\AutoEncoder.py " + f"{base_name}_AE_Geno " +
+                                                                                 f"{path_to_save_filtered_data} " +
+                                                                                 f"{path_to_save_filtered_data.stem}" +
+                                                                                 f"_QC.csv {save_dir}\"\n")
 
-                fh.writelines("\n####### Clean up ################################\n\n")
+                fh.writelines("\n####### Clean up ################################\n")
                 fh.writelines("module unload python/anaconda3-2019.10-tensorflowgpu\n")
                 fh.close()
 
