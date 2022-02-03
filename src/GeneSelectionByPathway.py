@@ -64,7 +64,7 @@ if __name__ == '__main__':
         geno = pd.read_csv(filename, index_col=0)  # original data
         # filter data
         for index, gene_set in enumerate(pathways.All_Genes):
-            pathway = pathways.iloc[index + 1, 0]
+            pathway = pathways.iloc[index, 0]
             input_data = geno[geno.columns.intersection(gene_set)]
             base_name = f'{pathway}-{filename.stem}'
             job_directory = Path(f'{os.getcwd()}/.job')
@@ -85,18 +85,19 @@ if __name__ == '__main__':
             # process filtered dataset
             with open(job_file, "w") as fh:
                 fh.writelines("#!/bin/bash\n")
+                fh.writelines("#SBATCH --mail-user=%uR@ucalgary.ca\n")
+                fh.writelines("#SBATCH --mail-type=ALL\n")
                 fh.writelines("#SBATCH --partition=gpu-v100\n")
                 fh.writelines("#SBATCH --gres=gpu:1\n")
                 fh.writelines("#SBATCH --time=2:0:0\n")
                 fh.writelines("#SBATCH --mem=8GB\n")
-                fh.writelines("#SBATCH --job-name=%x-job-%N-%j.slurm.job\n")
+                fh.writelines(f"#SBATCH --job-name={base_name}\n")
                 fh.writelines("#SBATCH --out=%x-job-%N-%j.slurm.out\n")
                 fh.writelines("#SBATCH --error=%x-job-%N-%j.slurm.error\n")
-                fh.writelines("#SBATCH --mail-type=ALL\n")
-                fh.writelines("#SBATCH --mail-user=$USER@ucalgary.ca\n")
 
                 fh.writelines("\n####### Set environment variables ###############\n\n")
-                fh.writelines("module load python/anaconda3-2018.12\n")
+                fh.writelines("module load python/anaconda3-2019.10-tensorflowgpu\n")
+                fh.writelines("conda init bash\n")
                 fh.writelines("conda activate XAI\n")
 
                 fh.writelines("\n####### Run script ##############################\n\n")
