@@ -88,9 +88,9 @@ if __name__ == '__main__':
                 fh.writelines("#SBATCH --gres=gpu:1\n")
                 fh.writelines("#SBATCH --time=2:0:0\n")
                 fh.writelines("#SBATCH --mem=8GB\n")
-                fh.writelines(f"#SBATCH --job-name={base_name}\n")
-                fh.writelines("#SBATCH --out=%x-job-%N-%j.slurm.out\n")
-                fh.writelines("#SBATCH --error=%x-job-%N-%j.slurm.error\n")
+                fh.writelines(f"#SBATCH --job-name={base_name}-job.slurm\n")
+                fh.writelines("#SBATCH --out=%x-%N-%j.out\n")
+                fh.writelines("#SBATCH --error=%x-%N-%j.error\n")
 
                 fh.writelines("\n####### Set environment variables ###############\n\n")
                 fh.writelines("module load python/anaconda3-2019.10-tensorflowgpu\n")
