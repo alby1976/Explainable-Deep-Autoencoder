@@ -10,7 +10,7 @@ import os
 
 
 def get_gene_ids_from_string(ensembl_release: int, genes: str) -> np.ndarray:
-    return get_gene_ids(ensembl_release=ensembl_release, gene_list=np.fromstring(genes, dtype=str, sep=';'))
+    return get_gene_ids(ensembl_release=ensembl_release, gene_list=genes.split(';'))
 
 
 def get_gene_ids(ensembl_release: int, gene_list: np.ndarray) -> np.ndarray:
