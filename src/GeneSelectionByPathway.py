@@ -44,7 +44,7 @@ if __name__ == '__main__':
     pathway_data = Path(sys.argv[3])  # pathway data e.g. './data/pathway.csv'
     path_to_save_filtered_data = Path(sys.argv[4])  # base dir to saved filtered original data e.g. './data/filter'
     save_dir = Path(sys.argv[5])  # base directory to save AE models e.g. '.data/filter/AE'
-    os.environ['PYENSEMBL_CACHE_DIR'] = '/scratch/sys.argv[6]'
+    os.environ['PYENSEMBL_CACHE_DIR'] = '/scratch/' + sys.argv[6]
 
     if not (path_to_original_data.is_dir()):
         print(f'{path_to_original_data} is not a directory')
