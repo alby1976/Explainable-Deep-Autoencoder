@@ -105,8 +105,7 @@ if __name__ == '__main__':
                                                                                  f'_QC.csv {save_dir}\n')
                 fh.close()
 
-            output = subprocess.run([sys.executable, '-c', f'sbatch {job_file}'],
-                                    capture_output=True, text=True, check=True)
+            output = subprocess.run(('sbatch', job_file), capture_output=True, text=True, check=True)
 
             print('####################')
             print('Return code:', output.returncode)
