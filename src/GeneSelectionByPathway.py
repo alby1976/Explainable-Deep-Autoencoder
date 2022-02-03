@@ -94,7 +94,7 @@ if __name__ == '__main__':
 
                 fh.writelines("\n####### Set environment variables ###############\n\n")
                 fh.writelines("module load python/anaconda3-2019.10-tensorflowgpu\n")
-                fh.writelines("source ~/.bash_profile\n")
+                fh.writelines("source $HOME/.bash_profile\n")
                 fh.writelines("conda activate XAI\n")
 
                 fh.writelines("\n####### Run script ##############################\n")
