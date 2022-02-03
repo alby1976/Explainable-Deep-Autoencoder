@@ -59,7 +59,7 @@ if __name__ == '__main__':
                                                       get_gene_ids_from_string(ensembl_release=ensembl_version,
                                                                                genes=x))
     pathways.to_csv(pathway_data.parent.joinpath('pathways_geneids.csv'))
-    for filename in path_to_original_data.cwd().glob('*.csv'):
+    for filename in path_to_original_data.glob('*.csv'):
         geno = pd.read_csv(filename, index_col=0)  # original data
         # filter data
         for index, gene_set in enumerate(pathways.All_Genes):
@@ -102,7 +102,8 @@ if __name__ == '__main__':
                 fh.writelines("echo \"python " + "${pwd} src\\AutoEncoder.py " + f'{base_name}_AE_Geno ' +
                                                                                  f'{path_to_save_filtered_data} ' +
                                                                                  f'{path_to_save_filtered_data.stem}' +
-                                                                                 f' _QC.csv {save_dir}\n')
+                                                                                 f'_QC.csv {save_dir}\n')
+                fh.close()
 
             output = subprocess.run([sys.executable, '-c', f'sbatch {job_file}'],
                                     capture_output=True, text=True, check=True)
