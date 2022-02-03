@@ -94,13 +94,17 @@ if __name__ == '__main__':
 
                 fh.writelines("\n####### Set environment variables ###############\n\n")
                 fh.writelines("module load python/anaconda3-2019.10-tensorflowgpu\n")
+                fh.writelines("source ~/.bash_profile\n")
                 fh.writelines("conda activate XAI\n")
 
                 fh.writelines("\n####### Run script ##############################\n\n")
                 fh.writelines("echo \"python " + "${pwd} src\\AutoEncoder.py " + f'{base_name}_AE_Geno ' +
                                                                                  f'{path_to_save_filtered_data} ' +
-                                                                                 f'{path_to_save_filtered_data.stem}' +
+                                                                                 f'{filtered_data_dir}' +
                                                                                  f'_QC.csv {save_dir}\n')
+
+                fh.writelines("\n####### Clean up ################################\n\n")
+                fh.writelines("module unload python/anaconda3-2019.10-tensorflowgpu\n")
                 fh.close()
 
             output = subprocess.run(('sbatch', job_file), capture_output=True, text=True, check=True)
