@@ -10,7 +10,7 @@ import os
 
 
 def get_gene_ids_from_string(ensembl_release: int, genes: str) -> np.ndarray:
-    return get_gene_ids(ensembl_release=ensembl_release, gene_list=genes.split(';'))
+    return get_gene_ids(ensembl_release=ensembl_release, gene_list=np.array(genes.split(';')))
 
 
 def get_gene_ids(ensembl_release: int, gene_list: np.ndarray) -> np.ndarray:
@@ -58,7 +58,7 @@ if __name__ == '__main__':
     pathways['All_Genes'] = pathways['All_Genes'].map(lambda x:
                                                       get_gene_ids_from_string(ensembl_release=ensembl_version,
                                                                                genes=x))
-    pathways.to_csv(pathway_data.parent.joinpath('pathways_geneids.csv'))
+    pathways.to_csv(pathway_data.parent.joinpath('pathways_gene_ids.csv'))
     for filename in path_to_original_data.glob('*.csv'):
         geno = pd.read_csv(filename, index_col=0)  # original data
         # filter data
