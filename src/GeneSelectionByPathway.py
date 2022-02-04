@@ -82,9 +82,9 @@ def main(ensembl_version: int, path_to_original_data: Path, pathway_data: Path, 
                 fh.writelines("conda activate XAI\n")
 
                 fh.writelines("\n####### Run script ##############################\n")
-                fh.writelines("echo \"python -m src AutoEncoder.py {base_name}_AE_Geno " +
+                fh.writelines("echo \"python src/AutoEncoder.py {base_name}_AE_Geno " +
                               f"{path_to_save_filtered_data} {qc_file} {save_dir} 64\"\n")
-                fh.writelines(f"python -m src AutoEncoder.py {base_name}_AE_Geno {path_to_save_filtered_data} " +
+                fh.writelines(f"python src/AutoEncoder.py {base_name}_AE_Geno {path_to_save_filtered_data} " +
                               f"{qc_file} {save_dir} 64\\n")
 
                 fh.writelines("\n####### Clean up ################################\n")
