@@ -1,16 +1,12 @@
 # Filters Dataset by KEGG Pathway and uses PyEnsembl to get EnsemblID
 from pyensembl import EnsemblRelease
 from pathlib import Path
+from src.AutoEncoderModule import create_dir
 import pandas as pd
 import numpy as np
 import subprocess
 import sys
 import os
-
-
-def create_dir(directory: Path):
-    """make a directory (directory) if it doesn't exist"""
-    directory.mkdir(parents=True, exist_ok=True)
 
 
 def get_gene_ids_from_string(ensembl_release: int, genes: str) -> np.ndarray:
