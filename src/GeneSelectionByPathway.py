@@ -85,7 +85,7 @@ def main(ensembl_version: int, path_to_original_data: Path, pathway_data: Path, 
                 fh.writelines("echo \"python src/AutoEncoder.py {base_name}_AE_Geno " +
                               f"{path_to_save_filtered_data} {qc_file} {save_dir} 64\"\n")
                 fh.writelines(f"python src/AutoEncoder.py {base_name}_AE_Geno {path_to_save_filtered_data} " +
-                              f"{qc_file} {save_dir} 64\\n")
+                              f"{qc_file} {save_dir} 64\n")
 
                 fh.writelines("\n####### Clean up ################################\n")
                 fh.writelines("module unload python/anaconda3-2019.10-tensorflowgpu\n")
