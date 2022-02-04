@@ -14,9 +14,9 @@ from pandas.io.parsers import TextFileReader
 from torch import nn
 from torch.utils.data import DataLoader
 from sklearn.model_selection import train_test_split
-from src.AutoEncoderModule import GPDataSet
-from src.AutoEncoderModule import AutoGenoShallow
-from src.AutoEncoderModule import run_ae
+from AutoEncoderModule import GPDataSet
+from AutoEncoderModule import AutoGenoShallow
+from AutoEncoderModule import run_ae
 
 
 def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_save_ae: Path, compression_ratio: int):
