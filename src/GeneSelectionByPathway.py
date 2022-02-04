@@ -1,7 +1,7 @@
 # Filters Dataset by KEGG Pathway and uses PyEnsembl to get EnsemblID
 from pyensembl import EnsemblRelease
 from pathlib import Path
-from .AutoEncoderModule import create_dir
+from src.AutoEncoderModule import create_dir
 import pandas as pd
 import numpy as np
 import subprocess
