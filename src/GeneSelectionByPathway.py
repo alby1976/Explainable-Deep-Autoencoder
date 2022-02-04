@@ -1,7 +1,7 @@
 # Filters Dataset by KEGG Pathway and uses PyEnsembl to get EnsemblID
 from pyensembl import EnsemblRelease
 from pathlib import Path
-import pathlib
+from .AutoEncoderModule import create_dir
 import pandas as pd
 import numpy as np
 import subprocess
@@ -24,12 +24,6 @@ def get_gene_ids(ensembl_release: int, gene_list: np.ndarray) -> np.ndarray:
         except ValueError:
             ids.append(gene)
     return np.array(ids)
-
-
-def mkdir_p(directory: pathlib.Path):
-    """make a directory (directory) if it doesn't exist"""
-    print(f'dir: {directory}')
-    directory.mkdir(parents=True, exist_ok=True)
 
 
 def main(ensembl_version: int, path_to_original_data: Path, pathway_data: Path, base_to_save_filtered_data: Path,
@@ -59,9 +53,9 @@ def main(ensembl_version: int, path_to_original_data: Path, pathway_data: Path, 
             save_dir = dir_to_model.joinpath(base_name)
 
             # Make top level directories
-            mkdir_p(job_directory)
-            mkdir_p(filtered_data_dir)
-            mkdir_p(save_dir)
+            create_dir(job_directory)
+            create_dir(filtered_data_dir)
+            create_dir(save_dir)
 
             job_file = job_directory.joinpath(f'{base_name}.job')
             path_to_save_filtered_data = filtered_data_dir.joinpath(f'{base_name}.csv')
@@ -89,9 +83,9 @@ def main(ensembl_version: int, path_to_original_data: Path, pathway_data: Path, 
 
                 fh.writelines("\n####### Run script ##############################\n")
                 fh.writelines("echo \"python " + "src\\AutoEncoder.py " + f"{base_name}_AE_Geno " +
-                              f"{path_to_save_filtered_data} {qc_file} {save_dir}\"\n")
+                              f"{path_to_save_filtered_data} {qc_file} {save_dir} 64\"\n")
                 fh.writelines(f"python src\\AutoEncoder.py {base_name}_AE_Geno {path_to_save_filtered_data} " +
-                              f"{qc_file} {save_dir}\"\n")
+                              f"{qc_file} {save_dir} 64\\n")
 
                 fh.writelines("\n####### Clean up ################################\n")
                 fh.writelines("module unload python/anaconda3-2019.10-tensorflowgpu\n")
