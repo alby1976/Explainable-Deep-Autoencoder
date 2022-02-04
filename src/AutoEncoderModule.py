@@ -1,10 +1,11 @@
-import time
 from typing import Any, Union
 from pathlib import Path
 from numpy import ndarray
 from torch import nn
 from torch.autograd import Variable
+from torch.optim import Adam
 from torch.utils.data import Dataset
+from torch.utils.data import DataLoader
 import numpy as np
 
 
@@ -60,17 +61,17 @@ def create_dir(directory: Path):
     directory.mkdir(parents=True, exist_ok=True)
 
 
-def run_ae(model_name, model, geno_train_set_loader, geno_test_set_loader, input_features, smallest_layer, optimizer,
-           distance=nn.MSELoss(), num_epochs=200, batch_size=4096, do_train=True, do_test=True, save_dir='./'):
+def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataLoader, geno_test_set_loader: DataLoader,
+           input_features: int, optimizer: Adam, distance=nn.MSELoss(), num_epochs=200, batch_size=4096, do_train=True,
+           do_test=True, save_dir: Path = Path('./model')):
     create_dir(Path(save_dir))
     for epoch in range(num_epochs):
-        start_time = time.time()
         batch_precision_list = []
         output_coder_list = []
         average_precision = 0.0
-        sum_loss = 0
+        sum_loss = 0.0
         if do_train:
-            current_batch = 0
+            current_batch: int = 0
             model.train()
             for geno_data in geno_train_set_loader:
                 current_batch += 1
@@ -95,17 +96,16 @@ def run_ae(model_name, model, geno_train_set_loader, geno_test_set_loader, input
                 optimizer.step()
             # ===========log============
             coder_np: Union[ndarray, int] = np.array(output_coder_list)
-            temp = round(smallest_layer / 1000)
-            coder_file = f"{save_dir}{model_name}-{str(epoch)}.csv"
+            coder_file = save_dir.joinpath(f"{model_name}-{str(epoch)}.csv")
             np.savetxt(fname=coder_file, X=coder_np, fmt='%f', delimiter=',')
             average_precision = sum(
                 batch_precision_list) / current_batch  # precision_list = [ave_pre_batch1, ave_pre_batch2,...]
         # ===========test==========
         test_batch_precision_list = []
         test_average_precision = 0.0
+        test_sum_loss = 0.0
         if do_test:
-            test_sum_loss = 0
-            test_current_batch = 0
+            test_current_batch: int = 0
             model.eval()
             for geno_test_data in geno_test_set_loader:
                 test_current_batch += 1
@@ -124,4 +124,4 @@ def run_ae(model_name, model, geno_train_set_loader, geno_test_set_loader, input
             test_average_precision = sum(
                 test_batch_precision_list) / test_current_batch
         print(f"epoch[{epoch + 1:3d}/{num_epochs}, loss: {sum_loss:.4f}, precision: {average_precision:.4f}, "
-              f"test precision: {test_average_precision:.4f}")
+              f" test lost: {test_sum_loss:.4f}, test precision: {test_average_precision:.4f}")
