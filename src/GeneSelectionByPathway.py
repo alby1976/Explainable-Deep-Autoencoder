@@ -2,6 +2,7 @@
 from pyensembl import EnsemblRelease
 from pathlib import Path
 from AutoEncoderModule import create_dir
+from AutoEncoder import get_filtered_data
 import pandas as pd
 import numpy as np
 import subprocess
@@ -26,6 +27,17 @@ def get_gene_ids(ensembl_release: int, gene_list: np.ndarray) -> np.ndarray:
     return np.array(ids)
 
 
+def get_gene_names(ensembl_release: int, gene_list: np.ndarray) -> np.ndarray:
+    gene_data = EnsemblRelease(release=ensembl_release, species='human', server='ftp://ftp.ensembl.org/')
+    names = []
+    for gene in gene_list:
+        try:
+            names.append(gene_data.gene_name_of_gene_id(gene))
+        except ValueError:
+            names.append(gene)
+    return np.array(names)
+
+
 def main(ensembl_version: int, path_to_original_data: Path, pathway_data: Path, base_to_save_filtered_data: Path,
          dir_to_model: Path):
     if not (path_to_original_data.is_dir()):
@@ -42,11 +54,11 @@ def main(ensembl_version: int, path_to_original_data: Path, pathway_data: Path, 
                                                                                genes=x))
     pathways.to_csv(pathway_data.parent.joinpath('pathways_gene_ids.csv'))
     for filename in path_to_original_data.glob('*.csv'):
-        geno = pd.read_csv(filename, index_col=0)  # original data
+        geno: pd.DataFrame = pd.read_csv(filename, index_col=0)  # original data
         # filter data
         for index, gene_set in enumerate(pathways.All_Genes):
             pathway = pathways.iloc[index, 0]
-            input_data = geno[geno.columns.intersection(gene_set)]
+            input_data: pd.DataFrame = geno[geno.columns.intersection(gene_set)]
             base_name = f'{pathway}-{filename.stem}'
             job_directory = Path(f'{os.getcwd()}/.job')
             filtered_data_dir = base_to_save_filtered_data.joinpath(base_name)
@@ -57,11 +69,16 @@ def main(ensembl_version: int, path_to_original_data: Path, pathway_data: Path, 
             create_dir(filtered_data_dir)
             create_dir(save_dir)
 
+            input_data.to_csv(path_to_save_filtered_data)
+
             job_file = job_directory.joinpath(f'{base_name}.job')
             path_to_save_filtered_data = filtered_data_dir.joinpath(f'{base_name}.csv')
-            qc_file = filtered_data_dir.joinpath(f'{base_name}_QC.csv')
+            qc_file_gene_id = filtered_data_dir.joinpath(f'{base_name}_gene_id_QC.csv')
 
-            input_data.to_csv(path_to_save_filtered_data)
+            qc_file_gene_name = filtered_data_dir.joinpath(f'{base_name}_gene_name_QC.csv')
+            names = get_gene_names(ensembl_release=ensembl_version, gene_list=input_data.columns)
+            input_data.rename(zip(input_data.columns, names), axis='columns')
+            get_filtered_data(geno=input_data, path_to_save_qc=qc_file_gene_name)
 
             # process filtered dataset
             with open(job_file, "w") as fh:
@@ -71,7 +88,8 @@ def main(ensembl_version: int, path_to_original_data: Path, pathway_data: Path, 
                 fh.writelines("#SBATCH --partition=gpu-v100\n")
                 fh.writelines("#SBATCH --gres=gpu:1\n")
                 fh.writelines("#SBATCH --time=2:0:0\n")
-                fh.writelines("#SBATCH --mem=8GB\n")
+                fh.writelines("#SBATCH --mem=16GB\n")
+                fh.writelines("#SBATCH --cpus-per-task=8")
                 fh.writelines(f"#SBATCH --job-name={base_name}-job.slurm\n")
                 fh.writelines("#SBATCH --out=%x-%N-%j.out\n")
                 fh.writelines("#SBATCH --error=%x-%N-%j.error\n")
@@ -83,7 +101,7 @@ def main(ensembl_version: int, path_to_original_data: Path, pathway_data: Path, 
 
                 fh.writelines("\n####### Run script ##############################\n")
                 fh.writelines("echo \"python src/AutoEncoder.py {base_name}_AE_Geno " +
-                              f"{path_to_save_filtered_data} {qc_file} {save_dir} 64\"\n")
+                              f"{path_to_save_filtered_data} {qc_file_gene_id} {save_dir} 64\"\n")
                 fh.writelines(f"python src/AutoEncoder.py {base_name}_AE_Geno {path_to_save_filtered_data} " +
                               f"{qc_file} {save_dir} 64\n")
 
