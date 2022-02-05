@@ -2,21 +2,27 @@
 # ** path - is a string to desired path location. **
 import math
 import sys
-from typing import Union, Any
+from typing import Union
 
 import pandas as pd
-import numpy as np
 import sklearn.preprocessing
 import torch
 from pathlib import Path
 from pandas import Series, DataFrame
-from pandas.io.parsers import TextFileReader
 from torch import nn
 from torch.utils.data import DataLoader
 from sklearn.model_selection import train_test_split
 from AutoEncoderModule import GPDataSet
 from AutoEncoderModule import AutoGenoShallow
 from AutoEncoderModule import run_ae
+
+
+def get_filtered_data(geno: pd.DataFrame, path_to_save_qc: Path) -> pd.DataFrame:
+    geno_var: Union[Series, int] = geno.var()
+    geno.drop(geno_var[geno_var < 1].index.values, axis=1, inplace=True)
+    sklearn.preprocessing.minmax_scale(X=geno, feature_range=(0, 1), axis=0, copy=False)
+    geno.to_csv(path_to_save_qc)
+    return geno
 
 
 def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_save_ae: Path, compression_ratio: int):
@@ -29,13 +35,7 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
         sys.exit(-1)
 
     # data quality control
-    geno: Union[Union[TextFileReader, Series, DataFrame, None], Any] = pd.read_csv(path_to_data, index_col=0)
-    geno_var: Union[Series, int] = geno.var()
-    geno.drop(geno_var[geno_var < 1].index.values, axis=1, inplace=True)
-    sklearn.preprocessing.minmax_scale(X=geno, feature_range=(0, 1), axis=0, copy=False)
-    geno.to_csv(path_to_save_qc)
-    geno = np.array(geno)
-    snp = int(len(geno[0]))
+    geno: DataFrame = get_filtered_data(pd.read_csv(path_to_data, index_col=0), path_to_save_qc)
 
     batch_size = 4096
     geno_train, geno_test = train_test_split(geno, test_size=0.1, random_state=42)
@@ -45,9 +45,9 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
 
     geno_test_set = GPDataSet(geno_test)
     geno_test_set_loader = DataLoader(dataset=geno_test_set, batch_size=batch_size, shuffle=False, num_workers=8)
-    input_features = int(snp)
+    input_features = len(geno.columns)
     output_features = input_features
-    smallest_layer = math.ceil(snp / compression_ratio)
+    smallest_layer = math.ceil(input_features / compression_ratio)
     hidden_layer = int(2 * smallest_layer)
 
     model = AutoGenoShallow(input_features=input_features, hidden_layer=hidden_layer,
@@ -66,7 +66,7 @@ if __name__ == '__main__':
               'quality_control_filename dir_AE_model compression_ratio')
         print('\tmodel_name - model name e.g. AE_Geno')
         print('\toriginal_datafile - original datafile e.g. ./data/data_example.csv')
-        print('\tquality_control_filename - filename of orginal data after quality control e.g. ./data/data_QC.csv')
+        print('\tquality_control_filename - filename of original data after quality control e.g. ./data/data_QC.csv')
         print('\tdir_AE_model - base dir to saved AE models e.g. .data/filter/AE')
         print('\tcompression_ratio - compression ratio for smallest layer NB: ideally a number that is power of 2')
         sys.exit(-1)
