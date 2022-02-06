@@ -69,15 +69,15 @@ def main(ensembl_version: int, path_to_original_data: Path, pathway_data: Path, 
             create_dir(filtered_data_dir)
             create_dir(save_dir)
 
+            path_to_save_filtered_data = filtered_data_dir.joinpath(f'{base_name}.csv')
             input_data.to_csv(path_to_save_filtered_data)
 
             job_file = job_directory.joinpath(f'{base_name}.job')
-            path_to_save_filtered_data = filtered_data_dir.joinpath(f'{base_name}.csv')
             qc_file_gene_id = filtered_data_dir.joinpath(f'{base_name}_gene_id_QC.csv')
 
             qc_file_gene_name = filtered_data_dir.joinpath(f'{base_name}_gene_name_QC.csv')
             names = get_gene_names(ensembl_release=ensembl_version, gene_list=input_data.columns)
-            input_data.rename(zip(input_data.columns, names), axis='columns')
+            input_data.rename(dict(zip(input_data.columns, names)), axis='columns')
             get_filtered_data(geno=input_data, path_to_save_qc=qc_file_gene_name)
 
             # process filtered dataset
@@ -103,7 +103,7 @@ def main(ensembl_version: int, path_to_original_data: Path, pathway_data: Path, 
                 fh.writelines("echo \"python src/AutoEncoder.py {base_name}_AE_Geno " +
                               f"{path_to_save_filtered_data} {qc_file_gene_id} {save_dir} 64\"\n")
                 fh.writelines(f"python src/AutoEncoder.py {base_name}_AE_Geno {path_to_save_filtered_data} " +
-                              f"{qc_file} {save_dir} 64\n")
+                              f"{qc_file_gene_id} {save_dir} 64\n")
 
                 fh.writelines("\n####### Clean up ################################\n")
                 fh.writelines("module unload python/anaconda3-2019.10-tensorflowgpu\n")
