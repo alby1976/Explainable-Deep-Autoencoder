@@ -79,7 +79,6 @@ def main(ensembl_version: int, path_to_original_data: Path, pathway_data: Path, 
             names = get_gene_names(ensembl_release=ensembl_version, gene_list=input_data.columns)
             input_data.rename(dict(zip(input_data.columns, names)), axis='columns')
             get_filtered_data(geno=input_data, path_to_save_qc=qc_file_gene_name)
-            input_data.to_csv(qc_file_gene_name)
 
             # process filtered dataset
             with open(job_file, "w") as fh:
