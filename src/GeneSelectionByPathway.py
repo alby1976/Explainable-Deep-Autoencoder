@@ -21,7 +21,7 @@ def get_gene_ids(ensembl_release: int, gene_list: np.ndarray) -> np.ndarray:
     ids = []
     for gene in gene_list:
         try:
-            ids.append(str.strip(gene_data.gene_ids_of_gene_name(gene_name=gene)[0]))
+            ids.append((gene_data.gene_ids_of_gene_name(gene_name=gene)[0]).replace('\'', ''))
         except ValueError:
             ids.append(gene)
     return np.array(ids)
@@ -32,7 +32,7 @@ def get_gene_names(ensembl_release: int, gene_list: np.ndarray) -> np.ndarray:
     names = []
     for gene in gene_list:
         try:
-            names.append(str.strip(gene_data.gene_name_of_gene_id(gene)))
+            names.append((gene_data.gene_name_of_gene_id(gene)).replace('\'', ''))
         except ValueError:
             names.append(gene)
     return np.array(names)
@@ -109,12 +109,14 @@ def main(ensembl_version: int, path_to_original_data: Path, pathway_data: Path, 
                 fh.writelines("module unload python/anaconda3-2019.10-tensorflowgpu\n")
                 fh.close()
 
+
+'''
             output = subprocess.run(('sbatch', job_file), capture_output=True, text=True, check=True)
 
             print('####################')
             print('Return code:', output.returncode)
             print('Output:', output.stdout)
-
+'''
 
 if __name__ == '__main__':
     if len(sys.argv) < 6:
