@@ -21,7 +21,7 @@ def get_gene_ids(ensembl_release: int, gene_list: np.ndarray) -> np.ndarray:
     ids = []
     for gene in gene_list:
         try:
-            ids.append(gene_data.gene_ids_of_gene_name(gene_name=gene)[0])
+            ids.append(str.strip(gene_data.gene_ids_of_gene_name(gene_name=gene)[0]))
         except ValueError:
             ids.append(gene)
     return np.array(ids)
@@ -32,7 +32,7 @@ def get_gene_names(ensembl_release: int, gene_list: np.ndarray) -> np.ndarray:
     names = []
     for gene in gene_list:
         try:
-            names.append(gene_data.gene_name_of_gene_id(gene))
+            names.append(str.strip(gene_data.gene_name_of_gene_id(gene)))
         except ValueError:
             names.append(gene)
     return np.array(names)
@@ -79,6 +79,7 @@ def main(ensembl_version: int, path_to_original_data: Path, pathway_data: Path, 
             names = get_gene_names(ensembl_release=ensembl_version, gene_list=input_data.columns)
             input_data.rename(dict(zip(input_data.columns, names)), axis='columns')
             get_filtered_data(geno=input_data, path_to_save_qc=qc_file_gene_name)
+            input_data.to_csv(qc_file_gene_name)
 
             # process filtered dataset
             with open(job_file, "w") as fh:
@@ -102,8 +103,8 @@ def main(ensembl_version: int, path_to_original_data: Path, pathway_data: Path, 
                 fh.writelines("\n####### Run script ##############################\n")
                 fh.writelines("echo \"python src/AutoEncoder.py {base_name}_AE_Geno " +
                               f"{path_to_save_filtered_data} {qc_file_gene_id} {save_dir} 64\"\n")
-                fh.writelines(f"python src/AutoEncoder.py {base_name}_AE_Geno {path_to_save_filtered_data} " +
-                              f"{qc_file_gene_id} {save_dir} 64\n")
+#                fh.writelines(f"python src/AutoEncoder.py {base_name}_AE_Geno {path_to_save_filtered_data} " +
+#                              f"{qc_file_gene_id} {save_dir} 64\n")
 
                 fh.writelines("\n####### Clean up ################################\n")
                 fh.writelines("module unload python/anaconda3-2019.10-tensorflowgpu\n")
