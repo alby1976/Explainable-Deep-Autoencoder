@@ -18,7 +18,7 @@ from AutoEncoderModule import run_ae
 
 
 def get_filtered_data(geno, path_to_save_qc: Path) -> DataFrame:
-    geno_var: Union[Union[Series, DataFrame], Any] = geno.var()
+    geno_var: Any = geno.var()
     geno.drop(geno_var[geno_var < 1].index.values, axis=1, inplace=True)
     sklearn.preprocessing.minmax_scale(X=geno, feature_range=(0, 1), axis=0, copy=False)
     geno.to_csv(path_to_save_qc)
