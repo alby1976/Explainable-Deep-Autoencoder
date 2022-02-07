@@ -10,7 +10,7 @@ import shap
 
 PATH_TO_DATA_GENE_ID = './gene_id_QC.txt'    # path to cleaned data with gene id (not gene name) (after quality control)
 PATH_TO_AE_RESULT = './AE_199.txt'    # path to AutoEncoder results, alwarys the last epoch result
-PATH_TO_SAVE = './shap.txt'.          # path to save gene module
+PATH_TO_SAVE = './shap.txt'          # path to save gene module
 
 gene_id = pd.read_csv(PATH_TO_DATA_GENE_ID, index_col=0)
 hidden_vars = pd.read_csv(PATH_TO_AE_RESULT, header = None)
