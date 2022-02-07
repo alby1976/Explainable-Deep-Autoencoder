@@ -117,13 +117,12 @@ def main(ensembl_version: int, path_to_original_data: Path, pathway_data: Path, 
                 fh.close()
 
 
-'''
             output = subprocess.run(('sbatch', job_file), capture_output=True, text=True, check=True)
 
             print('####################')
             print('Return code:', output.returncode)
             print('Output:', output.stdout)
-'''
+
 
 if __name__ == '__main__':
     if len(sys.argv) < 6:
