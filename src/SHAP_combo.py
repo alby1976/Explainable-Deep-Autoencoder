@@ -10,7 +10,7 @@ import shap
 from pandas import DataFrame
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
-
+from AutoEncoderModule import create_dir
 
 def get_last_model(directory: Path):
     file_path: Path
@@ -21,6 +21,9 @@ def get_last_model(directory: Path):
 
 def main(path_to_data_gene_name: Path, path_to_data_gene_id: Path, path_to_ae_result: Path,
          path_to_save_bar: str, path_to_save_scatter: str, path_to_save_gene_model: str):
+    create_dir(path_to_save_bar.parent)
+    create_dir(path_to_save_scatter.parent)
+    create_dir(path_to_save_gene_model)
     gene: DataFrame = pd.read_csv(path_to_data_gene_name, index_col=0)
     hidden_vars: DataFrame = pd.read_csv(path_to_ae_result, header=None)
     column_num: int = len(hidden_vars.columns)
@@ -56,13 +59,16 @@ def main(path_to_data_gene_name: Path, path_to_data_gene_id: Path, path_to_ae_re
         gene_model = gene_model.head(top_num)
         gene_model = gene_model[(gene_model[[1]] != -np.inf).all(axis=1)]
         if len(gene_model.index) > (1 / 4) * top_num:
-            gene_model.to_csv(f'{path_to_save_gene_model}({i}).csv', header=False, index=False, sep='\t')
+            print(f'{path_to_save_gene_model}({i}).csv')
+            gene_model.to_csv(f'{path_to_save_gene_model}({i}).csv', header=True, index=False, sep='\t')
         # generate bar chart
         shap.summary_plot(shap_values, x_test, plot_type='bar', plot_size=(15, 10))
+        print(f'{path_to_save_bar}({i}).png')
         plt.savefig(f'{path_to_save_bar}({i}).png', dpi=100, format='png')
         plt.close()
         # generate scatter chart
         shap.summary_plot(shap_values, x_test, plot_size=(15, 10))
+        print(f'{path_to_save_scatter}({i}).png')
         plt.savefig(f'{path_to_save_scatter}({i}).png', dpi=100, format='png')
         plt.close()
 
