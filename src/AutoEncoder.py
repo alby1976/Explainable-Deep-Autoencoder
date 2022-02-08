@@ -4,7 +4,6 @@ import math
 import sys
 from typing import Union
 
-import numpy as np
 import pandas as pd
 import sklearn.preprocessing
 import torch
@@ -20,8 +19,7 @@ from AutoEncoderModule import run_ae
 
 def get_filtered_data(geno: DataFrame, path_to_save_qc: Path) -> DataFrame:
     geno_var: Union[Series, int] = geno.var()
-    names = np.array(geno_var[geno_var < 1].index.values)
-    geno.drop(names, axis=1, inplace=True)
+    geno.drop(geno_var[geno_var < 1].index.values, axis=1, inplace=True)
     geno.to_csv(path_to_save_qc)
     return geno
 
@@ -38,7 +36,7 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
     # data quality control
     geno = get_filtered_data(pd.read_csv(path_to_data, index_col=0), path_to_save_qc)
     # normalize the data
-    sklearn.preprocessing.minmax_scale(X=geno, feature_range=(0, 1), axis=0, copy=False)
+    geno = sklearn.preprocessing.minmax_scale(X=geno, feature_range=(0, 1), axis=0, copy=True)
     # setup of training and testing
     batch_size = 4096
     geno_train, geno_test = train_test_split(geno, test_size=0.1, random_state=42)
