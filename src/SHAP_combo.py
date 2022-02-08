@@ -20,7 +20,7 @@ def get_last_model(directory: Path):
 
 
 def main(path_to_data_gene_name: Path, path_to_data_gene_id: Path, path_to_ae_result: Path,
-         path_to_save_bar: Path, path_to_save_scatter: Path, path_to_save_gene_model: Path):
+         path_to_save_bar: str, path_to_save_scatter: str, path_to_save_gene_model: str):
     gene: DataFrame = pd.read_csv(path_to_data_gene_name, index_col=0)
     hidden_vars: DataFrame = pd.read_csv(path_to_ae_result, header=None)
     column_num: int = len(hidden_vars.columns)
@@ -80,8 +80,8 @@ if __name__ == '__main__':
         print('\tPATH_TO_SAVE_SCATTER - path to save SHAP scatter chart e.g. ./shap/scatter')
         print('\tPATH_TO_SAVE_GENE_MODEL - path to save gene module e.g. ./shap/gene_model')
         main(Path('./gene_name_QC.csv'), Path('./gene_id_QC.csv'), Path('./AE_199.csv'),
-             Path('./shap/bar'), Path('./shap/scatter'), Path('./shap/gene_module'))
+             './shap/bar', './shap/scatter', './shap/gene_module')
     else:
 
         main(Path(sys.argv[1]), Path(sys.argv[2]), get_last_model(Path(sys.argv[3])),
-             Path(sys.argv[4]), Path(sys.argv[5]), Path(sys.argv[6]))
+             sys.argv[4], sys.argv[5], sys.argv[6])
