@@ -12,6 +12,13 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
 
 
+def get_last_model(directory: Path):
+    file_path: Path
+    time: float
+    time, file_path = max((f.stat().st_mtime, f) for f in directory.iterdir())
+    return file_path
+
+
 def main(path_to_data_gene_name: Path, path_to_data_gene_id: Path, path_to_ae_result: Path,
          path_to_save_bar: Path, path_to_save_scatter: Path, path_to_save_gene_model: Path):
     gene: DataFrame = pd.read_csv(path_to_data_gene_name, index_col=0)
@@ -24,20 +31,20 @@ def main(path_to_data_gene_name: Path, path_to_data_gene_id: Path, path_to_ae_re
     gene_id: np.ndarray = np.array(gene_id.columns)
 
     for i in range(column_num):
-        X_train: Any
-        X_test: Any
-        Y_train: Any
-        Y_test: Any
-        X_train, X_test, Y_train, Y_test = train_test_split(gene,
+        x_train: Any
+        x_test: Any
+        y_train: Any
+        y_test: Any
+        x_train, x_test, y_train, y_test = train_test_split(gene,
                                                             hidden_vars[i],
                                                             test_size=0.2,
                                                             random_state=42)
         my_model: RandomForestRegressor = RandomForestRegressor(bootstrap=True, oob_score=False, max_depth=20,
                                                                 random_state=42, n_estimators=100)
-        my_model.fit(X_train, Y_train)
+        my_model.fit(x_train, y_train)
         explainer = shap.TreeExplainer(my_model)
-        # **explainer = shap.KernelExplainer(my_model.predict, data = X_test.iloc[0:10])
-        shap_values = explainer.shap_values(X_test)
+        # **explainer = shap.KernelExplainer(my_model.predict, data = x_test.iloc[0:10])
+        shap_values = explainer.shap_values(x_test)
         # **generate gene model
         shap_values_mean = np.sum(abs(shap_values), axis=0) / sample_num
         shap_values_ln = np.log(shap_values_mean)  # *calculate ln^|shap_values_mean|
@@ -51,17 +58,17 @@ def main(path_to_data_gene_name: Path, path_to_data_gene_id: Path, path_to_ae_re
         if len(gene_model.index) > (1 / 4) * top_num:
             gene_model.to_csv(f'{path_to_save_gene_model}({i}).csv', header=False, index=False, sep='\t')
         # generate bar chart
-        shap.summary_plot(shap_values, X_test, plot_type='bar', plot_size=(15, 10))
+        shap.summary_plot(shap_values, x_test, plot_type='bar', plot_size=(15, 10))
         plt.savefig(f'{path_to_save_bar}({i}).png', dpi=100, format='png')
         plt.close()
         # generate scatter chart
-        shap.summary_plot(shap_values, X_test, plot_size=(15, 10))
+        shap.summary_plot(shap_values, x_test, plot_size=(15, 10))
         plt.savefig(f'{path_to_save_scatter}({i}).png', dpi=100, format='png')
         plt.close()
 
 
 if __name__ == '__main__':
-    if len(sys.argv) > 6:
+    if len(sys.argv) < 6:
         print('Default setting are used. Either change SHAP_combo.py to change settings or type:\n')
         print('python SHAP_combo.py path_to_data_gene_name PATH_TO_DATA_GENE_ID PATH_TO_AE_RESULT '
               'PATH_TO_SAVE_BAR PATH_TO_SAVE_SCATTER PATH_TO_SAVE_GENE_MODULE')
@@ -75,5 +82,6 @@ if __name__ == '__main__':
         main(Path('./gene_name_QC.csv'), Path('./gene_id_QC.csv'), Path('./AE_199.csv'),
              Path('./shap/bar'), Path('./shap/scatter'), Path('./shap/gene_module'))
     else:
-        main(Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3]),
+
+        main(Path(sys.argv[1]), Path(sys.argv[2]), get_last_model(Path(sys.argv[3])),
              Path(sys.argv[4]), Path(sys.argv[5]), Path(sys.argv[6]))

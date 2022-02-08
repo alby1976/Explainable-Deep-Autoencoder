@@ -62,14 +62,15 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
 
 if __name__ == '__main__':
     if len(sys.argv) < 5:
-        print('less than 6 command line arguments')
+        print('Default setting are used. Either change AutoEncoder.py to change settings or type:\n')
         print('python AutoEncoder.py model_name original_datafile '
               'quality_control_filename dir_AE_model compression_ratio')
         print('\tmodel_name - model name e.g. AE_Geno')
-        print('\toriginal_datafile - original datafile e.g. ./data/data_example.csv')
-        print('\tquality_control_filename - filename of original data after quality control e.g. ./data/data_QC.csv')
-        print('\tdir_AE_model - base dir to saved AE models e.g. .data/filter/AE')
+        print('\toriginal_datafile - original datafile e.g. ../data_example.csv')
+        print('\tquality_control_filename - filename of original data after quality control e.g. ./data_QC.csv')
+        print('\tdir_AE_model - base dir to saved AE models e.g. ./AE')
         print('\tcompression_ratio - compression ratio for smallest layer NB: ideally a number that is power of 2')
-        sys.exit(-1)
 
-    main(sys.argv[1], Path(sys.argv[2]), Path(sys.argv[3]), Path(sys.argv[4]), int(sys.argv[5]))
+        main('AE_Geno', Path('../data_example.csv'), Path('./data_QC.csv'), Path('./AE'), 4)
+    else:
+        main(sys.argv[1], Path(sys.argv[2]), Path(sys.argv[3]), Path(sys.argv[4]), int(sys.argv[5]))
