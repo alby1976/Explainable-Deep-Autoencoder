@@ -21,11 +21,9 @@ from AutoEncoderModule import create_dir
 def get_filtered_data(geno: DataFrame, path_to_save_qc: Path) -> np.ndarray:
     geno_var: Union[Series, int] = geno.var()
     geno.drop(geno_var[geno_var < 1].index.values, axis=1, inplace=True)
-    geno = np.array(geno)
-    minmax_scale(X=geno, feature_range=(0, 1), axis=0, copy=False)
     create_dir(path_to_save_qc.parent)
-    DataFrame(geno).to_csv(path_to_save_qc)
-    return geno
+    geno.to_csv(path_to_save_qc)
+    return np.array(geno)
 
 
 def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_save_ae: Path, compression_ratio: int):
@@ -39,6 +37,7 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
 
     # data quality control
     geno = get_filtered_data(pd.read_csv(path_to_data, index_col=0), path_to_save_qc)
+    minmax_scale(X=geno, feature_range=(0, 1), axis=0, copy=False)
     # normalize the data
     # setup of training and testing
     batch_size = 4096
