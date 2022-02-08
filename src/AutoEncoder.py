@@ -5,10 +5,10 @@ import sys
 from typing import Union
 import numpy as np
 import pandas as pd
-import sklearn.preprocessing
 import torch
 from pathlib import Path
 from pandas import Series, DataFrame
+from sklearn.preprocessing import minmax_scale
 from torch import nn
 from torch.utils.data import DataLoader
 from sklearn.model_selection import train_test_split
@@ -22,9 +22,9 @@ def get_filtered_data(geno: DataFrame, path_to_save_qc: Path) -> np.ndarray:
     geno_var: Union[Series, int] = geno.var()
     geno.drop(geno_var[geno_var < 1].index.values, axis=1, inplace=True)
     geno = np.array(geno)
-    sklearn.preprocessing.minmax_scale(X=geno, feature_range=(0, 1), axis=0, copy=False)
+    minmax_scale(X=geno, feature_range=(0, 1), axis=0, copy=False)
     create_dir(path_to_save_qc.parent)
-    DataFrame(geno).to_csv( path_to_save_qc)
+    DataFrame(geno).to_csv(path_to_save_qc)
     return geno
 
 
