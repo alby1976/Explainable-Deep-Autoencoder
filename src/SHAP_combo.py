@@ -21,9 +21,9 @@ def get_last_model(directory: Path):
 
 def main(path_to_data_gene_name: Path, path_to_data_gene_id: Path, path_to_ae_result: Path,
          path_to_save_bar: str, path_to_save_scatter: str, path_to_save_gene_model: str):
-    create_dir(path_to_save_bar.parent)
-    create_dir(path_to_save_scatter.parent)
-    create_dir(path_to_save_gene_model)
+    create_dir(Path(path_to_save_bar).parent)
+    create_dir(Path(path_to_save_scatter).parent)
+    create_dir(Path(path_to_save_gene_model).parent)
     gene: DataFrame = pd.read_csv(path_to_data_gene_name, index_col=0)
     hidden_vars: DataFrame = pd.read_csv(path_to_ae_result, header=None)
     column_num: int = len(hidden_vars.columns)

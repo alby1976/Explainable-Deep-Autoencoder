@@ -116,7 +116,6 @@ def main(ensembl_version: int, path_to_original_data: Path, pathway_data: Path, 
                 fh.writelines("module unload python/anaconda3-2019.10-tensorflowgpu\n")
                 fh.close()
 
-
             output = subprocess.run(('sbatch', job_file), capture_output=True, text=True, check=True)
 
             print('####################')
