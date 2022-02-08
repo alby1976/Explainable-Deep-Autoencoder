@@ -107,9 +107,10 @@ def main(ensembl_version: int, path_to_original_data: Path, pathway_data: Path, 
                               f"{path_to_save_filtered_data} {qc_file_gene_id} {save_dir} 64\"\n")
                 fh.writelines(f"python src/AutoEncoder.py {base_name}_AE_Geno {path_to_save_filtered_data} " +
                               f"{qc_file_gene_id} {save_dir} 64\n")
-                fh.writelines(f"echo \"python src/SHAP_combo.py {qc_file_gene_name} {qc_file_gene_id} {save_dir} "
+                fh.writelines(f"echo \"python src/SHAP_combo.py {qc_file_gene_name} {path_to_save_filtered_data} "
+                              f"{save_dir} "
                               f"{base_bar_path} {base_scatter_path} {base_model_path}\"\n")
-                fh.writelines(f"python src/SHAP_combo.py {qc_file_gene_name} {qc_file_gene_id} {save_dir} "
+                fh.writelines(f"python src/SHAP_combo.py {qc_file_gene_name} {path_to_save_filtered_data} {save_dir} "
                               f"{base_bar_path} {base_scatter_path} {base_model_path}\n")
 
                 fh.writelines("\n####### Clean up ################################\n")
