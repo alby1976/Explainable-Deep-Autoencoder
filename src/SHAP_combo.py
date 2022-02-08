@@ -68,7 +68,7 @@ def main(path_to_data_gene_name: Path, path_to_data_gene_id: Path, path_to_ae_re
 
 
 if __name__ == '__main__':
-    if len(sys.argv) > 6:
+    if len(sys.argv) < 6:
         print('Default setting are used. Either change SHAP_combo.py to change settings or type:\n')
         print('python SHAP_combo.py path_to_data_gene_name PATH_TO_DATA_GENE_ID PATH_TO_AE_RESULT '
               'PATH_TO_SAVE_BAR PATH_TO_SAVE_SCATTER PATH_TO_SAVE_GENE_MODULE')
