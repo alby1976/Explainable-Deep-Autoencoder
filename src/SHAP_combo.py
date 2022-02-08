@@ -30,7 +30,7 @@ def main(path_to_data_gene_name: Path, path_to_data_gene_id: Path, path_to_ae_re
     sample_num: int = len(gene.index)
     top_rate: float = 1 / 20  # top rate of gene columns
     top_num: int = int(top_rate * len(gene.columns))
-    gene_id: DataFrame = pd.read_csv(path_to_data_gene_id, index_col=0, header=True)
+    gene_id: DataFrame = pd.read_csv(path_to_data_gene_id, index_col=0, header=None)
     gene_id: np.ndarray = np.array(gene_id.columns)
 
     for i in range(column_num):
