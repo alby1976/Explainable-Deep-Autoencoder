@@ -33,6 +33,7 @@ def main(path_to_data_gene_name: Path, path_to_data_gene_id: Path, path_to_ae_re
     gene = minmax_scale(X=gene, feature_range=(0, 1), axis=0, copy=True)
     top_rate: float = 1 / 20  # top rate of gene columns
     top_num: int = int(top_rate * len(gene.columns))
+    gene: np.ndarray = minmax_scale(X=gene, feature_range=(0, 1), axis=0, copy=True)
     gene_id: DataFrame = pd.read_csv(path_to_data_gene_id, index_col=0, header=None)
     gene_id: np.ndarray = np.array(gene_id.columns)
 
