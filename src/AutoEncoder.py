@@ -3,7 +3,7 @@
 import math
 import sys
 from typing import Union
-
+import numpy as np
 import pandas as pd
 import sklearn.preprocessing
 import torch
@@ -17,11 +17,11 @@ from AutoEncoderModule import AutoGenoShallow
 from AutoEncoderModule import run_ae
 
 
-def get_filtered_data(geno: DataFrame, path_to_save_qc: Path) -> DataFrame:
+def get_filtered_data(geno: DataFrame, path_to_save_qc: Path) -> np.ndarray:
     geno_var: Union[Series, int] = geno.var()
     geno.drop(geno_var[geno_var < 1].index.values, axis=1, inplace=True)
     geno.to_csv(path_to_save_qc)
-    return geno
+    return np.array(geno)
 
 
 def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_save_ae: Path, compression_ratio: int):
@@ -36,7 +36,7 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
     # data quality control
     geno = get_filtered_data(pd.read_csv(path_to_data, index_col=0), path_to_save_qc)
     # normalize the data
-    geno = sklearn.preprocessing.minmax_scale(X=geno, feature_range=(0, 1), axis=0, copy=False)
+    sklearn.preprocessing.minmax_scale(X=geno, feature_range=(0, 1), axis=0, copy=False)
     # setup of training and testing
     batch_size = 4096
     geno_train, geno_test = train_test_split(geno, test_size=0.1, random_state=42)
@@ -46,7 +46,7 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
 
     geno_test_set = GPDataSet(geno_test)
     geno_test_set_loader = DataLoader(dataset=geno_test_set, batch_size=batch_size, shuffle=False, num_workers=8)
-    input_features = len(geno.columns)
+    input_features = len(geno[0])
     output_features = input_features
     smallest_layer = math.ceil(input_features / compression_ratio)
     hidden_layer = int(2 * smallest_layer)
