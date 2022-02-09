@@ -77,7 +77,7 @@ def main(ensembl_version: int, path_to_original_data: Path, pathway_data: Path, 
 
             qc_file_gene_name = filtered_data_dir.joinpath(f'{base_name}_gene_name_QC.csv')
             names = get_gene_names(ensembl_release=ensembl_version, gene_list=input_data.columns)
-            input_data.rename(dict(zip(input_data.columns, names)), axis='columns')
+            input_data.rename(dict(zip(np.array(input_data.columns), names)), axis='columns', inplace=True)
             get_filtered_data(input_data, qc_file_gene_name)
             base_bar_path: Path = save_dir.joinpath('shap/bar')
             base_scatter_path: Path = save_dir.joinpath('shap/scatter')
