@@ -1,6 +1,7 @@
 from typing import Any, Union
 from pathlib import Path
 from numpy import ndarray
+from pandas import DataFrame
 from torch import nn
 from torch.autograd import Variable
 from torch.optim import Adam
@@ -54,6 +55,13 @@ class AutoGenoShallow(nn.Module):
         y = self.encoder(x)
         x = self.decoder(y)
         return x, y
+
+
+def get_normalized_data(data: DataFrame) -> DataFrame:
+    from sklearn.preprocessing import MinMaxScaler
+
+    scaler = MinMaxScaler()
+    return DataFrame(data=scaler.fit_transform(data), columns=data.columns)
 
 
 def create_dir(directory: Path):
