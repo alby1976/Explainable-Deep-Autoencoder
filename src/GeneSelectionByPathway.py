@@ -88,7 +88,7 @@ def process_pathways(ensembl_version: int, filename: Path, pathways: pd.DataFram
             fh.writelines("conda activate XAI\n")
 
             fh.writelines("\n####### Run script ##############################\n")
-            fh.writelines("echo \"python src/AutoEncoder.py {base_name}_AE_Geno " +
+            fh.writelines(f"echo \"python src/AutoEncoder.py {base_name}_AE_Geno " +
                           f"{path_to_save_filtered_data} {qc_file_gene_id} {save_dir} 64\"\n")
             fh.writelines(f"python src/AutoEncoder.py {base_name}_AE_Geno {path_to_save_filtered_data} " +
                           f"{qc_file_gene_id} {save_dir} 64\n")
