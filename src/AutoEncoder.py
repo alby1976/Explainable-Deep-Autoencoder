@@ -57,6 +57,8 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
                 # diff = geno_data.numpy() - output3  # [0,0.5,1] - [0.0, 0.5, 0.5]
                 # diff_num = np.count_nonzero(diff)
                 # batch_average_precision = 1 - diff_num / (batch_size * input_features)
+                print(f"geno_data:\n{geno_data}\ntrain_geno:\n{train_geno}\noutput:\n{output}")
+                sys.exit(-1)
                 batch_average_precision = r2_score(y_true=geno_data.cpu().detach().numpy(),
                                                    y_pred=output.cpu().detach().numpy())
                 batch_precision_list.append(batch_average_precision)
