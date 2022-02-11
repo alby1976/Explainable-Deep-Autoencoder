@@ -41,7 +41,7 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
         if do_train:
             current_batch: int = 0
             model.train()
-            print(geno_train_set_loader.cpu().detect().numpy())
+            print(geno_train_set_loader.dataset.numpy())
             sys.exit(-1)
             for geno_data in geno_train_set_loader:
                 current_batch += 1
