@@ -57,7 +57,7 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
                 # diff = geno_data.numpy() - output3  # [0,0.5,1] - [0.0, 0.5, 0.5]
                 # diff_num = np.count_nonzero(diff)
                 # batch_average_precision = 1 - diff_num / (batch_size * input_features)
-                batch_average_precision = r2_score(output3, geno_data.numpy())
+                batch_average_precision = r2_score(output3, train_geno.numpy())
                 batch_precision_list.append(batch_average_precision)
                 # ======backward========
                 optimizer.zero_grad()
@@ -89,7 +89,7 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
                 # diff = geno_test_data.numpy() - test_output3  # [0,0.5,1] - [0.0, 0.5, 0.5]
                 # diff_num = np.count_nonzero(diff)
                 # batch_average_precision = 1 - diff_num / (batch_size * input_features)  # a single value
-                batch_average_precision = r2_score(test_output3, geno_test_data.numpy)
+                batch_average_precision = r2_score(test_output3, test_geno.numpy())
                 test_batch_precision_list.append(batch_average_precision)  # [ave_pre_batch1, ave_pre_batch2,...]
             test_average_precision = sum(
                 test_batch_precision_list) / test_current_batch
