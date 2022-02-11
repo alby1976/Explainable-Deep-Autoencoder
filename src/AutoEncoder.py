@@ -30,7 +30,7 @@ def get_filtered_data(geno: DataFrame, path_to_save_qc: Path) -> DataFrame:
 
 
 def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataLoader, geno_test_set_loader: DataLoader,
-           optimizer: Adam, distance=nn.MSELoss(), num_epochs=200, do_train=True,
+           optimizer: Adam, distance=nn.MSELoss(), batch_size=128, num_epochs=200, do_train=True,
            do_test=True, save_dir: Path = Path('./model')):
     create_dir(Path(save_dir))
     for epoch in range(num_epochs):
@@ -57,7 +57,8 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
                 # diff = geno_data.numpy() - output3  # [0,0.5,1] - [0.0, 0.5, 0.5]
                 # diff_num = np.count_nonzero(diff)
                 # batch_average_precision = 1 - diff_num / (batch_size * input_features)
-                batch_average_precision = r2_score(output2, train_geno.cpu().detach().numpy())
+                batch_average_precision = r2_score(y_true=train_geno.cpu().detach().numpy(), y_pred=coder2,
+                                                   multioutput='raw_values') / batch_size
                 batch_precision_list.append(batch_average_precision)
                 # ======backward========
                 optimizer.zero_grad()
@@ -89,7 +90,7 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
                 # diff = geno_test_data.numpy() - test_output3  # [0,0.5,1] - [0.0, 0.5, 0.5]
                 # diff_num = np.count_nonzero(diff)
                 # batch_average_precision = 1 - diff_num / (batch_size * input_features)  # a single value
-                batch_average_precision = r2_score(test_output2, test_geno.cpu().detach().numpy())
+                batch_average_precision = r2_score(coder.cpu().detach().numpy(), test_geno.cpu().detach().numpy())
                 test_batch_precision_list.append(batch_average_precision)  # [ave_pre_batch1, ave_pre_batch2,...]
             test_average_precision = sum(
                 test_batch_precision_list) / test_current_batch
@@ -130,7 +131,7 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
     distance = nn.MSELoss()  # for regression, 0, 0.5, 1
     optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
     run_ae(model_name=model_name, model=model, geno_train_set_loader=geno_train_set_loader,
-           geno_test_set_loader=geno_test_set_loader, num_epochs=epoch,
+           geno_test_set_loader=geno_test_set_loader, num_epochs=epoch, batch_size=batch_size,
            optimizer=optimizer, distance=distance, do_train=True, do_test=True, save_dir=path_to_save_ae)
 
 
