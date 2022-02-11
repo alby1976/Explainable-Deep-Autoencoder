@@ -79,8 +79,8 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
         test_average_precision = 0.0
         test_sum_loss = 0.0
         if do_test:
-            test_input_list: np.ndarray = np.array([])
-            test_output_list: np.ndarray = np.array([])
+            test_input_list: np.ndarray = np.empty()
+            test_output_list: np.ndarray = np.empty()
             test_current_batch: int = 0
             model.eval()
             for geno_test_data in geno_test_set_loader:
