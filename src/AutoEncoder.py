@@ -79,8 +79,8 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
         test_average_precision = 0.0
         test_sum_loss = 0.0
         if do_test:
-            test_input_list: np.ndarray = []
-            test_output_list: np.ndarray = []
+            test_input_list: np.ndarray = np.array([])
+            test_output_list: np.ndarray = np.array([])
             test_current_batch: int = 0
             model.eval()
             for geno_test_data in geno_test_set_loader:
@@ -91,10 +91,8 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
                 loss = distance(test_output, test_geno)
                 test_sum_loss += loss.item()
                 # ======precision======
-                test_input_list.append(test_geno.cpu().detach())
-                test_input_list.flatten()
-                test_output_list.append(test_output.cpu().detach())
-                test_output_list.flatten()
+                np.append(test_input_list, test_geno.cpu().detach())
+                np.append(test_output_list, test_output.cpu().detach())
                 # test_output2 = test_output.cpu().detach().numpy()
                 # test_output3 = np.floor(test_output2 * 3) / 2  # make output3's value to 0, 0.5, 1
                 # diff = geno_test_data.numpy() - test_output3  # [0,0.5,1] - [0.0, 0.5, 0.5]
