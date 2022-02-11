@@ -54,7 +54,7 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
                 output_coder_list.extend(coder2)
                 # ======precision======
                 np.append(input_list, train_geno.cpu().detach().numpy())
-                np.append(output_list, output.cpu().detach.numpy())
+                np.append(output_list, output.cpu().detach().numpy())
 
                 print(f'batch: {current_batch} input:\n{input_list}\nbatch: {current_batch} output:{output_list}')
                 # output3 = np.floor(output2 * 3) / 2  # make output3's value to 0, 0.5, 1
