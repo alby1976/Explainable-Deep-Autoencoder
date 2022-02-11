@@ -41,6 +41,8 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
         if do_train:
             current_batch: int = 0
             model.train()
+            print(geno_train_set_loader.cpu().detect().numpy())
+            sys.exit(-1)
             for geno_data in geno_train_set_loader:
                 current_batch += 1
                 train_geno = Variable(geno_data).float().cuda()
@@ -60,9 +62,9 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
                 batch_average_precision = r2_score(y_true=geno_data.cpu().detach().numpy(),
                                                    y_pred=output.cpu().detach().numpy())
                 batch_precision_list.append(batch_average_precision)
-                print(f"geno_data:\n{geno_data}\ntrain_geno:\n{train_geno}\noutput:\n{output}")
-                print(f'geno_data r^2: {r2_score(geno_data.cpu().detach().numpy(),output2)} '
-                      f'train_data f^2: {r2_score(train_geno.cpu().detach().numpy(),output2)}')
+                #print(f"geno_data:\n{geno_data}\ntrain_geno:\n{train_geno}\noutput:\n{output}")
+                #print(f'geno_data r^2: {r2_score(geno_data.cpu().detach().numpy(),output2)} '
+                #      f'train_data f^2: {r2_score(train_geno.cpu().detach().numpy(),output2)}')
                 sys.exit(-1)
                 # ======backward========
                 optimizer.zero_grad()
