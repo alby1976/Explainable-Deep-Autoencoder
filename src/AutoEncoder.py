@@ -84,8 +84,8 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
                 loss = distance(test_output, test_geno)
                 test_sum_loss += loss.item()
                 # ======precision======
-                test_output2 = test_output.cpu().detach().numpy()
-                test_output3 = np.floor(test_output2 * 3) / 2  # make output3's value to 0, 0.5, 1
+                # test_output2 = test_output.cpu().detach().numpy()
+                # test_output3 = np.floor(test_output2 * 3) / 2  # make output3's value to 0, 0.5, 1
                 # diff = geno_test_data.numpy() - test_output3  # [0,0.5,1] - [0.0, 0.5, 0.5]
                 # diff_num = np.count_nonzero(diff)
                 # batch_average_precision = 1 - diff_num / (batch_size * input_features)  # a single value
@@ -130,7 +130,7 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
     distance = nn.MSELoss()  # for regression, 0, 0.5, 1
     optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
     run_ae(model_name=model_name, model=model, geno_train_set_loader=geno_train_set_loader,
-           geno_test_set_loader=geno_test_set_loader, input_features=input_features, num_epochs=epoch,
+           geno_test_set_loader=geno_test_set_loader, num_epochs=epoch,
            optimizer=optimizer, distance=distance, do_train=True, do_test=True, save_dir=path_to_save_ae)
 
 
