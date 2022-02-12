@@ -23,7 +23,7 @@ from AutoEncoderModule import create_dir
 from AutoEncoderModule import get_normalized_data
 
 
-def r2_value(y_true: ndarray, y_pred: ndarray) -> float:
+def r2_value(y_true: ndarray, y_pred: ndarray) -> ndarray:
     # num: int = features*(np.sum(y_true*y_pred) - (y_true.sum()*y_pred.sum()))
     # den: int = np.sqrt((features * np.sum(np.square(y_true)) - np.square(y_true.sum())) *
     #                   (features * np.sum(np.square(y_pred)) - np.square(y_pred.sum())))
@@ -36,7 +36,7 @@ def r2_value(y_true: ndarray, y_pred: ndarray) -> float:
     # print(f'ssr {ssr.shape}:\n{ssr}')
     # print(f'sst {ssr.shape}:\n{sst}')
     # print(f'ssr: {ssr.sum()} sst: {sst.sum()} r^2: {ssr.sum()/sst.sum()}')
-    return ssr.sum() / sst.sum()
+    return ssr.sum(axis=0) / sst.sum(axis=0)
 
 
 def get_filtered_data(geno: DataFrame, path_to_save_qc: Path) -> DataFrame:
@@ -92,7 +92,7 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
             np.savetxt(fname=coder_file, X=coder_np, fmt='%f', delimiter=',')
             # batch_precision_list = [r2_score_batch1, r2_score_batch2,...]
 
-            average_precision = r2_value(y_true=input_list, y_pred=output_list)
+            average_precision = np.mean(r2_value(y_true=input_list, y_pred=output_list))
         # ===========test==========
         test_batch_precision_list = []
         test_average_precision = 0.0
@@ -119,7 +119,7 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
                 test_input_list = np.append(test_input_list, geno_test_data.cpu().detach().numpy(), axis=0)
                 test_output_list = np.append(test_output_list, test_output.cpu().detach().numpy(), axis=0)
             # test_batch_precision_list = [r2_score_batch1, r2_score_batch2,...]
-            test_average_precision = r2_value(y_true=test_input_list, y_pred=test_output_list)
+            test_average_precision = np.mean(r2_value(y_true=test_input_list, y_pred=test_output_list))
         print(f"epoch[{epoch + 1:3d}/{num_epochs}, loss: {sum_loss:.4f}, precision: {average_precision:.4f}, "
               f" test lost: {test_sum_loss:.4f}, test precision: {test_average_precision:.4f}")
 
