@@ -57,8 +57,8 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
                 output1 = output.cpu().detach().numpy()
                 input_list.append(train_geno1)
                 output_list.append(output1)
-                print(f'batch: {current_batch} input:\n{train_geno1}\n{input_list}\n'
-                      f'batch: {current_batch}\noutput\n{output1}\n{output_list}')
+                print(f'batch: {current_batch} input:\n{train_geno1}\n{np.array(input_list)}\n'
+                      f'batch: {current_batch}\noutput\n{output1}\n{np.array(output_list)}')
                 # output3 = np.floor(output2 * 3) / 2  # make output3's value to 0, 0.5, 1
                 # diff = geno_data.numpy() - output3  # [0,0.5,1] - [0.0, 0.5, 0.5]
                 # diff_num = np.count_nonzero(diff)
