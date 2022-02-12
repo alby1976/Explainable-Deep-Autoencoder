@@ -30,12 +30,12 @@ def get_filtered_data(geno: DataFrame, path_to_save_qc: Path) -> DataFrame:
 
 
 def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataLoader, geno_test_set_loader: DataLoader,
-           optimizer: Adam, distance=nn.MSELoss(), batch_size=128, num_epochs=200, do_train=True,
+           features: int, optimizer: Adam, distance=nn.MSELoss(), num_epochs=200, do_train=True,
            do_test=True, save_dir: Path = Path('./model')):
     create_dir(Path(save_dir))
     for epoch in range(num_epochs):
-        input_list: np.ndarray = np.empty((0, batch_size), float)
-        output_list: np.ndarray = np.empty((0, batch_size), float)
+        input_list: np.ndarray = np.empty((0, features), float)
+        output_list: np.ndarray = np.empty((0, features), float)
         output_coder_list = []
         average_precision = 0.0
         sum_loss = 0.0
@@ -82,8 +82,8 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
         test_average_precision = 0.0
         test_sum_loss = 0.0
         if do_test:
-            test_input_list: np.ndarray = np.empty((0, batch_size), float)
-            test_output_list: np.ndarray = np.empty((0, batch_size), float)
+            test_input_list: np.ndarray = np.empty((0, features), float)
+            test_output_list: np.ndarray = np.empty((0, features), float)
             test_current_batch: int = 0
             model.eval()
             for geno_test_data in geno_test_set_loader:
@@ -143,7 +143,7 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
     distance = nn.MSELoss()  # for regression, 0, 0.5, 1
     optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
     run_ae(model_name=model_name, model=model, geno_train_set_loader=geno_train_set_loader,
-           geno_test_set_loader=geno_test_set_loader, num_epochs=epoch, batch_size=batch_size,
+           geno_test_set_loader=geno_test_set_loader, num_epochs=epoch, features=input_features,
            optimizer=optimizer, distance=distance, do_train=True, do_test=True, save_dir=path_to_save_ae)
 
 
