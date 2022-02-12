@@ -27,10 +27,10 @@ def r2_value(y_true: ndarray, y_pred: ndarray) -> float:
     # num: int = features*(np.sum(y_true*y_pred) - (y_true.sum()*y_pred.sum()))
     # den: int = np.sqrt((features * np.sum(np.square(y_true)) - np.square(y_true.sum())) *
     #                   (features * np.sum(np.square(y_pred)) - np.square(y_pred.sum())))
-    y_ave = y_true.mean()
+    y_ave = y_true.mean(axis=1)
     ssr: ndarray = np.square(y_pred - y_ave)
     sst: ndarray = np.square(y_true - y_ave)
-    print(f'y_ave: {y_ave}')
+    print(f'y_ave {y_ave.shape}: {y_ave}')
     print(f'y_true {y_true.shape}:\n{y_true}')
     print(f'y_pred {y_pred.shape}:\n{y_pred}')
     print(f'ssr {ssr.shape}:\n{ssr}')
