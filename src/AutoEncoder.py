@@ -57,8 +57,8 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
                 output1 = output.cpu().detach().numpy()
                 input_list.append(train_geno1)
                 output_list.append(output1)
-                print(f'batch: {current_batch} input:\n{train_geno1}\n{np.array(input_list)}\n'
-                      f'batch: {current_batch}\noutput\n{output1}\n{np.array(output_list)}')
+                print(f'batch: {current_batch} input:\n{train_geno1}\n{np.asarray(input_list)}\n'
+                      f'batch: {current_batch}\noutput\n{output1}\n{np.asarray(output_list)}')
                 # output3 = np.floor(output2 * 3) / 2  # make output3's value to 0, 0.5, 1
                 # diff = geno_data.numpy() - output3  # [0,0.5,1] - [0.0, 0.5, 0.5]
                 # diff_num = np.count_nonzero(diff)
@@ -76,13 +76,13 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
             coder_file = save_dir.joinpath(f"{model_name}-{str(epoch)}.csv")
             np.savetxt(fname=coder_file, X=coder_np, fmt='%f', delimiter=',')
             # batch_precision_list = [ave_pre_batch1, ave_pre_batch2,...]
-            average_precision = r2_score(y_true=np.array(input_list), y_pred=np.array(output_list))
+            average_precision = r2_score(y_true=np.asarray(input_list), y_pred=np.asarray(output_list))
         # ===========test==========
         test_average_precision = 0.0
         test_sum_loss = 0.0
         if do_test:
-            test_input_list: np.ndarray = np.empty(1)
-            test_output_list: np.ndarray = np.empty(1)
+            test_input_list: list = []
+            test_output_list: list = []
             test_current_batch: int = 0
             model.eval()
             for geno_test_data in geno_test_set_loader:
@@ -93,8 +93,8 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
                 loss = distance(test_output, test_geno)
                 test_sum_loss += loss.item()
                 # ======precision======
-                np.append(test_input_list, test_geno.cpu().detach())
-                np.append(test_output_list, test_output.cpu().detach())
+                test_input_list.append(test_geno.cpu().detach())
+                test_output_list.append(test_output.cpu().detach())
                 # test_output2 = test_output.cpu().detach().numpy()
                 # test_output3 = np.floor(test_output2 * 3) / 2  # make output3's value to 0, 0.5, 1
                 # diff = geno_test_data.numpy() - test_output3  # [0,0.5,1] - [0.0, 0.5, 0.5]
@@ -104,7 +104,7 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
                 #                                   y_pred=test_output.cpu().detach().numpy())
                 # test_batch_precision_list.append(batch_average_precision)
                 # test_batch_precision_list = [ave_pre_batch1, ave_pre_batch2,...]
-            test_average_precision = r2_score(y_true=test_input_list, y_pred=test_output_list)
+            test_average_precision = r2_score(y_true=np.asarray(test_input_list), y_pred=np.asarray(test_output_list))
         print(f"epoch[{epoch + 1:3d}/{num_epochs}, loss: {sum_loss:.4f}, precision: {average_precision:.4f}, "
               f" test lost: {test_sum_loss:.4f}, test precision: {test_average_precision:.4f}")
 
