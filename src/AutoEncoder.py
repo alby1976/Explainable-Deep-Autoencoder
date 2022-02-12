@@ -28,16 +28,16 @@ def r2_value(y_true: ndarray, y_pred: ndarray) -> float:
     # den: int = np.sqrt((features * np.sum(np.square(y_true)) - np.square(y_true.sum())) *
     #                   (features * np.sum(np.square(y_pred)) - np.square(y_pred.sum())))
     y_ave = y_true.mean()
-    sse: ndarray = np.square(y_pred - y_ave)
+    ssr: ndarray = np.square(y_pred - y_ave)
     sst: ndarray = np.square(y_true - y_ave)
     print(f'y_ave: {y_ave}')
-    print(f'y_true:\n{y_true}')
-    print(f'y_pred:\n{y_pred}')
-    print(f'sse:\n{sse}')
-    print(f'sst:\n{sst}')
-    print(f'sse: {sse.sum()} sst: {sst.sum()} r^2: {sse.sum()/sst.sum()}')
+    print(f'y_true {y_true.shape}:\n{y_true}')
+    print(f'y_pred {y_pred.shape}:\n{y_pred}')
+    print(f'ssr {ssr.shape}:\n{ssr}')
+    print(f'sst {ssr.shape}:\n{sst}')
+    print(f'sse: {ssr.sum()} sst: {sst.sum()} r^2: {ssr.sum()/sst.sum()}')
     sys.exit(-1)
-    return sse.sum() / sst.sum()
+    return ssr.sum() / sst.sum()
 
 
 def get_filtered_data(geno: DataFrame, path_to_save_qc: Path) -> DataFrame:
