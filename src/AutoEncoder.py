@@ -35,6 +35,7 @@ def r2_value(y_true: ndarray, y_pred: ndarray) -> float:
     print(f'y_pred:\n{y_pred}')
     print(f'sse:\n{sse}')
     print(f'sst:\n{sst}')
+    print(f'sse: {sse.sum()} sst: {sst.sum()} r^2: {sse.sum()/sst.sum()}')
     sys.exit(-1)
     return sse.sum() / sst.sum()
 
