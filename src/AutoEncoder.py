@@ -57,8 +57,8 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
                 output1 = output.cpu().detach().numpy()
                 np.append(input_list, train_geno.cpu().detach().numpy().flatten(), axis=0)
                 np.append(output_list, output.cpu().detach().numpy().flatten(), axis=0)
-                print(f'batch: {current_batch} input:\n{train_geno1}\n{input_list}\n'
-                      f'batch: {current_batch}\noutput\n{output1}\n{output_list}')
+                print(f'batch: {current_batch} input:\n{train_geno1.flatten()}\n{input_list}\n'
+                      f'batch: {current_batch}\noutput\n{output1.flatten()}\n{output_list}')
                 # output3 = np.floor(output2 * 3) / 2  # make output3's value to 0, 0.5, 1
                 # diff = geno_data.numpy() - output3  # [0,0.5,1] - [0.0, 0.5, 0.5]
                 # diff_num = np.count_nonzero(diff)
@@ -81,8 +81,8 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
         test_average_precision = 0.0
         test_sum_loss = 0.0
         if do_test:
-            test_input_list: np.ndarray = np.empty(3, float)
-            test_output_list: np.ndarray = np.empty(3, float)
+            test_input_list: np.ndarray = np.empty(batch_size, float)
+            test_output_list: np.ndarray = np.empty(batch_size, float)
             test_current_batch: int = 0
             model.eval()
             for geno_test_data in geno_test_set_loader:
@@ -94,7 +94,7 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
                 test_sum_loss += loss.item()
                 # ======precision======
                 np.append(test_input_list, test_geno.cpu().detach().numpy().flatten(), axis=0)
-                np.append(test_output_list, test_output.cpu().detach().numpy(), axis=0)
+                np.append(test_output_list, test_output.cpu().detach().numpy().flatten(), axis=0)
                 # test_output2 = test_output.cpu().detach().numpy()
                 # test_output3 = np.floor(test_output2 * 3) / 2  # make output3's value to 0, 0.5, 1
                 # diff = geno_test_data.numpy() - test_output3  # [0,0.5,1] - [0.0, 0.5, 0.5]
