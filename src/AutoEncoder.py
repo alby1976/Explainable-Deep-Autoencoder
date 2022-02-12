@@ -59,8 +59,8 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
                 output1 = output.cpu().detach().numpy()
                 print(f'input dim: {train_geno1.shape} output dim: {output1.shape} '
                       f'input_list dim:{input_list.shape} output_list dim{output_list.shape}')
-                np.append(input_list, train_geno.cpu().detach().numpy(), axis=0)
-                np.append(output_list, output.cpu().detach().numpy(), axis=0)
+                input_list = np.append(input_list, train_geno.cpu().detach().numpy(), axis=0)
+                output_list = np.append(output_list, output.cpu().detach().numpy(), axis=0)
                 print(f'batch: {current_batch} input:\n{train_geno1}\n{input_list}\n'
                       f'batch: {current_batch}\noutput\n{output1}\n{output_list}')
                 # output3 = np.floor(output2 * 3) / 2  # make output3's value to 0, 0.5, 1
@@ -97,8 +97,8 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
                 loss = distance(test_output, test_geno)
                 test_sum_loss += loss.item()
                 # ======precision======
-                np.append(test_input_list, test_geno.cpu().detach().numpy(), axis=0)
-                np.append(test_output_list, test_output.cpu().detach().numpy(), axis=0)
+                test_input_list = np.append(test_input_list, test_geno.cpu().detach().numpy(), axis=0)
+                test_output_list = np.append(test_output_list, test_output.cpu().detach().numpy(), axis=0)
                 # test_output2 = test_output.cpu().detach().numpy()
                 # test_output3 = np.floor(test_output2 * 3) / 2  # make output3's value to 0, 0.5, 1
                 # diff = geno_test_data.numpy() - test_output3  # [0,0.5,1] - [0.0, 0.5, 0.5]
