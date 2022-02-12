@@ -155,7 +155,7 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
     distance = nn.MSELoss()  # for regression, 0, 0.5, 1
     optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
     run_ae(model_name=model_name, model=model, geno_train_set_loader=geno_train_set_loader,
-           geno_test_set_loader=geno_test_set_loader, num_epochs=epoch,
+           features=input_features, geno_test_set_loader=geno_test_set_loader, num_epochs=epoch,
            optimizer=optimizer, distance=distance, do_train=True, do_test=True, save_dir=path_to_save_ae)
 
 
