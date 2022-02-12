@@ -70,6 +70,7 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
                 #                                   y_pred=output.cpu().detach().numpy())
                 batch_average_precision = r2_value(y_true=geno_data.cpu().detach().numpy(),
                                                    y_pred=output.cpu().detach().numpy(), features=features)
+                print(f'batch: {current_batch} r2 value: {batch_average_precision}')
                 batch_precision_list.append(batch_average_precision)
 
                 # ======backward========
