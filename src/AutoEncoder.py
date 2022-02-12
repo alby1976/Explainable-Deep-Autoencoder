@@ -116,6 +116,8 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
                 #                                   y_pred=test_output.cpu().detach().numpy())
                 # rows, columns = geno_test_data.numpy().shape
                 # test_batch_precision_list.append(batch_average_precision / (rows * columns))
+                test_input_list = np.append(test_input_list, geno_test_data.cpu().detach().numpy(), axis=0)
+                test_output_list = np.append(test_output_list, test_output.cpu().detach().numpy())
             # test_batch_precision_list = [r2_score_batch1, r2_score_batch2,...]
             test_average_precision = r2_value(y_true=test_input_list, y_pred=test_output_list)
         print(f"epoch[{epoch + 1:3d}/{num_epochs}, loss: {sum_loss:.4f}, precision: {average_precision:.4f}, "
