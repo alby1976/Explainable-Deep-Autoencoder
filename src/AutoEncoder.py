@@ -23,16 +23,20 @@ from AutoEncoderModule import create_dir
 from AutoEncoderModule import get_normalized_data
 
 
-def r2_value(y_true: ndarray, y_pred: ndarray, features: int) -> float:
+def r2_value(y_true: ndarray, y_pred: ndarray) -> float:
     # num: int = features*(np.sum(y_true*y_pred) - (y_true.sum()*y_pred.sum()))
     # den: int = np.sqrt((features * np.sum(np.square(y_true)) - np.square(y_true.sum())) *
     #                   (features * np.sum(np.square(y_pred)) - np.square(y_pred.sum())))
     y_ave = y_true.mean()
     sse: ndarray = np.square(y_pred - y_ave)
     sst: ndarray = np.square(y_true - y_ave)
+    print(f'y_ave: {y_ave}')
+    print(f'y_true:\n{y_true}')
+    print(f'y_pred:\n{y_pred}')
+    print(f'sse:\n{sse}')
+    print(f'sst:\n{sst}')
+    sys.exit(-1)
     return sse.sum() / sst.sum()
-
-    return np.square(num / den)
 
 
 def get_filtered_data(geno: DataFrame, path_to_save_qc: Path) -> DataFrame:
@@ -44,7 +48,7 @@ def get_filtered_data(geno: DataFrame, path_to_save_qc: Path) -> DataFrame:
 
 
 def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataLoader, geno_test_set_loader: DataLoader,
-           features: int, optimizer: Adam, distance=nn.MSELoss(), num_epochs=200, do_train=True,
+           optimizer: Adam, distance=nn.MSELoss(), num_epochs=200, do_train=True,
            do_test=True, save_dir: Path = Path('./model')):
     create_dir(Path(save_dir))
     for epoch in range(num_epochs):
@@ -69,7 +73,7 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
                 # batch_average_precision = r2_score(y_true=geno_data.cpu().detach().numpy(),
                 #                                   y_pred=output.cpu().detach().numpy())
                 batch_average_precision = r2_value(y_true=geno_data.cpu().detach().numpy(),
-                                                   y_pred=output.cpu().detach().numpy(), features=features)
+                                                   y_pred=output.cpu().detach().numpy())
                 print(f'batch: {current_batch} r2 value: {batch_average_precision}')
                 batch_precision_list.append(batch_average_precision)
 
@@ -101,7 +105,7 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
                 # batch_average_precision = r2_score(y_true=geno_test_data.cpu().detach().numpy(),
                 #                                   y_pred=test_output.cpu().detach().numpy())
                 batch_average_precision = r2_value(y_true=geno_test_data.cpu().detach().numpy(),
-                                                   y_pred=test_output.cpu().detach().numpy(), features=features)
+                                                   y_pred=test_output.cpu().detach().numpy())
                 test_batch_precision_list.append(batch_average_precision)
             # test_batch_precision_list = [r2_score_batch1, r2_score_batch2,...]
             test_average_precision = np.mean(np.asarray(test_batch_precision_list))
@@ -142,7 +146,7 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
     distance = nn.MSELoss()  # for regression, 0, 0.5, 1
     optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
     run_ae(model_name=model_name, model=model, geno_train_set_loader=geno_train_set_loader,
-           geno_test_set_loader=geno_test_set_loader, num_epochs=epoch, features=input_features,
+           geno_test_set_loader=geno_test_set_loader, num_epochs=epoch,
            optimizer=optimizer, distance=distance, do_train=True, do_test=True, save_dir=path_to_save_ae)
 
 
