@@ -7,6 +7,8 @@ import numpy as np
 import pandas as pd
 import torch
 from pathlib import Path
+
+from numpy import ndarray
 from pandas import Series, DataFrame
 from sklearn.preprocessing import minmax_scale
 from sklearn.metrics import r2_score
@@ -34,8 +36,8 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
            do_test=True, save_dir: Path = Path('./model')):
     create_dir(Path(save_dir))
     for epoch in range(num_epochs):
-        input_list: np.ndarray = np.empty((0, features), float)
-        output_list: np.ndarray = np.empty((0, features), float)
+        input_list: ndarray = np.empty((0, features), float)
+        output_list: ndarray = np.empty((0, features), float)
         output_coder_list = []
         average_precision = 0.0
         sum_loss = 0.0
@@ -83,8 +85,8 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
         test_average_precision = 0.0
         test_sum_loss = 0.0
         if do_test:
-            test_input_list: np.ndarray = np.empty((0, features), float)
-            test_output_list: np.ndarray = np.empty((0, features), float)
+            test_input_list: ndarray = np.empty((0, features), float)
+            test_output_list: ndarray = np.empty((0, features), float)
             test_current_batch: int = 0
             model.eval()
             for geno_test_data in geno_test_set_loader:
