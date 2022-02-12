@@ -34,8 +34,8 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
            do_test=True, save_dir: Path = Path('./model')):
     create_dir(Path(save_dir))
     for epoch in range(num_epochs):
-        input_list: np.ndarray = np.empty(3, float)
-        output_list: np.ndarray = np.empty(3, float)
+        input_list: np.ndarray = np.empty(batch_size, float)
+        output_list: np.ndarray = np.empty(batch_size, float)
         output_coder_list = []
         average_precision = 0.0
         sum_loss = 0.0
