@@ -57,7 +57,7 @@ def r2_value(y_true: ndarray, y_pred: ndarray, axis=None) -> tuple:
 
 def adj_r2_value(y_true: ndarray, y_pred: ndarray) -> float:
     n, k = y_true.shape
-    result = (1 - r2_value(y_true=y_true, y_pred=y_pred)[0] * (n - 1))/(n - k - 1)
+    result = (1 - r2_value(y_true=y_true, y_pred=y_pred)[1] * (n - 1))/(n - k - 1)
     return 1 - result
 
 
@@ -174,7 +174,7 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
             precision = calculate_precision(input_data=input_list, output_data=output_list)
             r2_1: ndarray = r2_value(y_true=input_list, y_pred=output_list)[0]
             r2_2: ndarray = r2_value(y_true=input_list, y_pred=output_list)[1]
-            r2 = (r2_1.mean(), r2_2.mean(), adj_r2_value(y_true=input_list, y_pred=output_list),
+            r2 = (r2_2.mean(), adj_r2_value(y_true=input_list, y_pred=output_list),
                   r2_score(y_true=input_list, y_pred=output_list))
         print(f"epoch[{epoch + 1:3d}/{num_epochs}, "
               f"loss: {sum_loss:.4f}, precision: {precision:.4f}, r2: {r2}"
