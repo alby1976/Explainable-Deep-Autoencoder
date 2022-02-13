@@ -176,8 +176,9 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
             r2_2: ndarray = r2_value(y_true=input_list, y_pred=output_list)[1]
             r2 = (r2_1.mean(), r2_2.mean(), adj_r2_value(y_true=input_list, y_pred=output_list),
                   r2_score(y_true=input_list, y_pred=output_list))
-        print(f"epoch[{epoch + 1:3d}/{num_epochs}, loss: {sum_loss:.4f}, precision: {precision:.4f}, r2: {r2:.4f}"
-              f" test lost: {test_sum_loss:.4f}, test precision: {test_precision:.4f} test r2: {test_r2:.4f}")
+        print(f"epoch[{epoch + 1:3d}/{num_epochs}, "
+              f"loss: {sum_loss:.4f}, precision: {precision:.4f}, r2: {r2:(.4f,.4f,.4f)}"
+              f" test lost: {test_sum_loss:.4f}, test precision: {test_precision:.4f} test r2: {test_r2:(.4f,.4f,.4f)}")
 
 
 if __name__ == '__main__':
