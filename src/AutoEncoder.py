@@ -24,14 +24,14 @@ from AutoEncoderModule import get_normalized_data
 
 
 def calculate_precision(input_data: ndarray, output_data: ndarray) -> float:
-    print(f"input: {input_data.shape} output: {output_data.shape}")
+    # print(f"input: {input_data.shape} output: {output_data.shape}")
     y_true = np.asarray([x >= 0.5 for x in input_data])
     y_pred = np.asarray([x >= 0.5 for x in output_data])
     tp = np.count_nonzero(y_true)
     fp = np.count_nonzero(np.asarray([x * (x ^ y) for x, y in zip(y_true, y_pred)]))
-    print(f'y_true: {y_true.shape}\n{y_true}')
-    print(f'y_pred: {y_pred.shape}\n{y_pred}')
-    print(f'tp: {tp} fp: {fp}')
+    # print(f'y_true: {y_true.shape}\n{y_true}')
+    # print(f'y_pred: {y_pred.shape}\n{y_pred}')
+    # print(f'tp: {tp} fp: {fp}')
     return 1 - (tp / (tp + fp))
 
 
