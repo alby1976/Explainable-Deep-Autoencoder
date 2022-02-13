@@ -24,7 +24,7 @@ from AutoEncoderModule import get_normalized_data
 
 
 def calculate_precision(input_data: list, output_data: list) -> float:
-    print(f"input: {np.asarray(input_data).shape} output: {np.asrray(output_data).shape}")
+    print(f"input: {np.asarray(input_data).shape} output: {np.asarray(output_data).shape}")
     y_true = np.asarray([x >= 0.5 for x in input_data])
     y_pred = np.asarray([x >= 0.5 for x in output_data])
     tp = np.count_nonzero(y_true)
