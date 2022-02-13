@@ -57,7 +57,7 @@ def r2_value(y_true: ndarray, y_pred: ndarray, axis=None) -> tuple:
 
 def adj_r2_value(y_true: ndarray, y_pred: ndarray) -> float:
     n, k = y_true.shape
-    result = (1 - r2_value(y_true=y_true, y_pred=y_pred) * (n - 1))/(n - k - 1)
+    result = (1 - r2_value(y_true=y_true, y_pred=y_pred)[0] * (n - 1))/(n - k - 1)
     return 1 - result
 
 
