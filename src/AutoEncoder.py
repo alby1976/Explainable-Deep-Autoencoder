@@ -28,7 +28,10 @@ def calculate_precision(input_data: list, output_data: list) -> float:
     y_pred = np.asarray([x >= 0.5 for x in output_data])
     tp = np.count_nonzero(y_true)
     fp = np.count_nonzero(np.asarray([x * (x ^ y) for x, y in zip(y_true, y_pred)]))
-    return 1 - tp / (tp + fp)
+    print(f'y_true: {y_true.shape}\n{y_true}')
+    print(f'y_pred: {y_pred.shape}\n{y_pred}')
+    print(f'tp: {tp} fp: {fp}')
+    return 1 - (tp / (tp + fp))
 
 
 def r2_value(y_true: ndarray, y_pred: ndarray, axis=None) -> tuple:
