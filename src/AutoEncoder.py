@@ -36,6 +36,7 @@ def r2_value(y_true: ndarray, y_pred: ndarray) -> ndarray:
     print(f'ssr {ssr.shape}:\n{ssr}')
     print(f'sst {ssr.shape}:\n{sst}')
     print(f'ssr: {ssr.sum(axis=0)} sst: {sst.sum(axis=0)} r^2: {ssr.sum(axis=0)/sst.sum(axis=0)}')
+    sys.exit(-1)
     return ssr.sum(axis=0) / sst.sum(axis=0)
 
 
@@ -78,7 +79,7 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
                                                            y_pred=output.cpu().detach().numpy()))
                 # rows, columns = geno_data.numpy().shape
                 # print(f'batch: {current_batch} r2 value: {batch_average_precision}')
-                batch_precision_list.append(batch_average_precision / (rows * columns))
+                batch_precision_list.append(batch_average_precision)
                 # input_list = np.append(input_list, geno_data.cpu().detach().numpy(), axis=0)
                 # output_list = np.append(output_list, output.cpu().detach().numpy(), axis=0)
 
