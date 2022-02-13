@@ -77,24 +77,23 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
                 # ======precision======
                 # batch_average_precision = r2_score(y_true=geno_data.cpu().detach().numpy(),
                 #                                   y_pred=output.cpu().detach().numpy())
-                #input_data = geno_data.numpy()
-                #output_data = output.cpu().detach().numpy()
-                #y_true = np.asarray([x >= 0.5 for x in input_data])
-                #y_pred = np.asarray([x >= 0.5 for x in output_data])
-                #tp = np.count_nonzero(y_true)
-                #fp = np.count_nonzero(np.asarray([x * (x ^ y) for x, y in zip(y_true, y_pred)]))
+                input_data = geno_data.numpy()
+                output_data = output.cpu().detach().numpy()
+                y_true = np.asarray([x >= 0.5 for x in input_data])
+                y_pred = np.asarray([x >= 0.5 for x in output_data])
+                tp = np.count_nonzero(y_true)
+                fp = np.count_nonzero(np.asarray([x * (x ^ y) for x, y in zip(y_true, y_pred)]))
+                batch_average_precision = 1 - tp / (tp + fp)
                 #print(f'y_true {y_true.shape}:\n{y_true}')
                 #print(f'y_pred {y_pred.shape}:\n{y_pred}')
                 #print(f'TP: {tp} FP: {fp} precision: {tp/(tp+fp)}')
-                #rows, columns = y_true.shape
-                #batch_average_precision = tp / (tp + fp)
 
                 # batch_average_precision = np.mean(r2_value(y_true=geno_data.cpu().detach().numpy(),
                 #                                           y_pred=output.cpu().detach().numpy()))
                 # print(f'batch: {current_batch} r2 value: {batch_average_precision}')
-                #batch_precision_list.append(batch_average_precision)
-                input_list = np.append(input_list, geno_data.cpu().detach().numpy(), axis=0)
-                output_list = np.append(output_list, output.cpu().detach().numpy(), axis=0)
+                batch_precision_list.append(batch_average_precision)
+                # input_list = np.append(input_list, geno_data.cpu().detach().numpy(), axis=0)
+                # output_list = np.append(output_list, output.cpu().detach().numpy(), axis=0)
 
                 # ======backward========
                 optimizer.zero_grad()
@@ -105,11 +104,11 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
             coder_file = save_dir.joinpath(f"{model_name}-{str(epoch)}.csv")
             np.savetxt(fname=coder_file, X=coder_np, fmt='%f', delimiter=',')
             # batch_precision_list = [r2_score_batch1, r2_score_batch2,...]
-            y_true = np.asarray([x >= 0.5 for x in input_list])
-            y_pred = np.asarray([x >= 0.5 for x in output_list])
-            tp = np.count_nonzero(y_true)
-            fp = np.count_nonzero(np.asarray([x * (x ^ y) for x, y in zip(y_true, y_pred)]))
-            average_precision = tp / (tp + fp)
+            # y_true = np.asarray([x >= 0.5 for x in input_data])
+            # y_pred = np.asarray([x >= 0.5 for x in output_data])
+            # tp = np.count_nonzero(y_true)
+            # fp = np.count_nonzero(np.asarray([x * (x ^ y) for x, y in zip(y_true, y_pred)]))
+            average_precision = np.mean(np.asarray(batch_precision_list))
         # ===========test==========
         test_batch_precision_list = []
         test_average_precision = 0.0
@@ -139,7 +138,7 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
                 fp = np.count_nonzero(np.asarray([x * (x ^ y) for x, y in zip(y_true, y_pred)]))
 
                 rows, columns = y_true.shape
-                batch_average_precision = tp / (tp + fp)
+                batch_average_precision = 1 - tp / (tp + fp)
                 test_batch_precision_list.append(batch_average_precision)
                 # test_input_list = np.append(test_input_list, geno_test_data.cpu().detach().numpy(), axis=0)
                 # test_output_list = np.append(test_output_list, test_output.cpu().detach().numpy(), axis=0)
