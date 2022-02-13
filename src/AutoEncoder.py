@@ -144,7 +144,7 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
             np.savetxt(fname=coder_file, X=coder_np, fmt='%f', delimiter=',')
             # ======precision======
             precision = calculate_precision(input_data=input_list, output_data=output_list)
-            r2_1: ndarray = r2_value(y_true=input_list, y_pred=np.asarrayoutput_list)[0]
+            r2_1: ndarray = r2_value(y_true=input_list, y_pred=output_list)[0]
             r2_2: ndarray = r2_value(y_true=input_list, y_pred=output_list)[1]
             r2 = (r2_1.mean(), r2_2.mean(), adj_r2_value(y_true=input_list, y_pred=output_list),
                   r2_score(y_true=input_list, y_pred=output_list))
