@@ -48,7 +48,7 @@ def r2_value(y_true: ndarray, y_pred: ndarray, axis=None) -> tuple:
     ssr: ndarray = np.square(y_pred - y_ave)
     sst: ndarray = np.square(y_true - y_ave)
     result = ssr.sum(axis=axis) / sst.sum(axis=axis)
-    if (result.shap != y_true.shape) and (axis == 0):
+    if (result.shape != y_true.shape) and (axis == 0):
         print(f'Method 2 r^2\'s dimension: {result.shape} input\'s dimension: {y_true.shape}')
         sys.exit(-1)
 
