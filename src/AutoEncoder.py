@@ -77,10 +77,10 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
                 # ======precision======
                 # batch_average_precision = r2_score(y_true=geno_data.cpu().detach().numpy(),
                 #                                   y_pred=output.cpu().detach().numpy())
-                y_true = np.asarray([True if x >= 0.5 else False for x in geno_data.numpy()])
-                y_pred = np.asarray([True if x >= 0.5 else False for x in output.cpu().detach().numpy()])
+                y_true = [True if x >= 0.5 else False for x in geno_data.numpy()]
+                y_pred = [True if x >= 0.5 else False for x in output.cpu().detach().numpy()]
                 tp = np.count_nonzero(y_true)
-                fp = np.count_nonzero(np.asarray([(bool(y) and not(bool(x))) for x, y in zip(y_true, y_pred)]))
+                fp = np.count_nonzero([(bool(y) and not(bool(x))) for x, y in zip(y_true, y_pred)])
 
                 rows, columns = true.shape
                 batch_average_precision = tp / (tp + fp)
