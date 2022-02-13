@@ -77,9 +77,13 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
                 # ======precision======
                 # batch_average_precision = r2_score(y_true=geno_data.cpu().detach().numpy(),
                 #                                   y_pred=output.cpu().detach().numpy())
-                batch_average_precision = np.mean(r2_value(y_true=geno_data.cpu().detach().numpy(),
-                                                           y_pred=output.cpu().detach().numpy()))
-                # rows, columns = geno_data.numpy().shape
+                true = geno_data.numpy()
+                pred = output.cpu().detach().numpy()
+                rows, columns = true.numpy().shape
+                batch_average_precision = 1 - np.count_nonzero(true - pred)/(rows * columns)
+
+                # batch_average_precision = np.mean(r2_value(y_true=geno_data.cpu().detach().numpy(),
+                #                                           y_pred=output.cpu().detach().numpy()))
                 # print(f'batch: {current_batch} r2 value: {batch_average_precision}')
                 batch_precision_list.append(batch_average_precision)
                 # input_list = np.append(input_list, geno_data.cpu().detach().numpy(), axis=0)
@@ -114,9 +118,13 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
                 # ======precision======
                 # batch_average_precision = r2_score(y_true=geno_test_data.cpu().detach().numpy(),
                 #                                   y_pred=test_output.cpu().detach().numpy())
-                batch_average_precision = np.mean(r2_value(y_true=geno_test_data.cpu().detach().numpy(),
-                                                           y_pred=test_output.cpu().detach().numpy()))
-                # rows, columns = geno_test_data.numpy().shape
+                # batch_average_precision = np.mean(r2_value(y_true=geno_test_data.cpu().detach().numpy(),
+                #                                           y_pred=test_output.cpu().detach().numpy()))
+                true = geno_test_data.numpy()
+                pred = test_output.cpu().detach().numpy()
+
+                rows, columns = true.shape
+                batch_average_precision = 1 - np.count_nonzero(true - pred) / (rows * columns)
                 test_batch_precision_list.append(batch_average_precision)
                 # test_input_list = np.append(test_input_list, geno_test_data.cpu().detach().numpy(), axis=0)
                 # test_output_list = np.append(test_output_list, test_output.cpu().detach().numpy(), axis=0)
