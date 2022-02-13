@@ -23,7 +23,7 @@ from AutoEncoderModule import create_dir
 from AutoEncoderModule import get_normalized_data
 
 
-def calculate_precision (input_data: list, output_data: list) -> float:
+def calculate_precision(input_data: list, output_data: list) -> float:
     y_true = np.asarray([x >= 0.5 for x in input_data])
     y_pred = np.asarray([x >= 0.5 for x in output_data])
     tp = np.count_nonzero(y_true)
@@ -83,10 +83,12 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
     geno_train, geno_test = train_test_split(geno, test_size=0.1, random_state=42)
 
     geno_train_set: GPDataSet = GPDataSet(geno)
-    geno_train_set_loader: DataLoader[Any] = DataLoader(dataset=geno_train_set, batch_size=batch_size, shuffle=False, num_workers=8)
+    geno_train_set_loader: DataLoader[Any] = DataLoader(dataset=geno_train_set, batch_size=batch_size,
+                                                        shuffle=False, num_workers=8)
 
     geno_test_set = GPDataSet(geno_test)
-    geno_test_set_loader: DataLoader[Any] = DataLoader(dataset=geno_test_set, batch_size=batch_size, shuffle=False, num_workers=8)
+    geno_test_set_loader: DataLoader[Any] = DataLoader(dataset=geno_test_set, batch_size=batch_size,
+                                                       shuffle=False, num_workers=8)
     input_features = len(geno[0])
     output_features = input_features
     smallest_layer = math.ceil(input_features / compression_ratio)
@@ -136,12 +138,15 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
             np.savetxt(fname=coder_file, X=coder_np, fmt='%f', delimiter=',')
             # ======precision======
             precision = calculate_precision(input_data=input_list, output_data=output_list)
-            r2_1: ndarray = r2_value(y_true=input_list, y_pred=output_list)[0]
+            input_list = np.asarray(input_list)
+            output_list = np.asarray(output_list)
+            r2_1: ndarray = r2_value(y_true=input_list, y_pred=np.asarrayoutput_list)[0]
             r2_2: ndarray = r2_value(y_true=input_list, y_pred=output_list)[1]
-            r2 = (r2_1.mean(), r2_2.mean(), adj_r2_value(y_true=input_list, y_pred=output_list))
+            r2 = (r2_1.mean(), r2_2.mean(), adj_r2_value(y_true=input_list, y_pred=output_list),
+                  r2_score(y_true=input_list, y_pred=output_list))
         # ===========test==========
-        input_list: []
-        output_list: []
+        input_list = []
+        output_list = []
         test_sum_loss = 0.0
         test_precision = 0.0
         test_r2: tuple = ()
@@ -162,11 +167,14 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
                 output_list.append(test_output.cpu().detach().numpy())
             # ======precision======
             precision = calculate_precision(input_data=input_list, output_data=output_list)
+            input_list = np.asarray(input_list)
+            output_list = np.asarray(output_list)
             r2_1: ndarray = r2_value(y_true=input_list, y_pred=output_list)[0]
             r2_2: ndarray = r2_value(y_true=input_list, y_pred=output_list)[1]
-            r2 = (r2_1.mean(), r2_2.mean(), adj_r2_value(y_true=input_list, y_pred=output_list))
+            r2 = (r2_1.mean(), r2_2.mean(), adj_r2_value(y_true=input_list, y_pred=output_list),
+                  r2_score(y_true=input_list, y_pred=output_list))
         print(f"epoch[{epoch + 1:3d}/{num_epochs}, loss: {sum_loss:.4f}, precision: {precision:.4f}, r2: {r2:.4f}"
-              f" test lost: {test_sum_loss:.4f}, test precision: {test_precision:.4f} test r2: " {test_r2:.4f})
+              f" test lost: {test_sum_loss:.4f}, test precision: {test_precision:.4f} test r2: {test_r2:.4f}")
 
 
 if __name__ == '__main__':
