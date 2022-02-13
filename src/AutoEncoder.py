@@ -30,12 +30,12 @@ def r2_value(y_true: ndarray, y_pred: ndarray) -> ndarray:
     y_ave = y_true.mean(axis=0)
     ssr: ndarray = np.square(y_pred - y_ave)
     sst: ndarray = np.square(y_true - y_ave)
-    # print(f'y_ave {y_ave.shape}: {y_ave}')
-    # print(f'y_true {y_true.shape}:\n{y_true}')
-    # print(f'y_pred {y_pred.shape}:\n{y_pred}')
-    # print(f'ssr {ssr.shape}:\n{ssr}')
-    # print(f'sst {ssr.shape}:\n{sst}')
-    # print(f'ssr: {ssr.sum()} sst: {sst.sum()} r^2: {ssr.sum()/sst.sum()}')
+    print(f'y_ave {y_ave.shape}: {y_ave}')
+    print(f'y_true {y_true.shape}:\n{y_true}')
+    print(f'y_pred {y_pred.shape}:\n{y_pred}')
+    print(f'ssr {ssr.shape}:\n{ssr}')
+    print(f'sst {ssr.shape}:\n{sst}')
+    print(f'ssr: {ssr.sum(axis=0)} sst: {sst.sum(axis=0)} r^2: {ssr.sum(axis=0)/sst.sum(axis=0)}')
     return ssr.sum(axis=0) / sst.sum(axis=0)
 
 
