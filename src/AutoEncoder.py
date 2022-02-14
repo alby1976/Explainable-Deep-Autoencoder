@@ -93,17 +93,17 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
     distance = nn.MSELoss()  # for regression, 0, 0.5, 1
     optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
     run_ae(model_name=model_name, model=model, geno_train_set_loader=geno_train_set_loader,
-           features=input_features, geno_test_set_loader=geno_test_set_loader, num_epochs=epoch,
+           features=input_features, geno_test_set_loader=geno_test_set_loader, window_size=size,
            optimizer=optimizer, distance=distance, do_train=True, do_test=True, save_dir=path_to_save_ae)
 
 
 def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataLoader, geno_test_set_loader: DataLoader,
-           features: int, optimizer: Adam, distance=nn.MSELoss(), num_epochs=200, do_train=True,
+           features: int, optimizer: Adam, distance=nn.MSELoss(), window_size=20, do_train=True,
            do_test=True, save_dir: Path = Path('./model')):
     create_dir(Path(save_dir))
     epoch: int = 0
     test_loss_list: Series = Series([], dtype=float)
-    while epoch < num_epochs:
+    while test_loss_list.rolling(window=20) == test_sum_loss:
         input_list: ndarray = np.empty((0, features), dtype=float)
         output_list: ndarray = np.empty((0, features), dtype=float)
         precision = 0.0
@@ -173,7 +173,7 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
               f" test lost: {test_sum_loss:.4f}, test precision: {test_precision:.4f} "
               f"test r2: {' '.join(format(r, '.4f') for r in test_r2)}")
         epoch += 1
-        if test_loss_list.rolling(window=20) == test_sum_loss or test_loss_list.min() < test_sum_loss:
+        if test_loss_list.min() < test_sum_loss:
             break
 
 
