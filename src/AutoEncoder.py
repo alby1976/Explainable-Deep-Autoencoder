@@ -181,7 +181,8 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
               f" test lost: {test_sum_loss:.4f}, test precision: {test_precision:.4f} "
               f"test r2: {' '.join(format(r, '.4f') for r in test_r2)}")
         epoch += 1
-        if (round(test_loss_list.rolling(window=window_size), 5) == round(test_sum_loss, 5)) or \
+        tmp = test_loss_list.rolling(window=window_size)
+        if round(tmp, 5) == round(test_sum_loss, 5) or \
                 (test_loss_list.min() < test_sum_loss):
             break
 
