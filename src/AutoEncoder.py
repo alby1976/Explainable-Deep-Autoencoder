@@ -43,7 +43,7 @@ def r2_value(y_true: ndarray, y_pred: ndarray) -> float:
     if sse / sst == 1 - ssr / sst:
         return sse / sst
     else:
-        return 0.0
+        return 1 - ssr / sst
 
 
 def adj_r2_value(r2: float, n: int, k: int) -> float:
