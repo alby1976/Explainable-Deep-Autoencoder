@@ -93,23 +93,24 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
     distance = nn.MSELoss()  # for regression, 0, 0.5, 1
     optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
     run_ae(model_name=model_name, model=model, geno_train_set_loader=geno_train_set_loader,
-           features=input_features, geno_test_set_loader=geno_test_set_loader, window_size=size,
+           geno_test_set_loader=geno_test_set_loader, window_size=size,
            optimizer=optimizer, distance=distance, do_train=True, do_test=True, save_dir=path_to_save_ae)
 
 
 def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataLoader, geno_test_set_loader: DataLoader,
-           features: int, optimizer: Adam, distance=nn.MSELoss(), window_size=20, do_train=True,
+           optimizer: Adam, distance=nn.MSELoss(), window_size=20, do_train=True,
            do_test=True, save_dir: Path = Path('./model')):
     create_dir(Path(save_dir))
     epoch: int = 0
     test_loss_list: Series = Series([], dtype=float)
-    while True:
-        input_list: ndarray = np.empty((0, features), dtype=float)
-        output_list: ndarray = np.empty((0, features), dtype=float)
+    while epoch < 2000:
         precision = 0.0
         r2 = ()
         sum_loss = 0.0
         if do_train:
+            batch_ave_list = []
+            r2_list = []
+            r2_adj_list = []
             output_coder_list = []
             model.train()
             for geno_data in geno_train_set_loader:
@@ -124,8 +125,14 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
                 # ======precision======
                 # batch_average_precision = r2_score(y_true=geno_data.cpu().detach().numpy(),
                 #                                   y_pred=output.cpu().detach().numpy())
-                input_list = np.append(input_list, geno_data.numpy(), axis=0)
-                output_list = np.append(output_list, output.cpu().detach().numpy(), axis=0)
+                input_list = geno_data.numpy()
+                output_list = output.cpu().detach().numpy()
+                tmp1: float = r2_value(y_true=input_list, y_pred=output_list)
+                rows, k = input_list.shape
+                n = rows * k
+                batch_ave_list.append(calculate_precision(input_data=input_list, output_data=output_list))
+                r2_list.append(tmp1)
+                r2_adj_list.append(adj_r2_value(tmp1, n, k))
                 # ======backward========
                 optimizer.zero_grad()
                 loss.backward()
@@ -135,14 +142,12 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
             coder_file = save_dir.joinpath(f"{model_name}-{str(epoch)}.csv")
             np.savetxt(fname=coder_file, X=coder_np, fmt='%f', delimiter=',')
             # ======precision======
-            precision = calculate_precision(input_data=input_list, output_data=output_list)
-            tmp1: float = r2_value(y_true=input_list, y_pred=output_list)
-            rows, k = input_list.shape
-            n = rows * k
-            r2 = (tmp1, adj_r2_value(tmp1, n, k))
+            precision = np.asarray(batch_ave_list).mean()
+            r2 = (np.asarray(r2_list).mean(), np.asarray(r2_adj_list).mean())
         # ===========test==========
-        input_list: ndarray = np.empty((0, features), dtype=float)
-        output_list: ndarray = np.empty((0, features), dtype=float)
+        batch_ave_list = []
+        r2_list = []
+        r2_adj_list = []
         test_sum_loss = 0.0
         test_precision = 0.0
         test_r2: tuple = ()
@@ -159,21 +164,24 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
                 #                                   y_pred=test_output.cpu().detach().numpy())
                 # batch_average_precision = np.mean(r2_value(y_true=geno_test_data.cpu().detach().numpy(),
                 #                                           y_pred=test_output.cpu().detach().numpy()))
-                input_list = np.append(input_list, geno_test_data.numpy(), axis=0)
-                output_list = np.append(output_list, test_output.cpu().detach().numpy(), axis=0)
+                input_list = geno_test_data.cpu().detach().numpy()
+                output_list = test_output.cpu().detach().numpy()
+                tmp1: float = r2_value(y_true=input_list, y_pred=output_list)
+                rows, k = input_list.shape
+                n = rows * k
+                batch_ave_list.append(calculate_precision(input_data=input_list, output_data=output_list))
+                r2_list.append(tmp1)
+                r2_adj_list.append(adj_r2_value(tmp1, n, k))
             # ======precision======
-            test_precision = calculate_precision(input_data=input_list, output_data=output_list)
-            tmp1: float = r2_value(y_true=input_list, y_pred=output_list)
-            rows, k = input_list.shape
-            n = rows * k
-            test_r2 = (tmp1, adj_r2_value(tmp1, n, k))
+            test_precision = np.asarray(batch_ave_list).mean()
+            test_r2 = (np.asarray(r2_list).mean(), np.asarray(r2_adj_list).mean())
         test_loss_list.append(Series([test_sum_loss]))
         print(f"epoch[{epoch + 1:4d}], "
               f"loss: {sum_loss:.4f}, precision: {precision:.4f}, r2: {' '.join(format(r, '.4f') for r in r2)}"
               f" test lost: {test_sum_loss:.4f}, test precision: {test_precision:.4f} "
               f"test r2: {' '.join(format(r, '.4f') for r in test_r2)}")
         epoch += 1
-        if (test_loss_list.rolling(window=window_size) == test_sum_loss) or \
+        if (round(test_loss_list.rolling(window=window_size), 5) == round(test_sum_loss, 5)) or \
                 (test_loss_list.min() < test_sum_loss):
             break
 
