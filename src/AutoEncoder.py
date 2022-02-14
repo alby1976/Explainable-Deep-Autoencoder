@@ -11,7 +11,6 @@ from pathlib import Path
 from numpy import ndarray
 from pandas import Series, DataFrame
 from sklearn.preprocessing import minmax_scale
-from sklearn.metrics import r2_score
 from torch import nn
 from torch.autograd import Variable
 from torch.optim import Adam
@@ -102,7 +101,9 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
            features: int, optimizer: Adam, distance=nn.MSELoss(), num_epochs=200, do_train=True,
            do_test=True, save_dir: Path = Path('./model')):
     create_dir(Path(save_dir))
-    for epoch in range(num_epochs):
+    epoch: int = 0
+    test_loss_list: Series = Series([])
+    while epoch < num_epochs:
         input_list: ndarray = np.empty((0, features), dtype=float)
         output_list: ndarray = np.empty((0, features), dtype=float)
         precision = 0.0
@@ -135,11 +136,10 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
             np.savetxt(fname=coder_file, X=coder_np, fmt='%f', delimiter=',')
             # ======precision======
             precision = calculate_precision(input_data=input_list, output_data=output_list)
-            tmp1: float = r2_score(y_true=input_list, y_pred=output_list)
-            tmp2: float = r2_value(y_true=input_list, y_pred=output_list)
+            tmp1: float = r2_value(y_true=input_list, y_pred=output_list)
             rows, k = input_list.shape
             n = rows * k
-            r2 = (tmp1, adj_r2_value(tmp1, n, k), tmp2, adj_r2_value(tmp2, n, k))
+            r2 = (tmp1, adj_r2_value(tmp1, n, k))
         # ===========test==========
         input_list: ndarray = np.empty((0, features), dtype=float)
         output_list: ndarray = np.empty((0, features), dtype=float)
@@ -163,15 +163,18 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
                 output_list = np.append(output_list, test_output.cpu().detach().numpy(), axis=0)
             # ======precision======
             test_precision = calculate_precision(input_data=input_list, output_data=output_list)
-            tmp1: float = r2_score(y_true=input_list, y_pred=output_list)
-            tmp2: float = r2_value(y_true=input_list, y_pred=output_list)
+            tmp1: float = r2_value(y_true=input_list, y_pred=output_list)
             rows, k = input_list.shape
             n = rows * k
-            test_r2 = (tmp1, adj_r2_value(tmp1, n, k), tmp2, adj_r2_value(tmp2, n, k))
+            test_r2 = (tmp1, adj_r2_value(tmp1, n, k))
+        test_sum_loss.append(Series([test_sum_loss]))
         print(f"epoch[{epoch + 1:3d}/{num_epochs}, "
-              f"loss: {sum_loss:.4f}, precision: {precision:.4f}, r2: {' '.join(format(r , '.4f') for r in r2)}\n"
+              f"loss: {sum_loss:.4f}, precision: {precision:.4f}, r2: {' '.join(format(r, '.4f') for r in r2)}"
               f" test lost: {test_sum_loss:.4f}, test precision: {test_precision:.4f} "
-              f"test r2: {' '.join(format(r , '.4f') for r in test_r2)}")
+              f"test r2: {' '.join(format(r, '.4f') for r in test_r2)}")
+        epoch += 1
+        if test_loss_list.rolling(window=20) == test_sum_loss or test_loss_list.min() < test_sum_loss:
+            break
 
 
 if __name__ == '__main__':
