@@ -37,9 +37,13 @@ def calculate_precision(input_data: ndarray, output_data: ndarray) -> float:
 
 def r2_value(y_true: ndarray, y_pred: ndarray) -> float:
     y_ave = y_true.mean()
-    ssr: int = (np.square(y_pred - y_ave)).sum()
+    sse: int = (np.square(y_pred - y_ave)).sum()
+    ssr: int = (np.square(y_true - y_pred)).sum()
     sst: int = (np.square(y_true - y_ave)).sum()
-    return ssr / sst
+    if sse / sst == 1 - ssr / sst:
+        return sse / sst
+    else:
+        return 0.0
 
 
 def adj_r2_value(r2: float, n: int, k: int) -> float:
