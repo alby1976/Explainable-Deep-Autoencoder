@@ -59,7 +59,7 @@ def get_filtered_data(geno: DataFrame, path_to_save_qc: Path) -> DataFrame:
 
 
 def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_save_ae: Path,
-         compression_ratio: int, epoch: int, batch_size: int):
+         compression_ratio: int, size: int, batch_size: int):
     if not (path_to_save_ae.is_dir()):
         print(f'{path_to_save_ae} is not a directory')
         sys.exit(-1)
@@ -103,7 +103,7 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
     create_dir(Path(save_dir))
     epoch: int = 0
     test_loss_list: Series = Series([], dtype=float)
-    while test_loss_list.rolling(window=20) == test_sum_loss:
+    while True:
         input_list: ndarray = np.empty((0, features), dtype=float)
         output_list: ndarray = np.empty((0, features), dtype=float)
         precision = 0.0
@@ -173,7 +173,8 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
               f" test lost: {test_sum_loss:.4f}, test precision: {test_precision:.4f} "
               f"test r2: {' '.join(format(r, '.4f') for r in test_r2)}")
         epoch += 1
-        if test_loss_list.min() < test_sum_loss:
+        if (test_loss_list.rolling(window=window_size) == test_sum_loss) or \
+                (test_loss_list.min() < test_sum_loss):
             break
 
 
@@ -187,11 +188,11 @@ if __name__ == '__main__':
         print('\tquality_control_filename - filename of original data after quality control e.g. ./data_QC.csv')
         print('\tdir_AE_model - base dir to saved AE models e.g. ./AE')
         print('\tcompression_ratio - compression ratio for smallest layer NB: ideally a number that is power of 2')
-        print('\tepoch - number of iterations e.g. 200')
+        print('\twindow_size - window_size for moving average e.g. 20')
         print('\tbatch_size - the size of each batch e.g. 4096')
 
         main('AE_Geno', Path('../data_example.csv'), Path('./data_QC.csv'), Path('./AE'), 1024, 200, 4096)
     else:
         main(model_name=sys.argv[1], path_to_data=Path(sys.argv[2]), path_to_save_qc=Path(sys.argv[3]),
              path_to_save_ae=Path(sys.argv[4]),
-             compression_ratio=int(sys.argv[5]), epoch=int(sys.argv[6]), batch_size=int(sys.argv[7]))
+             compression_ratio=int(sys.argv[5]), size=int(sys.argv[6]), batch_size=int(sys.argv[7]))
