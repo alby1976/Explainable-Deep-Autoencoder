@@ -35,29 +35,15 @@ def calculate_precision(input_data: ndarray, output_data: ndarray) -> float:
     return 1 - (tp / (tp + fp))
 
 
-def r2_value(y_true: ndarray, y_pred: ndarray, axis=None) -> tuple:
-    features = y_true.shape[1]
-    num: int = features*(np.sum(y_true*y_pred, axis=axis) - (y_true.sum(axis=axis)*y_pred.sum(axis=axis)))
-    den: int = np.sqrt((features * np.sum(np.square(y_true), axis=axis) - np.square(y_true.sum(axis=axis))) *
-                       (features * np.sum(np.square(y_pred), axis=axis) - np.square(y_pred.sum(axis=axis))))
-    r2: ndarray = np.square(num/den)
-    if (r2.shape != y_true.shape) and (axis == 0):
-        print(f'Method 1 r^2\'s dimension: {r2.shape} input\'s dimension: {y_true.shape}')
-        sys.exit(-1)
-    y_ave = y_true.mean(axis=axis)
-    ssr: ndarray = np.square(y_pred - y_ave)
-    sst: ndarray = np.square(y_true - y_ave)
-    result = ssr.sum(axis=axis) / sst.sum(axis=axis)
-    if (result.shape != y_true.shape) and (axis == 0):
-        print(f'Method 2 r^2\'s dimension: {result.shape} input\'s dimension: {y_true.shape}')
-        sys.exit(-1)
-
-    return r2, result
+def r2_value(y_true: ndarray, y_pred: ndarray) -> float:
+    y_ave = y_true.mean()
+    ssr: int = (np.square(y_pred - y_ave)).sum()
+    sst: int = (np.square(y_true - y_ave)).sum()
+    return ssr / sst
 
 
-def adj_r2_value(y_true: ndarray, y_pred: ndarray) -> float:
-    n, k = y_true.shape
-    result = (1 - r2_value(y_true=y_true, y_pred=y_pred)[1] * (n - 1))/(n - k - 1)
+def adj_r2_value(r2: float, n: int, k: int) -> float:
+    result = (1 - r2 * (n - 1))/(n - k - 1)
     return 1 - result
 
 
@@ -145,10 +131,11 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
             np.savetxt(fname=coder_file, X=coder_np, fmt='%f', delimiter=',')
             # ======precision======
             precision = calculate_precision(input_data=input_list, output_data=output_list)
-            r2_1: ndarray = r2_value(y_true=input_list, y_pred=output_list)[0]
-            r2_2: ndarray = r2_value(y_true=input_list, y_pred=output_list)[1]
-            r2 = (r2_score(y_true=input_list, y_pred=output_list),
-                  r2_2.mean(), adj_r2_value(y_true=input_list, y_pred=output_list))
+            tmp1: float = r2_score(y_true=input_list, y_pred=output_list)
+            tmp2: float = r2_value(y_true=input_list, y_pred=output_list)
+            rows, k = input_list.shape
+            n = rows * k
+            r2 = (tmp1, adj_r2_value(tmp1, n, k), tmp2, adj_r2_value(tmp2, n, k))
         # ===========test==========
         input_list: ndarray = np.empty((0, features), dtype=float)
         output_list: ndarray = np.empty((0, features), dtype=float)
@@ -172,12 +159,15 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
                 output_list = np.append(output_list, test_output.cpu().detach().numpy(), axis=0)
             # ======precision======
             test_precision = calculate_precision(input_data=input_list, output_data=output_list)
-            r2_2: ndarray = r2_value(y_true=input_list, y_pred=output_list)[1]
-            test_r2 = (r2_score(y_true=input_list, y_pred=output_list),
-                       r2_2.mean(), adj_r2_value(y_true=input_list, y_pred=output_list))
+            tmp1: float = r2_score(y_true=input_list, y_pred=output_list)
+            tmp2: float = r2_value(y_true=input_list, y_pred=output_list)
+            rows, k = input_list.shape
+            n = rows * k
+            test_r2 = (tmp1, adj_r2_value(tmp1, n, k), tmp2, adj_r2_value(tmp2, n, k))
         print(f"epoch[{epoch + 1:3d}/{num_epochs}, "
-              f"loss: {sum_loss:.4f}, precision: {precision:.4f}, r2: {r2}"
-              f" test lost: {test_sum_loss:.4f}, test precision: {test_precision:.4f} test r2: {test_r2}")
+              f"loss: {sum_loss:.4f}, precision: {precision:.4f}, r2: {' '.join(format(r , '.4f') for r in r2)}\n"
+              f" test lost: {test_sum_loss:.4f}, test precision: {test_precision:.4f} "
+              f"test r2: {' '.join(format(r , '.4f') for r in test_r2)}")
 
 
 if __name__ == '__main__':
