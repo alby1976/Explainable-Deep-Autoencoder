@@ -167,7 +167,7 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
             rows, k = input_list.shape
             n = rows * k
             test_r2 = (tmp1, adj_r2_value(tmp1, n, k))
-        test_sum_loss.append(Series([test_sum_loss]))
+        test_loss_list.append(Series([test_sum_loss]))
         print(f"epoch[{epoch + 1:3d}/{num_epochs}, "
               f"loss: {sum_loss:.4f}, precision: {precision:.4f}, r2: {' '.join(format(r, '.4f') for r in r2)}"
               f" test lost: {test_sum_loss:.4f}, test precision: {test_precision:.4f} "
