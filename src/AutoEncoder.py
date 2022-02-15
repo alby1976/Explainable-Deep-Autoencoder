@@ -26,7 +26,7 @@ def calculate_precision(input_data: ndarray, output_data: ndarray) -> float:
     # print(f"input: {input_data.shape} output: {output_data.shape}")
     y_true = np.asarray([x >= 0.5 for x in input_data])
     y_pred = np.asarray([x >= 0.5 for x in output_data])
-    tp = np.count_nonzero(np.asarray([x * (x == y) for x, y in zip (y_true, y_pred)]))
+    tp = np.count_nonzero(np.asarray([x * (x == y) for x, y in zip(y_true, y_pred)]))
     fp = np.count_nonzero(np.asarray([x * (x ^ y) for x, y in zip(y_true, y_pred)]))
     # print(f'y_true: {y_true.shape}\n{y_true}')
     # print(f'y_pred: {y_pred.shape}\n{y_pred}')
@@ -114,7 +114,7 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
             output_coder_list = []
             model.train()
             for geno_data in geno_train_set_loader:
-                train_geno = Variable(geno_data).float().cuda()
+                train_geno: object = Variable(geno_data).float().cuda()
                 # =======forward========
                 output, coder = model.forward(train_geno)
                 loss = distance(output, train_geno)
@@ -125,8 +125,8 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
                 # ======precision======
                 # batch_average_precision = r2_score(y_true=geno_data.cpu().detach().numpy(),
                 #                                   y_pred=output.cpu().detach().numpy())
-                input_list = geno_data.numpy()
-                output_list = output.cpu().detach().numpy()
+                input_list: ndarray = geno_data.numpy()
+                output_list: ndarray = output.cpu().detach().numpy()
                 tmp1: float = r2_value(y_true=input_list, y_pred=output_list)
                 rows, k = input_list.shape
                 n = rows * k
@@ -166,7 +166,7 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
                 #                                           y_pred=test_output.cpu().detach().numpy()))
                 input_list = geno_test_data.cpu().detach().numpy()
                 output_list = test_output.cpu().detach().numpy()
-                tmp1: float = r2_value(y_true=input_list, y_pred=output_list)
+                tmp1 = r2_value(y_true=input_list, y_pred=output_list)
                 rows, k = input_list.shape
                 n = rows * k
                 batch_ave_list.append(calculate_precision(input_data=input_list, output_data=output_list))
@@ -181,8 +181,8 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
               f" test lost: {test_sum_loss:.4f}, test precision: {test_precision:.4f} "
               f"test r2: {' '.join(format(r, '.4f') for r in test_r2)}")
         epoch += 1
-        tmp = test_loss_list.rolling(window=window_size)
-        if np.round(tmp, 5) == np.round(test_sum_loss, 5) or \
+        tmp = test_loss_list[-window_size:]
+        if round(tmp.mean(), 6) == np.round(test_sum_loss, 6) or \
                 (test_loss_list.min() < test_sum_loss):
             break
 
