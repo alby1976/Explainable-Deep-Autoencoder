@@ -2,7 +2,7 @@
 # ** path - is a string to desired path location. **
 import math
 import sys
-from typing import Union, Any
+from typing import Union, Any, Tuple
 import numpy as np
 import pandas as pd
 import torch
@@ -87,19 +87,14 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
     epoch: int = 0
     test_loss_list: Series = Series([], dtype=float)
     while epoch < 2000:
-        input_list: ndarray = np.empty((0, features), dtype=float)
-        output_list: ndarray = np.empty((0, features), dtype=float)
-        precision = 0.0
-        r2 = 9.0
-        spearman = 0.0
-        sum_loss = 0.0
+        input_list: Union[ndarray, int] = np.empty((0, features), dtype=float)
+        output_list: Union[ndarray, int] = np.empty((0, features), dtype=float)
+        sum_loss: float = 0.0
+        r2: float = 0.0
+        ks_test: Tuple[float, float] = (0.0, 0.0)
+        rho: ndarray = np.asarray([])
+        spearman: Tuple[any, float] = (0.0, 0.0)
         if do_train:
-            batch_ave_list = []
-            r2_list = [
-
-
-            ]
-            r2_adj_list = []
             output_coder_list = []
             model.train()
             for geno_data in geno_train_set_loader:
@@ -126,14 +121,17 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
             np.savetxt(fname=coder_file, X=coder_np, fmt='%f', delimiter=',')
             # ======goodness of fit======
             ks_test = kstest(rvs=output_list, cdf=input_list)
-            spearman = spearmanr(a=input_list, b=output_list)
+            spearman: Union[tuple, any] = spearmanr(a=input_list, b=output_list)
+            rho = spearman[0]
             r2 = r2_value(y_true=input_list, y_pred=output_list)
         # ===========test==========
-        test_input_list: ndarray = np.empty((0, features), dtype=float)
-        test_output_list: ndarray = np.empty((0, features), dtype=float)
-        test_sum_loss = 0.0
-        test_spearman = 0.0
-        test_r2 = 0.0
+        test_input_list: Union[ndarray, int] = np.empty((0, features), dtype=float)
+        test_output_list: Union[ndarray, int] = np.empty((0, features), dtype=float)
+        test_sum_loss: float = 0.0
+        test_r2: float = 0.0
+        test_ks_test: Tuple[float, float] = (0.0, 0.0)
+        test_rho: ndarray = np.asarray([])
+        test_spearman: Tuple[any, float] = (0.0, 0.0)
         if do_test:
             model.eval()
             for geno_test_data in geno_test_set_loader:
@@ -150,16 +148,16 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
                 test_input_list = np.append(test_input_list, geno_test_data.cpu().detach().numpy())
                 test_output_list = np.append(test_output_list, test_output.cpu().detach().numpy())
             # ======goodness of fit======
-            test_ks_test = ks_test(rvs=test_output_list, cdf=test_input_list)
+            test_ks_test = kstest(rvs=test_output_list, cdf=test_input_list)
             test_r2 = r2_value(y_true=test_input_list, y_pred=test_output_list)
-        test_loss_list.append(Series([test_sum_loss]))
-        rho = spearman[0]
-        test_rho = test_spearman[0]
+            test_loss_list.append(Series([test_sum_loss]))
+            test_spearman = spearmanr(a=test_input_list, b=test_output_list)
+            test_rho = test_spearman[0]
         print(f"epoch[{epoch + 1:4d}], "
               f"loss: {sum_loss:.4f}, ks test: {ks_test[0]:.4f}, p-value: {ks_test[1]:.4f}"
               f", rho: {rho[0,1]:.4f}, p-value{spearman[1]:.4f}, r2: {r2:.4f}"
               f" test loss: {test_sum_loss:.4f}, ks test: {test_ks_test[0]:.4f} , p-value: {test_ks_test[1]:.4f}"
-              f", rho {test_rho[0,1]:.4f} p-value: {test_spearman[1]}"
+              f", rho {test_rho[0,1]:.4f} p-value: {test_spearman[1]:.4f}"
               f"test r2: {test_r2:.4f}")
         epoch += 1
         tmp = test_loss_list[-window_size:]

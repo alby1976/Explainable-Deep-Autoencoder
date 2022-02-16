@@ -9,10 +9,11 @@ scikit-learn==0.23.1
 pyensembl>=1.9.4
 torch==1.6.0
 torchvision==0.7.0
-
+scipy>=1.7.3
 
 # R package required:
 WebGestaltR==0.4.4
 data.table==1.14.2
 biomaRt==2.50.0
+
 
