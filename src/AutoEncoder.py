@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import torch
 from pathlib import Path
-from scipy.stats import spearmanr, kstest
+from scipy.stats import spearmanr, kstest, pearsonr
 from numpy import ndarray
 from pandas import Series, DataFrame
 from sklearn.preprocessing import minmax_scale
@@ -93,6 +93,7 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
         r2: float = 0.0
         ks_test: Tuple[float, float] = (0.0, 0.0)
         spearman: Tuple[any, float] = (0.0, 0.0)
+        pearson: Tuple[float, any] = (0.0, 0.0)
         if do_train:
             output_coder_list = []
             model.train()
@@ -120,15 +121,17 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
             np.savetxt(fname=coder_file, X=coder_np, fmt='%f', delimiter=',')
             # ======goodness of fit======
             ks_test = kstest(rvs=output_list, cdf=input_list)
-            spearman: Union[tuple, any] = spearmanr(a=input_list, b=output_list)
+            spearman = spearmanr(a=input_list, b=output_list)
+            pearson = pearsonr(x=input_list, y=output_list)
             r2 = r2_value(y_true=input_list, y_pred=output_list)
         # ===========test==========
         test_input_list: Union[ndarray, int] = np.empty((0, features), dtype=float)
         test_output_list: Union[ndarray, int] = np.empty((0, features), dtype=float)
-        test_sum_loss: float = 0.0
-        test_r2: float = 0.0
         test_ks_test: Tuple[float, float] = (0.0, 0.0)
         test_spearman: Tuple[any, float] = (0.0, 0.0)
+        test_pearson: Tuple[float, any] = (0.0, 0.0)
+        test_sum_loss: float = 0.0
+        test_r2: float = 0.0
         if do_test:
             model.eval()
             for geno_test_data in geno_test_set_loader:
@@ -149,6 +152,7 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
             test_r2 = r2_value(y_true=test_input_list, y_pred=test_output_list)
             test_loss_list = np.append(test_loss_list, [test_sum_loss])
             test_spearman = spearmanr(a=test_input_list, b=test_output_list)
+            test_pearson = pearsonr(x=test_input_list, y=test_output_list)
         print(f"epoch[{epoch + 1:4d}], "
               f"loss: {sum_loss:.4f}, ks: {ks_test[0]:.4f}, p-value: {ks_test[1]:.4f}"
               f", rho: {spearman[0]:.4f}, r2: {r2:.4f}, "
@@ -160,9 +164,9 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
         if np.round(tmp.mean(), 6) == np.round(test_sum_loss, 6) and window_size <= len(tmp) or \
                 (test_loss_list.min(initial=10000) < test_sum_loss):
             print(f"\nepoch[{epoch:4d}], "
-                  f"loss: {sum_loss:.4f}, ks: {ks_test[0]:.4f}, p-value: {ks_test[1]:.4f}"
+                  f"loss: {sum_loss:.4f}, Pearson: {pearson:0.4f},"
                   f", rho: {spearman[0]:.4f}, r2: {r2:.4f}\n        "
-                  f"test loss: {test_sum_loss:.4f}, ks: {test_ks_test[0]:.4f}, p-value: {test_ks_test[1]:.4f}"
+                  f"test loss: {test_sum_loss:.4f}, Pearson: {test_pearson:0.4}"
                   f", rho: {spearman[0]:.4f}, "
                   f"r2: {test_r2:.4f}")
             break
