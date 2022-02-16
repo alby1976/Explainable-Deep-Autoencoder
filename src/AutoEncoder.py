@@ -86,7 +86,7 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
     create_dir(Path(save_dir))
     epoch: int = 0
     test_loss_list: Series = Series([], dtype=float)
-    while epoch < 2000:
+    while epoch < 9999:
         input_list: Union[ndarray, int] = np.empty((0, features), dtype=float)
         output_list: Union[ndarray, int] = np.empty((0, features), dtype=float)
         sum_loss: float = 0.0
@@ -157,6 +157,7 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
               f"r2: {test_r2:.4f}")
         epoch += 1
         tmp = test_loss_list[-window_size:]
+        print(f'tmp: {(tmp.mean, tmp)}')
         if round(tmp.mean(), 4) == np.round(test_sum_loss, 4) or \
                 (test_loss_list.min() < test_sum_loss):
             print(f"epoch[{epoch + 1:4d}], "
