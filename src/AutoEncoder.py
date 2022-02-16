@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import torch
 from pathlib import Path
-
+from scipy.stats import spearmanr, kstest
 from numpy import ndarray
 from pandas import Series, DataFrame
 from sklearn.preprocessing import minmax_scale
@@ -22,18 +22,6 @@ from AutoEncoderModule import create_dir
 from AutoEncoderModule import get_normalized_data
 
 
-def calculate_precision(input_data: ndarray, output_data: ndarray) -> float:
-    # print(f"input: {input_data.shape} output: {output_data.shape}")
-    y_true = np.asarray([x >= 0.5 for x in input_data])
-    y_pred = np.asarray([x >= 0.5 for x in output_data])
-    tp = np.count_nonzero(np.asarray([x * (x == y) for x, y in zip(y_true, y_pred)]))
-    fp = np.count_nonzero(np.asarray([x * (x ^ y) for x, y in zip(y_true, y_pred)]))
-    # print(f'y_true: {y_true.shape}\n{y_true}')
-    # print(f'y_pred: {y_pred.shape}\n{y_pred}')
-    # print(f'tp: {tp} fp: {fp}')
-    return 1 - (tp / (tp + fp))
-
-
 def r2_value(y_true: ndarray, y_pred: ndarray) -> float:
     y_ave = y_true.mean()
     sse: int = (np.square(y_pred - y_ave)).sum()
@@ -43,11 +31,6 @@ def r2_value(y_true: ndarray, y_pred: ndarray) -> float:
         return sse / sst
     else:
         return 1 - ssr / sst
-
-
-def adj_r2_value(r2: float, n: int, k: int) -> float:
-    result = (1 - r2 * (n - 1))/(n - k - 1)
-    return 1 - result
 
 
 def get_filtered_data(geno: DataFrame, path_to_save_qc: Path) -> DataFrame:
@@ -93,23 +76,29 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
     distance = nn.MSELoss()  # for regression, 0, 0.5, 1
     optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
     run_ae(model_name=model_name, model=model, geno_train_set_loader=geno_train_set_loader,
-           geno_test_set_loader=geno_test_set_loader, window_size=size,
+           geno_test_set_loader=geno_test_set_loader, window_size=size, features=input_features,
            optimizer=optimizer, distance=distance, do_train=True, do_test=True, save_dir=path_to_save_ae)
 
 
 def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataLoader, geno_test_set_loader: DataLoader,
-           optimizer: Adam, distance=nn.MSELoss(), window_size=20, do_train=True,
+           features: int, optimizer: Adam, distance=nn.MSELoss(), window_size=20, do_train=True,
            do_test=True, save_dir: Path = Path('./model')):
     create_dir(Path(save_dir))
     epoch: int = 0
     test_loss_list: Series = Series([], dtype=float)
     while epoch < 2000:
+        input_list: ndarray = np.empty((0, features), dtype=float)
+        output_list: ndarray = np.empty((0, features), dtype=float)
         precision = 0.0
-        r2 = ()
+        r2 = 9.0
+        spearman = 0.0
         sum_loss = 0.0
         if do_train:
             batch_ave_list = []
-            r2_list = []
+            r2_list = [
+
+
+            ]
             r2_adj_list = []
             output_coder_list = []
             model.train()
@@ -125,14 +114,8 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
                 # ======precision======
                 # batch_average_precision = r2_score(y_true=geno_data.cpu().detach().numpy(),
                 #                                   y_pred=output.cpu().detach().numpy())
-                input_list: ndarray = geno_data.numpy()
-                output_list: ndarray = output.cpu().detach().numpy()
-                tmp1: float = r2_value(y_true=input_list, y_pred=output_list)
-                rows, k = input_list.shape
-                n = rows * k
-                batch_ave_list.append(calculate_precision(input_data=input_list, output_data=output_list))
-                r2_list.append(tmp1)
-                r2_adj_list.append(adj_r2_value(tmp1, n, k))
+                input_list = np.append(input_list, geno_data.numpy())
+                output_list = np.append(output_list, output.cpu().detach().numpy())
                 # ======backward========
                 optimizer.zero_grad()
                 loss.backward()
@@ -141,16 +124,16 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
             coder_np: Union[np.ndarray, int] = np.array(output_coder_list)
             coder_file = save_dir.joinpath(f"{model_name}-{str(epoch)}.csv")
             np.savetxt(fname=coder_file, X=coder_np, fmt='%f', delimiter=',')
-            # ======precision======
-            precision = np.asarray(batch_ave_list).mean()
-            r2 = (np.asarray(r2_list).mean(), np.asarray(r2_adj_list).mean())
+            # ======goodness of fit======
+            ks_test = kstest(rvs=output_list, cdf=input_list)
+            spearman = spearmanr(a=input_list, b=output_list)
+            r2 = r2_value(y_true=input_list, y_pred=output_list)
         # ===========test==========
-        batch_ave_list = []
-        r2_list = []
-        r2_adj_list = []
+        test_input_list: ndarray = np.empty((0, features), dtype=float)
+        test_output_list: ndarray = np.empty((0, features), dtype=float)
         test_sum_loss = 0.0
-        test_precision = 0.0
-        test_r2: tuple = ()
+        test_spearman = 0.0
+        test_r2 = 0.0
         if do_test:
             model.eval()
             for geno_test_data in geno_test_set_loader:
@@ -164,22 +147,20 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
                 #                                   y_pred=test_output.cpu().detach().numpy())
                 # batch_average_precision = np.mean(r2_value(y_true=geno_test_data.cpu().detach().numpy(),
                 #                                           y_pred=test_output.cpu().detach().numpy()))
-                input_list = geno_test_data.cpu().detach().numpy()
-                output_list = test_output.cpu().detach().numpy()
-                tmp1 = r2_value(y_true=input_list, y_pred=output_list)
-                rows, k = input_list.shape
-                n = rows * k
-                batch_ave_list.append(calculate_precision(input_data=input_list, output_data=output_list))
-                r2_list.append(tmp1)
-                r2_adj_list.append(adj_r2_value(tmp1, n, k))
-            # ======precision======
-            test_precision = np.asarray(batch_ave_list).mean()
-            test_r2 = (np.asarray(r2_list).mean(), np.asarray(r2_adj_list).mean())
+                test_input_list = np.append(test_input_list, geno_test_data.cpu().detach().numpy())
+                test_output_list = np.append(test_output_list, test_output.cpu().detach().numpy())
+            # ======goodness of fit======
+            test_ks_test = ks_test(rvs=test_output_list, cdf=test_input_list)
+            test_r2 = r2_value(y_true=test_input_list, y_pred=test_output_list)
         test_loss_list.append(Series([test_sum_loss]))
+        rho = spearman[0]
+        test_rho = test_spearman[0]
         print(f"epoch[{epoch + 1:4d}], "
-              f"loss: {sum_loss:.4f}, precision: {precision:.4f}, r2: {' '.join(format(r, '.4f') for r in r2)}"
-              f" test loss: {test_sum_loss:.4f}, test precision: {test_precision:.4f} "
-              f"test r2: {' '.join(format(r, '.4f') for r in test_r2)}")
+              f"loss: {sum_loss:.4f}, ks test: {ks_test[0]:.4f}, p-value: {ks_test[1]:.4f}"
+              f", rho: {rho[0,1]:.4f}, p-value{spearman[1]:.4f}, r2: {r2:.4f}"
+              f" test loss: {test_sum_loss:.4f}, ks test: {test_ks_test[0]:.4f} , p-value: {test_ks_test[1]:.4f}"
+              f", rho {test_rho[0,1]:.4f} p-value: {test_spearman[1]}"
+              f"test r2: {test_r2:.4f}")
         epoch += 1
         tmp = test_loss_list[-window_size:]
         if round(tmp.mean(), 6) == np.round(test_sum_loss, 6) or \
