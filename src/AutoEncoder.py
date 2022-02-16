@@ -85,7 +85,7 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
            do_test=True, save_dir: Path = Path('./model')):
     create_dir(Path(save_dir))
     epoch: int = 0
-    test_loss_list: Series = Series([], dtype=float)
+    test_loss_list: ndarray = np.empty(0, dtype=float)
     while epoch < 9999:
         input_list: Union[ndarray, int] = np.empty((0, features), dtype=float)
         output_list: Union[ndarray, int] = np.empty((0, features), dtype=float)
@@ -147,7 +147,7 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
             # ======goodness of fit======
             test_ks_test = kstest(rvs=test_output_list, cdf=test_input_list)
             test_r2 = r2_value(y_true=test_input_list, y_pred=test_output_list)
-            test_loss_list.append(Series([test_sum_loss]))
+            test_loss_list = np.append(test_loss_list, [test_sum_loss])
             test_spearman = spearmanr(a=test_input_list, b=test_output_list)
         print(f"epoch[{epoch + 1:4d}], "
               f"loss: {sum_loss:.4f}, ks: {ks_test[0]:.4f}, p-value: {ks_test[1]:.4f}"
@@ -156,10 +156,10 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
               f", rho: {test_spearman[0]:.4f}, "
               f"r2: {test_r2:.4f}")
         epoch += 1
-        tmp = test_loss_list[-window_size:]
+        tmp: ndarray = test_loss_list[-window_size:]
         print(f'tmp: {(tmp.mean(), tmp)}')
         if round(tmp.mean(), 4) == np.round(test_sum_loss, 4) or \
-                (test_loss_list.min() < test_sum_loss):
+                (test_loss_list.min(initial=0) < test_sum_loss):
             print(f"epoch[{epoch + 1:4d}], "
                   f"loss: {sum_loss:.4f}, ks: {ks_test[0]:.4f}, p-value: {ks_test[1]:.4f}"
                   f", rho: {spearman[0]:.4f}, r2: {r2:.4f}\n        "
