@@ -33,6 +33,12 @@ def r2_value(y_true: ndarray, y_pred: ndarray) -> float:
         return 1 - ssr / sst
 
 
+def rolling_mean(x: ndarray, size) -> float:
+    if len(ndarray) < size:
+        return np.nan
+
+    return x.mean()
+
 def get_filtered_data(geno: DataFrame, path_to_save_qc: Path) -> DataFrame:
     geno_var: Union[Series, int] = geno.var()
     geno.drop(geno_var[geno_var < 1].index.values, axis=1, inplace=True)
@@ -159,7 +165,7 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
               f"r2: {test_r2:.4f}")
         epoch += 1
         tmp: ndarray = test_loss_list[-window_size:]
-        if np.round(tmp.mean(), 6) == np.round(test_sum_loss, 6) and window_size <= len(tmp) or \
+        if np.round(rolling_mean(x=tmp, size=window_size), 6) == np.round(test_sum_loss, 6) or \
                 (test_loss_list.min(initial=10000) < test_sum_loss):
             print(f"\nepoch[{epoch:4d}], "
                   f"loss: {sum_loss:.4f}, ks: {ks_test[0]:.4f}, p-value: {ks_test[1]:.4f}"
