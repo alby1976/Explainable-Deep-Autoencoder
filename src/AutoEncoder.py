@@ -92,7 +92,6 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
         sum_loss: float = 0.0
         r2: float = 0.0
         ks_test: Tuple[float, float] = (0.0, 0.0)
-        rho: ndarray = np.asarray([])
         spearman: Tuple[any, float] = (0.0, 0.0)
         if do_train:
             output_coder_list = []
@@ -122,7 +121,6 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
             # ======goodness of fit======
             ks_test = kstest(rvs=output_list, cdf=input_list)
             spearman: Union[tuple, any] = spearmanr(a=input_list, b=output_list)
-            rho = spearman[0]
             r2 = r2_value(y_true=input_list, y_pred=output_list)
         # ===========test==========
         test_input_list: Union[ndarray, int] = np.empty((0, features), dtype=float)
@@ -130,7 +128,6 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
         test_sum_loss: float = 0.0
         test_r2: float = 0.0
         test_ks_test: Tuple[float, float] = (0.0, 0.0)
-        test_rho: ndarray = np.asarray([])
         test_spearman: Tuple[any, float] = (0.0, 0.0)
         if do_test:
             model.eval()
@@ -152,17 +149,22 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
             test_r2 = r2_value(y_true=test_input_list, y_pred=test_output_list)
             test_loss_list.append(Series([test_sum_loss]))
             test_spearman = spearmanr(a=test_input_list, b=test_output_list)
-            test_rho = test_spearman[0]
         print(f"epoch[{epoch + 1:4d}], "
               f"loss: {sum_loss:.4f}, ks: {ks_test[0]:.4f}, p-value: {ks_test[1]:.4f}"
-              f", rho: {spearman[0]:.4f}, r2: {r2:.4f}\n        "
+              f", rho: {spearman[0]:.4f}, r2: {r2:.4f}, "
               f"test loss: {test_sum_loss:.4f}, ks: {test_ks_test[0]:.4f}, p-value: {test_ks_test[1]:.4f}"
-              f", rho: {spearman[0]:.4f}, "
+              f", rho: {test_spearman[0]:.4f}, "
               f"r2: {test_r2:.4f}")
         epoch += 1
         tmp = test_loss_list[-window_size:]
         if round(tmp.mean(), 4) == np.round(test_sum_loss, 4) or \
                 (test_loss_list.min() < test_sum_loss):
+            print(f"epoch[{epoch + 1:4d}], "
+                  f"loss: {sum_loss:.4f}, ks: {ks_test[0]:.4f}, p-value: {ks_test[1]:.4f}"
+                  f", rho: {spearman[0]:.4f}, r2: {r2:.4f}\n        "
+                  f"test loss: {test_sum_loss:.4f}, ks: {test_ks_test[0]:.4f}, p-value: {test_ks_test[1]:.4f}"
+                  f", rho: {spearman[0]:.4f}, "
+                  f"r2: {test_r2:.4f}")
             break
 
 
