@@ -155,9 +155,9 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
             test_rho = test_spearman[0]
         print(f"epoch[{epoch + 1:4d}], "
               f"loss: {sum_loss:.4f}, ks test: {ks_test[0]:.4f}, p-value: {ks_test[1]:.4f}"
-              f", rho: {rho[0,1]:.4f}, p-value{spearman[1]:.4f}, r2: {r2:.4f}"
+              f", rho: {rho:.4f}, p-value{spearman[1]:.4f}, r2: {r2:.4f}"
               f" test loss: {test_sum_loss:.4f}, ks test: {test_ks_test[0]:.4f} , p-value: {test_ks_test[1]:.4f}"
-              f", rho {test_rho[0,1]:.4f} p-value: {test_spearman[1]:.4f}"
+              f", rho {test_rho:.4f} p-value: {test_spearman[1]:.4f}"
               f"test r2: {test_r2:.4f}")
         epoch += 1
         tmp = test_loss_list[-window_size:]
