@@ -157,7 +157,7 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
               f"r2: {test_r2:.4f}")
         epoch += 1
         tmp: ndarray = test_loss_list[-window_size:]
-        print(f'tmp: {(tmp.mean(), tmp)}')
+        print(f'tmp: {len(tmp), (tmp.mean(), tmp)}')
         if round(tmp.mean(), 6) == np.round(test_sum_loss, 6 and window_size <= len(tmp)) or \
                 (test_loss_list.min(initial=0) < test_sum_loss):
             print(f"epoch[{epoch:4d}], "
