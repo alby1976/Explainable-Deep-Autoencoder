@@ -2,12 +2,13 @@
 # ** path - is a string to desired path location. **
 import math
 import sys
-from typing import Union, Any, Tuple
+from itertools import islice
+from typing import Union, Any, Tuple, Iterable
 import numpy as np
 import pandas as pd
 import torch
 from pathlib import Path
-from scipy.stats import spearmanr, kstest, pearsonr
+from scipy.stats import spearmanr, pearsonr, anderson, anderson_ksamp, levene, ks_2samp
 from numpy import ndarray
 from pandas import Series, DataFrame
 from sklearn.preprocessing import minmax_scale
@@ -20,6 +21,37 @@ from AutoEncoderModule import GPDataSet
 from AutoEncoderModule import AutoGenoShallow
 from AutoEncoderModule import create_dir
 from AutoEncoderModule import get_normalized_data
+
+
+def same_distribution_test(*samples: ndarray) -> bool:
+    stat: float
+    crit: Union[ndarray, Iterable, int, float]
+    stat, crit, _ = anderson_ksamp(samples=samples)
+
+    if crit[2] < stat:
+        return False
+    else:
+        return True
+
+
+def normality_test(data: ndarray) -> bool:
+    stat: float
+    crit: Iterable
+    stat, crit, _ = anderson(x=data, dist='norm')
+    tmp = next(islice(crit, 2, 3))
+    if tmp < stat:
+        return False
+    else:
+        return True
+
+
+def equality_of_variance_test(*samples: ndarray) -> bool:
+    p_value: float
+    _, p_value = levene(samples, center='mean')
+    if p_value < 0.5:
+        return False
+    else:
+        return True
 
 
 def r2_value(y_true: ndarray, y_pred: ndarray) -> float:
@@ -38,6 +70,7 @@ def rolling_mean(x: ndarray, size) -> float:
         return np.nan
 
     return x.mean()
+
 
 def get_filtered_data(geno: DataFrame, path_to_save_qc: Path) -> DataFrame:
     geno_var: Union[Series, int] = geno.var()
@@ -126,7 +159,7 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
             coder_file = save_dir.joinpath(f"{model_name}-{str(epoch)}.csv")
             np.savetxt(fname=coder_file, X=coder_np, fmt='%f', delimiter=',')
             # ======goodness of fit======
-            ks_test = kstest(rvs=output_list, cdf=input_list)
+            ks_test = ks_2samp(data1=input_list, data2=output_list)
             spearman = spearmanr(a=input_list, b=output_list)
             pearson = pearsonr(x=input_list, y=output_list)
             r2 = r2_value(y_true=input_list, y_pred=output_list)
@@ -154,15 +187,21 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
                 test_input_list = np.append(test_input_list, geno_test_data.cpu().detach().numpy())
                 test_output_list = np.append(test_output_list, test_output.cpu().detach().numpy())
             # ======goodness of fit======
-            test_ks_test = kstest(rvs=test_output_list, cdf=test_input_list)
+            test_ks_test = ks_2samp(data1=test_input_list, data2=test_output_list)
             test_r2 = r2_value(y_true=test_input_list, y_pred=test_output_list)
             test_loss_list = np.append(test_loss_list, [test_sum_loss])
             test_pearson = pearsonr(x=test_input_list, y=test_output_list)
             test_spearman = spearmanr(a=test_input_list, b=test_output_list)
-        print(f"epoch[{epoch + 1:4d}], "
-              f"loss: {sum_loss:.4f}, Pearson: {pearson[0]:.4f}, rho: {spearman[0]:.4f}, r2: {r2:.4f}, "
-              f"test loss: {test_sum_loss:.4f}, Pearson: {test_pearson[0]:.4f}, rho: {test_spearman[0]:.4f}, "
-              f"r2: {test_r2:.4f}")
+        if same_distribution_test(input_list, output_list, test_input_list, test_output_list) and \
+                normality_test(data=input_list) and \
+                equality_of_variance_test(input_list, output_list, test_input_list, test_output_list):
+            print(f"epoch[{epoch + 1:4d}], "
+                  f"loss: {sum_loss:.4f}, Pearson: {pearson[0]:.4f}, r2: {r2:.4f}, "
+                  f"test loss: {test_sum_loss:.4f}, Pearson: {test_pearson[0]:.4f}, r2: {test_r2:.4f}")
+        else:
+            print(f"epoch[{epoch + 1:4d}], loss: {sum_loss:.4f}, rho: {spearman[0]:.4f}, r2: {r2:.4f}, "
+                  f"test loss: {test_sum_loss:.4f}, rho: {test_spearman[0]:.4f}, r2: {test_r2:.4f}")
+
         epoch += 1
         tmp: ndarray = test_loss_list[-window_size:]
         if np.round(rolling_mean(x=tmp, size=window_size), 6) == np.round(test_sum_loss, 6) or \
