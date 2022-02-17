@@ -6,6 +6,7 @@ from itertools import islice
 from typing import Union, Any, Tuple, Iterable
 import numpy as np
 import pandas as pd
+import scipy.stats.morestats
 import torch
 from pathlib import Path
 from scipy.stats import spearmanr, pearsonr, anderson, anderson_ksamp, levene, ks_2samp
@@ -65,8 +66,8 @@ def r2_value(y_true: ndarray, y_pred: ndarray) -> float:
         return 1 - ssr / sst
 
 
-def rolling_mean(x: ndarray, size) -> float:
-    if len(ndarray) < size:
+def rolling_mean(x: ndarray, size: int) -> float:
+    if len(x) < size:
         return np.nan
 
     return x.mean()
