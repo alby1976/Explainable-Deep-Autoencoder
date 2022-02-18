@@ -6,7 +6,6 @@ from itertools import islice
 from typing import Union, Any, Tuple, Iterable
 import numpy as np
 import pandas as pd
-import scipy.stats.morestats
 import torch
 from pathlib import Path
 from scipy.stats import spearmanr, pearsonr, anderson, anderson_ksamp, levene, ks_2samp
@@ -30,9 +29,9 @@ def same_distribution_test(*samples: ndarray) -> Tuple[bool, float, float]:
     stat, crit, _ = anderson_ksamp(samples=samples)
 
     if crit[2] < stat:
-        return False
+        return False, stat, crit[2]
     else:
-        return True
+        return True, stat, crit[2]
 
 
 def normality_test(data: ndarray) -> Tuple[bool, float, float]:
