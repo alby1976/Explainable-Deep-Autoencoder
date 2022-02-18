@@ -24,7 +24,7 @@ from AutoEncoderModule import create_dir
 from AutoEncoderModule import get_normalized_data
 
 
-def same_distribution_test(*samples: ndarray) -> bool:
+def same_distribution_test(*samples: ndarray) -> Tuple[bool, float, float]:
     stat: float
     crit: Union[ndarray, Iterable, int, float]
     stat, crit, _ = anderson_ksamp(samples=samples)
@@ -35,24 +35,24 @@ def same_distribution_test(*samples: ndarray) -> bool:
         return True
 
 
-def normality_test(data: ndarray) -> bool:
+def normality_test(data: ndarray) -> Tuple[bool, float, float]:
     stat: float
     crit: Iterable
     stat, crit, _ = anderson(x=data, dist='norm')
     tmp = next(islice(crit, 2, 3))
     if tmp < stat:
-        return False
+        return False, stat, tmp
     else:
-        return True
+        return True, stat, tmp
 
 
-def equality_of_variance_test(*samples: ndarray) -> bool:
+def equality_of_variance_test(*samples: ndarray) -> Tuple[bool, float, float]:
     p_value: float
-    _, p_value = levene(samples, center='mean')
+    stat, p_value = levene(samples, center='mean')
     if p_value < 0.5:
-        return False
+        return False, stat, p_value
     else:
-        return True
+        return True, stat, p_value
 
 
 def r2_value(y_true: ndarray, y_pred: ndarray) -> float:
@@ -193,9 +193,9 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
             test_loss_list = np.append(test_loss_list, [test_sum_loss])
             test_pearson = pearsonr(x=test_input_list, y=test_output_list)
             test_spearman = spearmanr(a=test_input_list, b=test_output_list)
-        if same_distribution_test(input_list, output_list, test_input_list, test_output_list) and \
-                normality_test(data=input_list) and \
-                equality_of_variance_test(input_list, output_list, test_input_list, test_output_list):
+        if same_distribution_test(input_list, output_list, test_input_list, test_output_list)[0] and \
+                normality_test(data=input_list)[0] and \
+                equality_of_variance_test(input_list, output_list, test_input_list, test_output_list)[0]:
             print(f"epoch[{epoch + 1:4d}], "
                   f"loss: {sum_loss:.4f}, Pearson: {pearson[0]:.4f}, r2: {r2:.4f}, "
                   f"test loss: {test_sum_loss:.4f}, Pearson: {test_pearson[0]:.4f}, r2: {test_r2:.4f}")
