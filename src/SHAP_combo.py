@@ -10,8 +10,7 @@ import shap
 from pandas import DataFrame
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
-from AutoEncoderModule import create_dir
-from AutoEncoderModule import get_normalized_data
+from CommonTools import create_dir, get_normalized_data
 
 
 def get_last_model(directory: Path):

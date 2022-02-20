@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 import torch
 from pathlib import Path
+
 from scipy.stats import spearmanr, pearsonr, anderson, anderson_ksamp, levene, ks_2samp
 from numpy import ndarray
 from pandas import Series, DataFrame
@@ -18,8 +19,10 @@ from torch.nn.utils import clip_grad_norm_
 from torch.optim import Adam
 from torch.optim.lr_scheduler import LambdaLR
 from torch.utils.data import DataLoader
+from torchmetrics import R2Score, SpearmanCorrcoef, PearsonCorrcoef
 from sklearn.model_selection import train_test_split
-from AutoEncoderModule import GPDataSet, AutoGenoShallow, create_dir, get_normalized_data
+from AutoEncoderModule import GPDataSet, AutoGenoShallow
+from CommonTools import create_dir, get_normalized_data
 from AutoEncoderModule import get_device, cyclical_lr, get_min_max_lr
 
 
@@ -52,24 +55,6 @@ def equality_of_variance_test(*samples: ndarray) -> Tuple[bool, float, float]:
         return False, stat, p_value
     else:
         return True, stat, p_value
-
-
-def r2_value(y_true: ndarray, y_pred: ndarray) -> float:
-    y_ave = y_true.mean()
-    sse: int = (np.square(y_pred - y_ave)).sum()
-    ssr: int = (np.square(y_true - y_pred)).sum()
-    sst: int = (np.square(y_true - y_ave)).sum()
-    if sse / sst == 1 - ssr / sst:
-        return sse / sst
-    else:
-        return 1 - ssr / sst
-
-
-def rolling_mean(x: ndarray, size: int) -> float:
-    if len(x) < size:
-        return np.nan
-
-    return x.mean()
 
 
 def get_filtered_data(geno: DataFrame, path_to_save_qc: Path) -> DataFrame:
@@ -123,6 +108,72 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
     run_ae(model_name=model_name, model=model, geno_train_set_loader=geno_train_set_loader,
            geno_test_set_loader=geno_test_set_loader, window_size=size, features=input_features,
            optimizer=optimizer, distance=distance, do_train=True, do_test=True, save_dir=path_to_save_ae)
+
+
+def train_model(model, criterion, optimizer, num_epochs=100000, lr_step=False, scheduler=None):
+    logs = []
+
+    r2score: R2Score = torchmetrics.R2Score()
+    test_r2score: R2Score = torchmetrics.R2Score()
+    spearman: SpearmanCorrcoef = torchmetrics.SpearmanCorrcoef()
+    test_spearman: SpearmanCorrcoef = torchmetrics.SpearmanCorrcoef()
+    pearson: PearsonCorrcoef = torchmetrics.PearsonCorrcoef()
+    test_pearson: PearsonCorrcoef = torchmetrics.PearsonCorrcoef()
+    for epoch in range(num_epochs):
+
+        epoch_log = {}
+
+        print('Epoch {}/{}'.format(epoch, num_epochs - 1))
+        print('-' * 10)
+
+        # Each epoch has a training and validation phase
+        for phase in ['train', 'val']:
+            if phase == 'train':
+                model.train()  # Set model to training mode
+            else:
+                model.eval()  # Set model to evaluate mode
+
+            running_loss = 0.0
+            running_corrects = 0
+
+            # Iterate over data.
+            for inputs, labels in dataloaders[phase]:
+                inputs = inputs.to(device)
+                labels = labels.to(device)
+
+                # zero the parameter gradients
+                optimizer.zero_grad()
+
+                # forward
+                # track history if only in train
+                with torch.set_grad_enabled(phase == 'train'):
+                    outputs = model(inputs)
+                    _, preds = torch.max(outputs, 1)
+                    loss = criterion(outputs, labels)
+
+                    # backward + optimize only if in training phase
+                    if phase == 'train':
+                        loss.backward()
+                        if lr_step:
+                            scheduler.step()
+                        optimizer.step()
+
+                # statistics
+                running_loss += loss.item() * inputs.size(0)
+                running_corrects += torch.sum(preds == labels.data)
+
+            epoch_loss = running_loss / dataset_sizes[phase]
+            epoch_acc = running_corrects.double() / dataset_sizes[phase]
+
+            print('{} Loss: {:.4f} Acc: {:.4f}'.format(
+                phase, epoch_loss, epoch_acc))
+
+            epoch_log["acc_{}".format(phase)] = epoch_acc
+            epoch_log["loss_{}".format(phase)] = epoch_loss
+
+        logs.append(epoch_log)
+
+    return logs
 
 
 def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataLoader, geno_test_set_loader: DataLoader,

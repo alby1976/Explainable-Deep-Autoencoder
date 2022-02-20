@@ -1,16 +1,17 @@
 import math
 from typing import Any, Tuple
-from pathlib import Path
 
-import torch
 from numpy import ndarray
-from pandas import DataFrame
 from torch import nn, device
+from torch.nn import functional as f
 from torch.autograd import Variable
 from torch.optim import Adam
 from torch.utils.data import Dataset, DataLoader
+import torch.optim
+import pytorch_lightning as pl
 import numpy as np
 
+from CommonTools import
 
 class GPDataSet(Dataset):
     def __init__(self, gp_list):
@@ -29,9 +30,14 @@ class GPDataSet(Dataset):
         return x
 
 
-class AutoGenoShallow(nn.Module):
-    def __init__(self, input_features, hidden_layer, smallest_layer, output_features):
+class AutoGenoShallow(pl.LightningModule):
+    def _forward_unimplemented(self, *inputs: Any) -> None:
+        pass
+
+    def __init__(self, input_features: int, hidden_layer: int, smallest_layer: int, output_features: int,
+                 learning_rate: float = 0.02):
         super().__init__()  # I guess this inherits __init__ from super class
+        self.learning_rate = learning_rate
 
         # def the encoder function
         self.encoder = nn.Sequential(
@@ -49,35 +55,26 @@ class AutoGenoShallow(nn.Module):
             nn.Sigmoid()
         )
 
-    def _forward_unimplemented(self, *inputs: Any) -> None:
-        pass
-
     # def forward function
     def forward(self, x):
         y = self.encoder(x)
         x = self.decoder(y)
         return x, y
 
+    # def straining
+    def training_step(self, batch, batch_idx):
+        x, y = batch
+        loss = f.mse_loss(input=x, target=y)
+        return loss
 
-def get_normalized_data(data: DataFrame) -> DataFrame:
-    from sklearn.preprocessing import MinMaxScaler
-
-    scaler = MinMaxScaler()
-    return DataFrame(data=scaler.fit_transform(data), columns=data.columns)
-
-
-def create_dir(directory: Path):
-    """make a directory (directory) if it doesn't exist"""
-    directory.mkdir(parents=True, exist_ok=True)
-
-
-def get_device() -> device:
-    return torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    # configures the optimizers through learning rate
+    def configures_optimizer(self):
+        return torch.optim.Adam(self.parameters(), lr=self.learning_rate)
 
 
 def cyclical_lr(step_size: int, min_lr: float = 3e-2, max_lr: float = 3e-3):
     # Scaler: we can adapt this if we do not want the triangular CLR
-    def scaler(x: Any) -> int:
+    def scaler(_: Any) -> int:
         return 1
 
     # Additional function to see where on the cycle we are
@@ -86,7 +83,7 @@ def cyclical_lr(step_size: int, min_lr: float = 3e-2, max_lr: float = 3e-3):
         x = abs(it / size - 2 * cycle + 1)
         return max(0, (1 - x)) * scaler(cycle)
 
-    return lambda it: min_lr + (max_lr - min_lr) * relative(it, step_size) # Lambda function to calculate the LR
+    return lambda it: min_lr + (max_lr - min_lr) * relative(it, step_size)  # Lambda function to calculate the LR
 
 
 def get_min_max_lr(model: nn.Module, dataset: DataLoader) -> Tuple[float, float]:
