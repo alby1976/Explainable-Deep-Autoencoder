@@ -14,13 +14,13 @@ from pandas import Series, DataFrame
 from sklearn.preprocessing import minmax_scale
 from torch import nn
 from torch.autograd import Variable
+from torch.nn.utils import clip_grad_norm_
 from torch.optim import Adam
+from torch.optim.lr_scheduler import LambdaLR
 from torch.utils.data import DataLoader
 from sklearn.model_selection import train_test_split
-from AutoEncoderModule import GPDataSet
-from AutoEncoderModule import AutoGenoShallow
-from AutoEncoderModule import create_dir
-from AutoEncoderModule import get_normalized_data
+from AutoEncoderModule import GPDataSet, AutoGenoShallow, create_dir, get_normalized_data
+from AutoEncoderModule import get_device, cyclical_lr, get_min_max_lr
 
 
 def same_distribution_test(*samples: ndarray) -> Tuple[bool, float, float]:
@@ -111,9 +111,15 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
     hidden_layer = int(2 * smallest_layer)
 
     model = AutoGenoShallow(input_features=input_features, hidden_layer=hidden_layer,
-                            smallest_layer=smallest_layer, output_features=output_features).cuda()
+                            smallest_layer=smallest_layer, output_features=output_features).to(get_device())
     distance = nn.MSELoss()  # for regression, 0, 0.5, 1
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
+    # optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
+    optimizer = torch.optim.Adam(model.parameters(), lr=1.)
+    step_size = 4 * len(geno_train_set_loader)
+    min_lf , max_lf = get_min_max_lr(model, geno_train_set_loader)
+    clr = cyclical_lr(step_size, min_lr=min_lf, max_lr=max_lf)
+    scheduler: LambdaLR = torch.optim.lr_scheduler.LambdaLR(optimizer, clr)
+
     run_ae(model_name=model_name, model=model, geno_train_set_loader=geno_train_set_loader,
            geno_test_set_loader=geno_test_set_loader, window_size=size, features=input_features,
            optimizer=optimizer, distance=distance, do_train=True, do_test=True, save_dir=path_to_save_ae)
@@ -137,7 +143,7 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
             output_coder_list = []
             model.train()
             for geno_data in geno_train_set_loader:
-                train_geno: object = Variable(geno_data).float().cuda()
+                train_geno: object = Variable(geno_data).float().to(get_device())
                 # =======forward========
                 output, coder = model.forward(train_geno)
                 loss = distance(output, train_geno)
@@ -145,15 +151,20 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
                 # ======get coder======
                 coder2 = coder.cpu().detach().numpy()
                 output_coder_list.extend(coder2)
-                # ======precision======
+                # ======goodness of fit======
                 # batch_average_precision = r2_score(y_true=geno_data.cpu().detach().numpy(),
                 #                                   y_pred=output.cpu().detach().numpy())
                 input_list = np.append(input_list, geno_data.numpy())
                 output_list = np.append(output_list, output.cpu().detach().numpy())
                 # ======backward========
-                optimizer.zero_grad()
-                loss.backward()
-                optimizer.step()
+                optimizer.zero_grad()  # clear the gradient
+                loss.backward()  # backwork propagation
+                # Clip the gradients norm to avoid them becoming too large
+                clip_grad_norm_(model.parameters(), 5)
+
+                # Update the LR
+                scheduler.step()
+                optimizer.step()  # updating gradients
             # ===========log============
             coder_np: Union[np.ndarray, int] = np.array(output_coder_list)
             coder_file = save_dir.joinpath(f"{model_name}-{str(epoch)}.csv")
@@ -174,7 +185,7 @@ def run_ae(model_name: str, model: AutoGenoShallow, geno_train_set_loader: DataL
         if do_test:
             model.eval()
             for geno_test_data in geno_test_set_loader:
-                test_geno = Variable(geno_test_data).float().cuda()
+                test_geno = Variable(geno_test_data).float().to(get_device())
                 # =======forward========
                 test_output, coder = model.forward(test_geno)
                 loss = distance(test_output, test_geno)
