@@ -10,9 +10,17 @@ from scipy.stats import anderson_ksamp, levene
 from torch import device
 
 
-def same_distribution_test(*samples: ndarray) -> Tuple[bool, float, float]:
+def data_parametric(*samples: ndarray) -> bool:
+    result1, _, _ = same_distribution_test(samples)
+    result2, _, _ = normality_test(samples[0])
+    result3, _, _ = equality_of_variance_test(samples)
+    return result1 and result2 and result3
+
+
+def same_distribution_test(*samples: Tuple[ndarray, ...]) -> Tuple[bool, float, float]:
     stat: float
     crit: Union[ndarray, Iterable, int, float]
+
     stat, crit, _ = anderson_ksamp(samples=samples)
 
     if crit[2] < stat:
@@ -24,6 +32,7 @@ def same_distribution_test(*samples: ndarray) -> Tuple[bool, float, float]:
 def normality_test(data: ndarray) -> Tuple[bool, float, float]:
     stat: float
     crit: Iterable
+
     stat, crit, _ = anderson(x=data, dist='norm')
     tmp = next(islice(crit, 2, 3))
     if tmp < stat:
@@ -32,8 +41,10 @@ def normality_test(data: ndarray) -> Tuple[bool, float, float]:
         return True, stat, tmp
 
 
-def equality_of_variance_test(*samples: ndarray) -> Tuple[bool, float, float]:
+def equality_of_variance_test(*samples: Tuple[ndarray, ...]) -> Tuple[bool, float, float]:
+    stat: float
     p_value: float
+
     stat, p_value = levene(samples, center='mean')
     if p_value < 0.5:
         return False, stat, p_value
