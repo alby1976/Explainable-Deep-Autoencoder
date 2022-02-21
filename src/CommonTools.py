@@ -1,13 +1,21 @@
 from itertools import islice
 from pathlib import Path
-from typing import Tuple, Union, Iterable, Dict, Any
+from typing import Tuple, Union, Iterable, Dict, Any, List
 
 import torch
 from numpy import ndarray
-from pandas import DataFrame
+from pandas import DataFrame, Series
 from scipy.optimize import anderson
 from scipy.stats import anderson_ksamp, levene
-from torch import device
+from torch import device, Tensor
+
+
+def get_data(geno: DataFrame, path_to_save_qc: Path) -> ndarray:
+    geno_var: Union[Series, int] = geno.var()
+    geno.drop(geno_var[geno_var < 1].index.values, axis=1, inplace=True)
+    create_dir(path_to_save_qc.parent)
+    geno.to_csv(path_to_save_qc)
+    return get_normalized_data(data=geno).to_numpy()
 
 
 # merge list to single dict
@@ -17,6 +25,15 @@ def merge_list_dict(lists) -> Dict[Any, Any]:
         result = {**result, **tmp}
 
     return result
+
+
+# get dictionary values for a particular key in a list of dictionary
+def get_dict_values(key: str, lists: List[Dict[str, Tensor]]) -> List[Any]:
+    values: List = []
+    for item in lists:
+        values.extend([item[key].cpu().detach().numpy()])
+
+    return values
 
 
 def data_parametric(*samples: ndarray) -> bool:
