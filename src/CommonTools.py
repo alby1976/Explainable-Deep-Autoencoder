@@ -1,6 +1,6 @@
 from itertools import islice
 from pathlib import Path
-from typing import Tuple, Union, Iterable
+from typing import Tuple, Union, Iterable, Dict, Any
 
 import torch
 from numpy import ndarray
@@ -8,6 +8,15 @@ from pandas import DataFrame
 from scipy.optimize import anderson
 from scipy.stats import anderson_ksamp, levene
 from torch import device
+
+
+# merge list to single dict
+def merge_list_dict(lists) -> Dict[Any, Any]:
+    result = {}
+    for tmp in lists:
+        result = {**result, **tmp}
+
+    return result
 
 
 def data_parametric(*samples: ndarray) -> bool:
