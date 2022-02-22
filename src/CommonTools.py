@@ -27,13 +27,9 @@ def merge_list_dict(lists) -> Dict[Any, Any]:
     return result
 
 
-# get dictionary values for a particular key in a list of dictionary
-def get_dict_values(key: str, lists: List[Dict[str, Tensor]]) -> List[Any]:
-    values: List = []
-    for item in lists:
-        values.extend([item[key].cpu().detach().numpy()])
-
-    return values
+# get dictionary values in a Tensor for a particular key in a list of dictionary
+def get_dict_values(key: str, lists: List[Dict[str, Tensor]]) -> Tensor:
+    return torch.stack([item[key] for item in lists])
 
 
 def data_parametric(*samples: ndarray) -> bool:
