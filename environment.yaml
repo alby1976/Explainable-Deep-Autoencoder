@@ -1,0 +1,24 @@
+name:XAI
+channels:
+  - conda-forge
+  - pytorch
+  - defaults
+dependencies:
+  # pyton requirements
+  - python=3.8.*
+  - matplotlib
+  - numpy
+  - pandas
+  - shap
+  - scikit-learn
+  - pyensembl
+  - torchvision
+  - scipy
+  - torchmetrics
+  - pip
+    - torch~=1.10.2
+  # R requirements
+  - r-base
+  - WebGestaltR==0.4.4
+  - data.table==1.14.2
+  - biomaRt==2.50.0
