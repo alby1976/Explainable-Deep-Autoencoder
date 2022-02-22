@@ -14,6 +14,7 @@ dependencies:
   - pyensembl
   - torchvision
   - scipy
+  - pytorch-lightning
   - torchmetrics
   - pip
     - torch~=1.10.2
