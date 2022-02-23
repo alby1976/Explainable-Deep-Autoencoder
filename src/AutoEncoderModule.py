@@ -97,7 +97,7 @@ class AutoGenoShallow(pl.LightningModule):
     # define training step
     def training_step(self, batch, batch_idx) -> Dict[str, Tensor]:
         print(f'training batch type: {type(batch)}\n{batch}')
-        x = batch[0]
+        x, _ = batch[0]
         output, coder = self.forward(x)
         self.training_r2score(preds=output, target=x)
         # self.training_spearman(preds=output, target=x)
@@ -112,6 +112,7 @@ class AutoGenoShallow(pl.LightningModule):
         target: Tensor = get_dict_values('input', training_step_outputs)
         epoch = self.trainer.current_epoch
 
+        print(f'pred: {pred.size()} target: {target.size()}')
         # ===========save model============
         output_coder_list: Tensor = get_dict_values('model', training_step_outputs)
         coder_np: Union[np.ndarray, int] = output_coder_list.cpu().detach().numpy()
@@ -148,7 +149,7 @@ class AutoGenoShallow(pl.LightningModule):
     # define validation step
     def validation_step(self, batch, batch_idx) -> Dict[str, Tensor]:
         print(f'val batch type: {type(batch[0])} {batch[0].size()}')
-        x = batch[0]
+        x, _ = batch[0]
         output, coder = self.forward(x)
         print(f'output type:{type(output)} {output.size()} batch type:{type(x)} {x.size()}')
         self.testing_r2score(preds=output, target=x)
