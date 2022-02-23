@@ -85,12 +85,8 @@ class AutoGenoShallow(pl.LightningModule):
 
     # define forward function
     def forward(self, x):
-        print(f'x type: {type(x)}')
-        print(f'input features: {self.input_features} hidden: {self.hidden_layer} smallest: {self.smallest_layer} '
-              f'output: {self.output_features}')
+        print(f'x type: {type(x)} {x.size()}')
         y = self.encoder(x)
-        print(f'input features: {self.input_features} hidden: {self.hidden_layer} smallest: {self.smallest_layer} '
-              f'output: {self.output_features}')
         x = self.decoder(y)
         return x, y
 
@@ -151,7 +147,7 @@ class AutoGenoShallow(pl.LightningModule):
         x = batch[0]
         print(f'val batch type: {type(x)} {x.size()}')
         output, coder = self.forward(x)
-        print(f'output type:{type(output)} {output.size()} batch type:{type(x)} {x.size()}')
+        print(f'val step output type:{type(output)} {output.size()} batch type:{type(x)} {x.size()}')
         self.testing_r2score(preds=output, target=x)
         # self.training_spearman(preds=output, target=x)
         # self.training_pearson(preds=output, target=x)
@@ -164,6 +160,7 @@ class AutoGenoShallow(pl.LightningModule):
         pred = get_dict_values('output', testing_step_outputs)
         target = get_dict_values('input', testing_step_outputs)
         # epoch = self.trainer.current_epoch
+        print(f'val epoch pred type:{type(pred)} {pred.size()} target type:{type(target)} {target.size()}')
 
         # ======goodness of fit======
         self.testing_r2score.update(preds=pred, target=target)
