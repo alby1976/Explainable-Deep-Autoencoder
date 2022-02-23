@@ -15,7 +15,7 @@ import pytorch_lightning as pl
 import numpy as np
 import pandas as pd
 
-from CommonTools import data_parametric, get_dict_values, get_data, merge_list_dict
+from CommonTools import data_parametric, get_dict_values_1d, get_dict_values_2d, get_data, merge_list_dict
 
 
 class GPDataSet(Dataset):
@@ -158,9 +158,9 @@ class AutoGenoShallow(pl.LightningModule):
     def validation_epoch_end(self, testing_step_outputs):
         values = merge_list_dict(testing_step_outputs)
 
-        losses = get_dict_values('loss', testing_step_outputs)
-        pred = get_dict_values('output', testing_step_outputs)
-        target = get_dict_values('input', testing_step_outputs)
+        losses = get_dict_values_1d('loss', testing_step_outputs)
+        pred = get_dict_values_2d('output', testing_step_outputs)
+        target = get_dict_values_2d('input', testing_step_outputs)
         print(f'regular losses: {losses.size()} pred: {pred.size()} target: {target.size()}')
         losses = values['loss']
         pred = values['output']
