@@ -85,15 +85,14 @@ class AutoGenoShallow(pl.LightningModule):
 
     # define forward function
     def forward(self, x):
-        print(f'x type: {type(x)} {x.size()}')
         y = self.encoder(x)
         x = self.decoder(y)
         return x, y
 
     # define training step
     def training_step(self, batch, batch_idx) -> Dict[str, Tensor]:
-        x = batch[0]
-        print(f'training batch type: {type(x)} {x.size()}')
+        x, _ = batch[0]
+        print(f'{batch_idx} training batch size: {self.hparams.batch_size} x: {x.size()}')
         output, coder = self.forward(x)
         self.training_r2score.forward(preds=output, target=x)
         # self.training_spearman(preds=output, target=x)
@@ -149,8 +148,8 @@ class AutoGenoShallow(pl.LightningModule):
         # self.training_spearman(preds=output, target=x)
         # self.training_pearson(preds=output, target=x)
         loss = f.mse_loss(input=output, target=x)
-        print(f'{batch_idx} val step output dim: {output.size()} batch dim: {x.size()} '
-             f'loss dim: {loss.size()} batch_size: {self.hparams.batch_size}')
+        print(f'{batch_idx} val step batch size: {self.hparams.batch_size} output dim: {output.size()} '
+              f'batch dim: {x.size()} loss dim: {loss.size()}')
         return {'input': x, 'output': output, 'loss': loss}
 
     # end of validation epoch
@@ -207,13 +206,14 @@ class AutoGenoShallow(pl.LightningModule):
         # Called when training the model
         self.train_dataset = torch.utils.data.TensorDataset(self.input_list)
         print(f'input_list: {type(self.input_list)} train_data: {type(self.train_dataset)}')
-        return DataLoader(dataset=self.train_dataset, batch_size=self.hparams.batch_size, num_workers=8)
+        return DataLoader(dataset=self.train_dataset, batch_size=self.hparams.batch_size, shuffle=False, num_workers=8)
 
     def val_dataloader(self) -> EVAL_DATALOADERS:
         # Called when evaluating the model (for each "n" steps or "n" epochs)
         self.testing_dataset = torch.utils.data.TensorDataset(self.test_input_list)
         print(f'test_input_list: {type(self.test_input_list)} testing_data: {type(self.testing_dataset)}')
-        return DataLoader(dataset=self.testing_dataset, batch_size=self.hparams.batch_size, num_workers=8)
+        return DataLoader(dataset=self.testing_dataset, batch_size=self.hparams.batch_size,
+                          shuffle=False, num_workers=8)
 
     def test_dataloader(self) -> EVAL_DATALOADERS:
         pass
