@@ -44,26 +44,26 @@ class AutoGenoShallow(pl.LightningModule):
         self.train_dataset = None
         self.test_input_list = None
         self.input_list = None
-        self.geno = None
-        self.input_features = 1
-        self.output_features = 1
-        self.smallest_layer = 1
-        self.hidden_layer = 2
-        self.training_r2score = torchmetrics.R2Score(compute_on_step=False)
-        self.training_pearson = torchmetrics.PearsonCorrcoef(compute_on_step=False)
-        self.training_spearman = torchmetrics.SpearmanCorrcoef(compute_on_step=False)
-        self.testing_r2score = torchmetrics.R2Score(compute_on_step=False)
-        self.testing_pearson = torchmetrics.PearsonCorrcoef(compute_on_step=False)
-        self.testing_spearman = torchmetrics.SpearmanCorrcoef(compute_on_step=False)
+        # get normalized data quality control
+        self.geno: ndarray = get_data(pd.read_csv(path_to_data, index_col=0), path_to_save_qc)
+        self.input_features = len(self.geno[0])
+        self.output_features = self.input_features
+        self.smallest_layer = math.ceil(self.input_features / compression_ratio)
+        self.hidden_layer = int(2 * self.smallest_layer)
+        self.training_r2score = torchmetrics.R2Score(num_outputs=self.input_features, compute_on_step=False)
+        # self.training_pearson = torchmetrics.regression.pearson.PearsonCorrcoef(compute_on_step=False)
+        # self.training_spearman = torchmetrics.regression.spearman.SpearmanCorrcoef(compute_on_step=False)
+        self.testing_r2score = torchmetrics.R2Score(num_outputs=self.input_features, compute_on_step=False)
+        # self.testing_pearson = torchmetrics.regression.pearson.PearsonCorrcoef(compute_on_step=False)
+        # self.testing_spearman = torchmetrics.regression.spearman.SpearmanCorrcoef(compute_on_step=False)
         self.save_dir = save_dir
-        self.path_to_data = path_to_data
-        self.path_to_save_qc = path_to_save_qc
+        # self.path_to_data = path_to_data
+        # self.path_to_save_qc = path_to_save_qc
         self.model_name = model_name
-        self.compression_ratio = compression_ratio
 
         # Hyper-parameters
         self.learning_rate = learning_rate
-        self.batch_size = batch_size
+        self.hparams.batch_size = batch_size
         self.min_lf = learning_rate / 6.0
         self.save_hyperparameters()
 
@@ -85,22 +85,31 @@ class AutoGenoShallow(pl.LightningModule):
 
     # define forward function
     def forward(self, x):
+        print(f'x type: {type(x)}')
+        print(f'input features: {self.input_features} hidden: {self.hidden_layer} smallest: {self.smallest_layer} '
+              f'output: {self.output_features}')
         y = self.encoder(x)
+        print(f'input features: {self.input_features} hidden: {self.hidden_layer} smallest: {self.smallest_layer} '
+              f'output: {self.output_features}')
         x = self.decoder(y)
         return x, y
 
     # define training step
     def training_step(self, batch, batch_idx) -> Dict[str, Tensor]:
-        output, coder = self.forward(batch)
-        self.training_r2score(preds=output, target=batch)
-        self.training_spearman(preds=output, target=batch)
-        self.training_pearson(preds=output, target=batch)
-        loss = f.mse_loss(input=output, target=batch)
-        return {'input': batch, 'output': output, 'model': coder, 'loss': loss}
+        print(f'training batch type: {type(batch)}\n{batch}')
+        x = batch[0]
+        output, coder = self.forward(x)
+        self.training_r2score(preds=output, target=x)
+        # self.training_spearman(preds=output, target=x)
+        # self.training_pearson(preds=output, target=x)
+        loss = f.mse_loss(input=output, target=x)
+        return {'input': x, 'output': output, 'model': coder, 'loss': loss}
 
     # end of training epoch
     def training_epoch_end(self, training_step_outputs):
         losses: Tensor = get_dict_values('loss', training_step_outputs)
+        pred: Tensor = get_dict_values('output', training_step_outputs)
+        target: Tensor = get_dict_values('input', training_step_outputs)
         epoch = self.trainer.current_epoch
 
         # ===========save model============
@@ -110,83 +119,103 @@ class AutoGenoShallow(pl.LightningModule):
         np.savetxt(fname=coder_file, X=coder_np, fmt='%f', delimiter=',')
 
         # ======goodness of fit======
-        r2: float = self.training_r2score.compute().item()
+        self.training_r2score.update(preds=pred, target=target)
+        # self.training_pearson.update(preds=pred, target=target)
+        # self.training_spearman.update(preds=pred, target=target)
+
+        r2 = self.training_r2score.compute().item()
+        '''
         coefficient: float
-        if data_parametric:
-            coefficient = self.training_pearson.compute().item()
+        if data_parametric():
+            coefficient = self.testing_pearson.compute().item()
         else:
-            coefficient = self.training_spearman.compute().item()
+            coefficient = self.testing_spearman.compute().item()
+        '''
 
         self.log('step', epoch + 1)
         self.log('loss', losses.sum())
-        self.log('r2score', self.training_r2score, on_step=False, on_epoch=True)
+        self.log('r2score', r2, on_step=False, on_epoch=True)
 
+        '''
         print(f"epoch[{epoch + 1:4d}], "
               f"loss: {losses.sum():.4f}, coefficient: {coefficient:.4f}, r2: {r2:.4f},",
+              end=' ')
+        '''
+        print(f"epoch[{epoch + 1:4d}], "
+              f"loss: {losses.sum():.4f}, r2: {r2:.4f},",
               end=' ')
 
     # define validation step
     def validation_step(self, batch, batch_idx) -> Dict[str, Tensor]:
-        output, coder = self.forward(batch)
-        self.training_r2score(preds=output, target=batch)
-        self.training_spearman(preds=output, target=batch)
-        self.training_pearson(preds=output, target=batch)
-        loss = f.mse_loss(input=output, target=batch)
-        return {'input': batch, 'output': output, 'model': coder, 'loss': loss}
+        print(f'val batch type: {type(batch[0])} {batch[0].size()}')
+        x = batch[0]
+        output, coder = self.forward(x)
+        print(f'output type:{type(output)} {output.size()} batch type:{type(x)} {x.size()}')
+        self.testing_r2score(preds=output, target=x)
+        # self.training_spearman(preds=output, target=x)
+        # self.training_pearson(preds=output, target=x)
+        loss = f.mse_loss(input=output, target=x)
+        return {'input': x, 'output': output, 'model': coder, 'loss': loss}
 
     # end of validation epoch
     def validation_epoch_end(self, testing_step_outputs):
-        losses = np.asarray(get_dict_values('loss', testing_step_outputs))
+        losses = get_dict_values('loss', testing_step_outputs)
+        pred = get_dict_values('output', testing_step_outputs)
+        target = get_dict_values('input', testing_step_outputs)
         # epoch = self.trainer.current_epoch
 
         # ======goodness of fit======
+        self.testing_r2score.update(preds=pred, target=target)
+        # self.testing_pearson.update(preds=pred, target=target)
+        # self.testing_spearman.update(preds=pred, target=target)
         r2 = self.testing_r2score.compute().item()
+        '''
         coefficient: float
         if data_parametric:
             coefficient = self.testing_pearson.compute().item()
         else:
             coefficient = self.testing_spearman.compute().item()
+        '''
 
         # self.log('step', epoch + 1)
         self.log('test_loss', losses.sum())
-        self.log('test_r2score', self.testing_r2score, on_step=False, on_epoch=True)
+        self.log('test_r2score', r2, on_step=False, on_epoch=True)
 
+        '''
         print(f"test_loss: {losses.sum():.4f}, "
               f"test_coefficient: {coefficient:.4f}, test_r2: {r2:.4f}")
+        '''
+        print(f"test_loss: {losses.sum():.4f}, test_r2: {r2:.4f}")
 
     # configures the optimizers through learning rate
-    def configures_optimizer(self):
+    def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
         step_size = 4 * len(self.train_dataloader())
         clr = self.cyclical_lr(step_size, min_lr=self.min_lf, max_lr=self.learning_rate)
         scheduler: LambdaLR = torch.optim.lr_scheduler.LambdaLR(optimizer, [clr])
         return {"optimizer": optimizer, "lr_scheduler": scheduler}
 
-    def prepare_data(self) -> None:
-        # get normalized data quality control
-        self.geno: ndarray = get_data(pd.read_csv(self.path_to_data, index_col=0), self.path_to_save_qc)
-        self.input_features = len(self.geno[0])
-        self.output_features = self.input_features
-        self.smallest_layer = math.ceil(self.input_features / self.compression_ratio)
-        self.hidden_layer = int(2 * self.smallest_layer)
-
     def setup(self, stage: Optional[str] = None):
         # setup of training and testing
         geno_train, geno_test = train_test_split(self.geno, test_size=0.1, random_state=42)
+        print(f'geno_train dim:{geno_train.shape} geno_test dim: {geno_test.shape}')
         # Assign train/val datasets for using in data-loaders
         if stage == 'fit' or stage is None:
             self.input_list = torch.from_numpy(geno_train).type(torch.FloatTensor)
             self.test_input_list = torch.from_numpy(geno_test).type(torch.FloatTensor)
+        print(f'input_list: {type(self.input_list)} test_input_list: {type(self.test_input_list)}')
 
-    def train_dataloader(self):
+    def train_dataloader(self) -> EVAL_DATALOADERS:
         # Called when training the model
         self.train_dataset = torch.utils.data.TensorDataset(self.input_list)
-        return DataLoader(self.train_dataset, batch_size=self.batch_size)
+        print(f'input_list: {type(self.input_list)} train_data: {type(self.train_dataset)}')
+        return DataLoader(dataset=self.train_dataset, batch_size=self.hparams.batch_size, num_workers=8)
 
-    def val_dataloader(self):
+    def val_dataloader(self) -> EVAL_DATALOADERS:
         # Called when evaluating the model (for each "n" steps or "n" epochs)
         self.testing_dataset = torch.utils.data.TensorDataset(self.test_input_list)
-        return DataLoader(self.testing_dataset, batch_size=self.batch_size)
+        print(f'test_input_list: {type(self.test_input_list)} testing_data: {type(self.testing_dataset)}')
+        return DataLoader(dataset=self.testing_dataset, batch_size=self.hparams.batch_size, num_workers=8)
 
     def test_dataloader(self) -> EVAL_DATALOADERS:
         pass
@@ -196,10 +225,6 @@ class AutoGenoShallow(pl.LightningModule):
 
     def _forward_unimplemented(self, *inputs: Any) -> None:
         pass
-
-    # get current learning rate
-    def get_lr(self) -> float:
-        return self.learning_rate
 
     @staticmethod
     def cyclical_lr(step_size: int, min_lr: float = 3e-2, max_lr: float = 3e-3):

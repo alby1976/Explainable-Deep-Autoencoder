@@ -14,34 +14,35 @@ from CommonTools import create_dir
 
 def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_save_ae: Path,
          compression_ratio: int, num_epochs: int, batch_size: int):
-    if not (path_to_save_ae.is_dir()):
-        print(f'{path_to_save_ae} is not a directory')
-        sys.exit(-1)
-
     if not (path_to_data.is_file()):
         print(f'{path_to_data} is not a file')
         sys.exit(-1)
 
     # instantiate model
+    create_dir(path_to_save_ae)
     model = AutoGenoShallow(save_dir=path_to_save_ae, path_to_data=path_to_data, path_to_save_qc=path_to_save_qc,
                             model_name=model_name, compression_ratio=compression_ratio, batch_size=batch_size)
     # find ideal learning rate
     seed_everything(42)
     early_stop_loss = EarlyStopping(monitor='test_loss', verbose=True, mode='min', check_on_train_epoch_end=False)
-    early_stop_r2score = EarlyStopping(monitor='test_r2score', verbose=True, max='max', check_on_train_epoch_end=False)
+    early_stop_r2score = EarlyStopping(monitor='test_r2score', verbose=True, mode='max', check_on_train_epoch_end=False)
     trainer = pl.Trainer(max_epochs=num_epochs,
+                         gpus=1,
                          deterministic=True,
                          callbacks=[early_stop_loss, early_stop_r2score],
                          auto_scale_batch_size='binsearch')
+    print('test1')
     model.learning_rate = trainer.tuner.lr_find(model).suggestion()
+    model.min_lf = model.learning_rate / 6.0
+    print('test2')
     # find ideal batch size
     trainer.tuner(model)
     # train & validate model
     log_dir = path_to_save_ae.joinpath('log')
     create_dir(log_dir)
-    csv_logger = CSVLogger(save_dir=log_dir, name=model_name)
+    csv_logger = CSVLogger(save_dir=str(log_dir), name=model_name)
     trainer.logger = csv_logger
-
+    trainer.fit(model=model, train_dataloaders=model.train_dataloader(), val_dataloaders=model.val_dataloader())
 
 
 if __name__ == '__main__':
@@ -57,7 +58,7 @@ if __name__ == '__main__':
         print('\tnum_epoch - max number of epochs e.g. 200')
         print('\tbatch_size - the size of each batch e.g. 4096')
 
-        main('AE_Geno', Path('../data_example.csv'), Path('./data_QC.csv'), Path('./AE'), 1024, 200, 4096)
+        main('AE_Geno', Path('../data_example.csv'), Path('./data_QC.csv'), Path('./AE'), 32, 200, 4096)
     else:
         main(model_name=sys.argv[1], path_to_data=Path(sys.argv[2]), path_to_save_qc=Path(sys.argv[3]),
              path_to_save_ae=Path(sys.argv[4]),
