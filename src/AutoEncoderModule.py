@@ -145,14 +145,14 @@ class AutoGenoShallow(pl.LightningModule):
     # define validation step
     def validation_step(self, batch, batch_idx) -> Dict[str, Tensor]:
         x = batch[0]
-        print(f'val batch type: {type(x)} {x.size()}')
-        output, coder = self.forward(x)
-        print(f'val step output type:{type(output)} {output.size()} batch type:{type(x)} {x.size()}')
+        output, _ = self.forward(x)
         self.testing_r2score(preds=output, target=x)
         # self.training_spearman(preds=output, target=x)
         # self.training_pearson(preds=output, target=x)
         loss = f.mse_loss(input=output, target=x)
-        return {'input': x, 'output': output, 'model': coder, 'loss': loss}
+        print(f'{batch_idx} val step output type:{type(output)} {output.size()} batch type:{type(x)} {x.size()} '
+              f'loss type: {type(loss)} {loss.size()}')
+        return {'input': x, 'output': output, 'loss': loss}
 
     # end of validation epoch
     def validation_epoch_end(self, testing_step_outputs):
