@@ -148,8 +148,10 @@ class AutoGenoShallow(pl.LightningModule):
         # self.training_spearman(preds=output, target=x)
         # self.training_pearson(preds=output, target=x)
         loss = f.mse_loss(input=output, target=x)
+        '''
         print(f'{batch_idx} val step batch size: {self.hparams.batch_size} output dim: {output.size()} '
               f'batch dim: {x.size()} loss dim: {loss.size()}')
+        '''
         return {'input': x, 'output': output, 'loss': loss}
 
     # end of validation epoch
@@ -200,7 +202,6 @@ class AutoGenoShallow(pl.LightningModule):
         if stage == 'fit' or stage is None:
             self.input_list = torch.from_numpy(geno_train).type(torch.FloatTensor)
             self.test_input_list = torch.from_numpy(geno_test).type(torch.FloatTensor)
-        print(f'input_list: {type(self.input_list)} test_input_list: {type(self.test_input_list)}')
 
     def train_dataloader(self) -> EVAL_DATALOADERS:
         # Called when training the model
