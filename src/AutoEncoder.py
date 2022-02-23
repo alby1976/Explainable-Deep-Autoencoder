@@ -26,12 +26,19 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
     seed_everything(42)
     early_stop_loss = EarlyStopping(monitor='test_loss', verbose=True, mode='min', check_on_train_epoch_end=False)
     early_stop_r2score = EarlyStopping(monitor='test_r2score', verbose=True, mode='max', check_on_train_epoch_end=False)
-    trainer = pl.Trainer(max_epochs=num_epochs,
-                         deterministic=True,
-                         callbacks=[early_stop_loss, early_stop_r2score],
-                         auto_scale_batch_size='binsearch')
+    trainer:Trainer
     if torch.cuda.is_available():
-        trainer.gpus=1
+        pl.Trainer(max_epochs=num_epochs,
+                   deterministic=True,
+                   gpus=1,
+                   callbacks=[early_stop_loss, early_stop_r2score],
+                   auto_scale_batch_size='binsearch')
+    else:
+        pl.Trainer(max_epochs=num_epochs,
+                   deterministic=True,
+                   callbacks=[early_stop_loss, early_stop_r2score],
+                   auto_scale_batch_size='binsearch')
+
     print('test1')
     model.learning_rate = trainer.tuner.lr_find(model).suggestion()
     model.min_lf = model.learning_rate / 6.0
