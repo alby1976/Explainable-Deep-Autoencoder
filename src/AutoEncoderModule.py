@@ -95,7 +95,7 @@ class AutoGenoShallow(pl.LightningModule):
         x = batch[0]
         print(f'training batch type: {type(x)} {x.size()}')
         output, coder = self.forward(x)
-        self.training_r2score(preds=output, target=x)
+        self.training_r2score.forward(preds=output, target=x)
         # self.training_spearman(preds=output, target=x)
         # self.training_pearson(preds=output, target=x)
         loss = f.mse_loss(input=output, target=x)
@@ -108,7 +108,6 @@ class AutoGenoShallow(pl.LightningModule):
         target: Tensor = get_dict_values_2d('input', training_step_outputs)
         epoch = self.trainer.current_epoch
 
-        print(f'pred: {pred.size()} target: {target.size()}')
         # ===========save model============
         output_coder_list: Tensor = get_dict_values_2d('model', training_step_outputs)
         coder_np: Union[np.ndarray, int] = output_coder_list.cpu().detach().numpy()
@@ -116,7 +115,7 @@ class AutoGenoShallow(pl.LightningModule):
         np.savetxt(fname=coder_file, X=coder_np, fmt='%f', delimiter=',')
 
         # ======goodness of fit======
-        self.training_r2score.update(preds=pred, target=target)
+        # self.training_r2score.update(preds=pred, target=target)
         # self.training_pearson.update(preds=pred, target=target)
         # self.training_spearman.update(preds=pred, target=target)
 
@@ -151,7 +150,7 @@ class AutoGenoShallow(pl.LightningModule):
         # self.training_pearson(preds=output, target=x)
         loss = f.mse_loss(input=output, target=x)
         print(f'{batch_idx} val step output type:{type(output)} {output.size()} batch type:{type(x)} {x.size()} '
-              f'loss type: {type(loss)} {loss.size()}')
+             f'loss type: {type(loss)} {loss.size()} batch_size: {self.hparams.batch_size}')
         return {'input': x, 'output': output, 'loss': loss}
 
     # end of validation epoch
@@ -162,18 +161,9 @@ class AutoGenoShallow(pl.LightningModule):
         pred = get_dict_values_2d('output', testing_step_outputs)
         target = get_dict_values_2d('input', testing_step_outputs)
         print(f'regular losses: {losses.size()} pred: {pred.size()} target: {target.size()}')
-        losses = values['loss']
-        pred = values['output']
-        target = values['input']
-        print(f'merge   losses: {losses.size()} pred: {pred.size()} target: {target.size()}')
-
-        # epoch = self.trainer.current_epoch
-        print(f'val epoch testing_step_outputs: {type(testing_step_outputs)}\n{testing_step_outputs}')
-        print(f'val epoch pred type:{type(pred)} {pred.size()} target type:{type(target)} {target.size()}')
-        print(f'val epoch outputs: {merge_list_dict(testing_step_outputs)}')
 
         # ======goodness of fit======
-        self.testing_r2score.update(preds=pred, target=target)
+        # self.testing_r2score.update(preds=pred, target=target)
         # self.testing_pearson.update(preds=pred, target=target)
         # self.testing_spearman.update(preds=pred, target=target)
         r2 = self.testing_r2score.compute().item()
