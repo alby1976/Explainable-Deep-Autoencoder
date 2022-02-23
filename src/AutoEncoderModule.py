@@ -103,14 +103,14 @@ class AutoGenoShallow(pl.LightningModule):
 
     # end of training epoch
     def training_epoch_end(self, training_step_outputs):
-        losses: Tensor = get_dict_values('loss', training_step_outputs)
-        pred: Tensor = get_dict_values('output', training_step_outputs)
-        target: Tensor = get_dict_values('input', training_step_outputs)
+        losses: Tensor = get_dict_values_1d('loss', training_step_outputs)
+        pred: Tensor = get_dict_values_2d('output', training_step_outputs)
+        target: Tensor = get_dict_values_2d('input', training_step_outputs)
         epoch = self.trainer.current_epoch
 
         print(f'pred: {pred.size()} target: {target.size()}')
         # ===========save model============
-        output_coder_list: Tensor = get_dict_values('model', training_step_outputs)
+        output_coder_list: Tensor = get_dict_values_2d('model', training_step_outputs)
         coder_np: Union[np.ndarray, int] = output_coder_list.cpu().detach().numpy()
         coder_file = self.save_dir.joinpath(f"{self.model_name}-{epoch}.csv")
         np.savetxt(fname=coder_file, X=coder_np, fmt='%f', delimiter=',')
