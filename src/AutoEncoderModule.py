@@ -157,9 +157,16 @@ class AutoGenoShallow(pl.LightningModule):
     # end of validation epoch
     def validation_epoch_end(self, testing_step_outputs):
         values = merge_list_dict(testing_step_outputs)
+
         losses = values['loss']
         pred = values['output']
         target = values['input']
+        print(f'merge   losses: {losses.size()} pred: {pred.size()} target: {target.size()}')
+        losses = get_dict_values('loss', testing_step_outputs)
+        pred = get_dict_values('output', testing_step_outputs)
+        target = get_dict_values('input', testing_step_outputs)
+        print(f'regular losses: {losses.size()} pred: {pred.size()} target: {target.size()}')
+
         # epoch = self.trainer.current_epoch
         print(f'val epoch testing_step_outputs: {type(testing_step_outputs)}\n{testing_step_outputs}')
         print(f'val epoch pred type:{type(pred)} {pred.size()} target type:{type(target)} {target.size()}')
