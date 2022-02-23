@@ -15,7 +15,7 @@ import pytorch_lightning as pl
 import numpy as np
 import pandas as pd
 
-from CommonTools import data_parametric, get_dict_values, get_data
+from CommonTools import data_parametric, get_dict_values, get_data, merge_list_dict
 
 
 class GPDataSet(Dataset):
@@ -162,6 +162,7 @@ class AutoGenoShallow(pl.LightningModule):
         # epoch = self.trainer.current_epoch
         print(f'val epoch testing_step_outputs: {type(testing_step_outputs)}\n{testing_step_outputs}')
         print(f'val epoch pred type:{type(pred)} {pred.size()} target type:{type(target)} {target.size()}')
+        print(f'val epoch outputs: {merge_list_dict(testing_step_outputs)}')
 
         # ======goodness of fit======
         self.testing_r2score.update(preds=pred, target=target)
