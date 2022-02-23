@@ -50,7 +50,7 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
     create_dir(log_dir)
     csv_logger = CSVLogger(save_dir=str(log_dir), name=model_name)
     trainer.logger = csv_logger
-    trainer.fit(model=model, train_dataloaders=model.train_dataloader(), val_dataloaders=model.val_dataloader())
+    # trainer.fit(model=model, train_dataloaders=model.train_dataloader(), val_dataloaders=model.val_dataloader())
 
 
 if __name__ == '__main__':
