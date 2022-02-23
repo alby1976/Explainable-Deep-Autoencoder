@@ -2,6 +2,7 @@ name:XAI
 channels:
   - conda-forge
   - pytorch
+  - bioconda
   - defaults
 dependencies:
   # pyton requirements
@@ -20,6 +21,9 @@ dependencies:
     - torch~=1.10.2
   # R requirements
   - r-base
-  - WebGestaltR==0.4.4
-  - data.table==1.14.2
-  - biomaRt==2.50.0
+  - r-biocmanager
+  - bioconductor-biocinstaller
+  - r-wgcna
+  - r-webgestaltr=0.4.4
+  - r-data.table=1.14.2
+  - bioconductor-biomart=2.50.0
