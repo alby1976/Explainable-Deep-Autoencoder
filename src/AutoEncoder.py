@@ -27,14 +27,20 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
     early_stop_loss = EarlyStopping(monitor='test_loss', verbose=True, mode='min', check_on_train_epoch_end=False)
     early_stop_r2score = EarlyStopping(monitor='test_r2score', verbose=True, mode='max', check_on_train_epoch_end=False)
     trainer: Trainer
+    log_dir = path_to_save_ae.joinpath('log')
+    create_dir(log_dir)
     if torch.cuda.is_available():
         trainer = pl.Trainer(max_epochs=num_epochs,
+                             log_every_n_steps=1,
+                             logger=CSVLogger(save_dir=str(log_dir), name=model_name),
                              deterministic=True,
                              gpus=1,
                              callbacks=[early_stop_loss, early_stop_r2score],
                              auto_scale_batch_size='binsearch')
     else:
         trainer = pl.Trainer(max_epochs=num_epochs,
+                             log_every_n_steps=1,
+                             logger=CSVLogger(save_dir=str(log_dir), name=model_name),
                              deterministic=True,
                              callbacks=[early_stop_loss, early_stop_r2score],
                              auto_scale_batch_size='binsearch')
@@ -44,12 +50,8 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
     model.min_lf = model.learning_rate / 6.0
     print('test2')
     # find ideal batch size
-    trainer.tuner(model)
+    trainer.tune(model)
     # train & validate model
-    log_dir = path_to_save_ae.joinpath('log')
-    create_dir(log_dir)
-    csv_logger = CSVLogger(save_dir=str(log_dir), name=model_name)
-    trainer.logger = csv_logger
     # trainer.fit(model=model, train_dataloaders=model.train_dataloader(), val_dataloaders=model.val_dataloader())
 
 
