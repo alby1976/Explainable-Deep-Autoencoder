@@ -210,13 +210,13 @@ class AutoGenoShallow(pl.LightningModule):
         # Called when training the model
         self.train_dataset = torch.utils.data.TensorDataset(self.input_list)
         print(f'input_list: {type(self.input_list)} train_data: {type(self.train_dataset)}')
-        return DataLoader(dataset=self.train_dataset, batch_size=self.hparams.batch_size, num_workers=8)
+        return DataLoader(dataset=self.train_dataset, batch_size=self.hparams.batch_size)
 
     def val_dataloader(self) -> EVAL_DATALOADERS:
         # Called when evaluating the model (for each "n" steps or "n" epochs)
         self.testing_dataset = torch.utils.data.TensorDataset(self.test_input_list)
         print(f'test_input_list: {type(self.test_input_list)} testing_data: {type(self.testing_dataset)}')
-        return DataLoader(dataset=self.testing_dataset, batch_size=self.hparams.batch_size, num_workers=8)
+        return DataLoader(dataset=self.testing_dataset, batch_size=self.hparams.batch_size)
 
     def test_dataloader(self) -> EVAL_DATALOADERS:
         pass
