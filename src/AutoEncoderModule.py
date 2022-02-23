@@ -149,8 +149,8 @@ class AutoGenoShallow(pl.LightningModule):
         # self.training_spearman(preds=output, target=x)
         # self.training_pearson(preds=output, target=x)
         loss = f.mse_loss(input=output, target=x)
-        print(f'{batch_idx} val step output type:{type(output)} {output.size()} batch type:{type(x)} {x.size()} '
-             f'loss type: {type(loss)} {loss.size()} batch_size: {self.hparams.batch_size}')
+        print(f'{batch_idx} val step output dim: {output.size()} batch dim: {x.size()} '
+             f'loss dim: {loss.size()} batch_size: {self.hparams.batch_size}')
         return {'input': x, 'output': output, 'loss': loss}
 
     # end of validation epoch
