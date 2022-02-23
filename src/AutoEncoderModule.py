@@ -160,6 +160,7 @@ class AutoGenoShallow(pl.LightningModule):
         pred = get_dict_values('output', testing_step_outputs)
         target = get_dict_values('input', testing_step_outputs)
         # epoch = self.trainer.current_epoch
+        print(f'val epoch testing_step_outputs: {testing_step_outputs.size()}\n{testing_step_outputs}')
         print(f'val epoch pred type:{type(pred)} {pred.size()} target type:{type(target)} {target.size()}')
 
         # ======goodness of fit======
