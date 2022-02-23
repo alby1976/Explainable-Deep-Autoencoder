@@ -3,9 +3,13 @@
 import sys
 import pytorch_lightning as pl
 from pathlib import Path
+
+import torch
 from pytorch_lightning import seed_everything
+from pytorch_lightning.loggers import CSVLogger
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from AutoEncoderModule import AutoGenoShallow
+from CommonTools import create_dir
 
 
 def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_save_ae: Path,
@@ -23,14 +27,21 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
                             model_name=model_name, compression_ratio=compression_ratio, batch_size=batch_size)
     # find ideal learning rate
     seed_everything(42)
+    early_stop_loss = EarlyStopping(monitor='test_loss', verbose=True, mode='min', check_on_train_epoch_end=False)
+    early_stop_r2score = EarlyStopping(monitor='test_r2score', verbose=True, max='max', check_on_train_epoch_end=False)
     trainer = pl.Trainer(max_epochs=num_epochs,
-                         precision=32,
                          deterministic=True,
+                         callbacks=[early_stop_loss, early_stop_r2score],
                          auto_scale_batch_size='binsearch')
     model.learning_rate = trainer.tuner.lr_find(model).suggestion()
+    # find ideal batch size
     trainer.tuner(model)
-    # TODO: finish this off
-    trainer.callbacks = [1, 2, 3]
+    # train & validate model
+    log_dir = path_to_save_ae.joinpath('log')
+    create_dir(log_dir)
+    csv_logger = CSVLogger(save_dir=log_dir, name=model_name)
+    trainer.logger = csv_logger
+
 
 
 if __name__ == '__main__':
