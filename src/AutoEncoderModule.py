@@ -50,15 +50,13 @@ class AutoGenoShallow(pl.LightningModule):
         self.output_features = self.input_features
         self.smallest_layer = math.ceil(self.input_features / compression_ratio)
         self.hidden_layer = int(2 * self.smallest_layer)
-        self.training_r2score = torchmetrics.R2Score(num_outputs=self.input_features, compute_on_step=False)
-        # self.training_pearson = torchmetrics.regression.pearson.PearsonCorrcoef(compute_on_step=False)
-        # self.training_spearman = torchmetrics.regression.spearman.SpearmanCorrcoef(compute_on_step=False)
-        self.testing_r2score = torchmetrics.R2Score(num_outputs=self.input_features, compute_on_step=False)
-        # self.testing_pearson = torchmetrics.regression.pearson.PearsonCorrcoef(compute_on_step=False)
-        # self.testing_spearman = torchmetrics.regression.spearman.SpearmanCorrcoef(compute_on_step=False)
+        self.training_r2score = torchmetrics.R2Score(compute_on_step=False)
+        self.training_pearson = torchmetrics.regression.pearson.PearsonCorrcoef(compute_on_step=False)
+        self.training_spearman = torchmetrics.regression.spearman.SpearmanCorrcoef(compute_on_step=False)
+        self.testing_r2score = torchmetrics.R2Score(compute_on_step=False)
+        self.testing_pearson = torchmetrics.regression.pearson.PearsonCorrcoef(compute_on_step=False)
+        self.testing_spearman = torchmetrics.regression.spearman.SpearmanCorrcoef(compute_on_step=False)
         self.save_dir = save_dir
-        # self.path_to_data = path_to_data
-        # self.path_to_save_qc = path_to_save_qc
         self.model_name = model_name
 
         # Hyper-parameters
@@ -94,40 +92,39 @@ class AutoGenoShallow(pl.LightningModule):
         x = batch[0]
         # print(f'{batch_idx} training batch size: {self.hparams.batch_size} x: {x.size()}')
         output, coder = self.forward(x)
-        self.training_r2score.forward(preds=output, target=x)
-        # self.training_spearman(preds=output, target=x)
-        # self.training_pearson(preds=output, target=x)
+        self.training_r2score.forward(preds=torch.reshape(output, (-1,)), target=torch.reshape(x, (-1,)))
+        self.training_spearman.update(preds=torch.reshape(output, (-1,)), target=torch.reshape(x, (-1,)))
+        self.training_pearson(preds=torch.reshape(output, (-1,)), target=torch.reshape(x, (-1,)))
         loss = f.mse_loss(input=output, target=x)
-        return {'model': coder, 'loss': loss}
+        return {'model': coder, 'loss': loss, 'input': x, 'output': output}
 
     # end of training epoch
     def training_epoch_end(self, training_step_outputs):
         losses: Tensor = get_dict_values_1d('loss', training_step_outputs)
+        x: Tensor = get_dict_values_2d('input', training_step_outputs)
+        output: Tensor = get_dict_values_2d('output', training_step_outputs)
         epoch = self.trainer.current_epoch
 
         # ===========save model============
         output_coder_list: Tensor = get_dict_values_2d('model', training_step_outputs)
         coder_np: Union[np.ndarray, int] = output_coder_list.cpu().detach().numpy()
         coder_file = self.save_dir.joinpath(f"{self.model_name}-{epoch}.csv")
-        #print(f'\n*** save_dir: {self.save_dir} coder_file: {coder_file} ***\n')
+        # print(f'\n*** save_dir: {self.save_dir} coder_file: {coder_file} ***\n')
         np.savetxt(fname=coder_file, X=coder_np, fmt='%f', delimiter=',')
 
         # ======goodness of fit======
-        # self.training_r2score.update(preds=pred, target=target)
-        # self.training_pearson.update(preds=pred, target=target)
-        # self.training_spearman.update(preds=pred, target=target)
-
         r2 = self.training_r2score.compute().item()
-        '''
         coefficient: float
-        if data_parametric():
+        result: bool = data_parametric(x.cpu().detach().numpy(), output.cpu().detach().numpy())
+        if result:
             coefficient = self.testing_pearson.compute().item()
         else:
             coefficient = self.testing_spearman.compute().item()
-        '''
 
         self.log('step', epoch + 1)
+        self.log('parametric', result)
         self.log('loss', losses.sum())
+        self.log('coefficient', coefficient)
         self.log('r2score', r2, on_step=False, on_epoch=True)
 
         '''
@@ -143,19 +140,21 @@ class AutoGenoShallow(pl.LightningModule):
     def validation_step(self, batch, batch_idx) -> Dict[str, Tensor]:
         x = batch[0]
         output, _ = self.forward(x)
-        self.testing_r2score.forward(preds=output, target=x)
-        # self.training_spearman(preds=output, target=x)
-        # self.training_pearson(preds=output, target=x)
+        self.testing_r2score.forward(preds=torch.reshape(output, (-1,)), target=torch.reshape(x, (-1,)))
+        self.training_spearman(preds=torch.reshape(output, (-1,)), target=torch.reshape(x, (-1,)))
+        self.training_pearson(preds=torch.reshape(output, (-1,)), target=torch.reshape(x, (-1,)))
         loss = f.mse_loss(input=output, target=x)
         '''
         print(f'{batch_idx} val step batch size: {self.hparams.batch_size} output dim: {output.size()} '
               f'batch dim: {x.size()} loss dim: {loss.size()}')
         '''
-        return {'loss': loss}
+        return {'loss': loss, 'input': x, 'output': output}
 
     # end of validation epoch
     def validation_epoch_end(self, testing_step_outputs):
         losses = get_dict_values_1d('loss', testing_step_outputs)
+        x = get_dict_values_2d('input', testing_step_outputs)
+        output = get_dict_values_2d('output', testing_step_outputs)
         # print(f'regular losses: {losses.size()} pred: {pred.size()} target: {target.size()}')
 
         # ======goodness of fit======
@@ -163,16 +162,17 @@ class AutoGenoShallow(pl.LightningModule):
         # self.testing_pearson.update(preds=pred, target=target)
         # self.testing_spearman.update(preds=pred, target=target)
         r2 = self.testing_r2score.compute().item()
-        '''
         coefficient: float
-        if data_parametric:
+        result: bool = data_parametric(x.cpu().detach().numpy(), output.cpu().detach().numpy())
+        if result:
             coefficient = self.testing_pearson.compute().item()
         else:
             coefficient = self.testing_spearman.compute().item()
-        '''
 
         # self.log('step', epoch + 1)
         self.log('test_loss', losses.sum())
+        self.log('test_parametric', result)
+        self.log('coefficient', coefficient)
         self.log('test_r2score', r2, on_step=False, on_epoch=True)
 
         '''
