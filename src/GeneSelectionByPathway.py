@@ -143,8 +143,8 @@ def process_pathways(slurm: bool, ensembl_version: int, filename: Path, pathways
                                 base_bar_path, qc_file_gene_name, base_scatter_path, base_model_path)
         else:
             with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
-                executor.submit(create_model, (base_name, path_to_save_filtered_data, qc_file_gene_id, save_dir,
-                                               base_bar_path, qc_file_gene_name, base_scatter_path, base_model_path))
+                executor.submit(create_model, base_name, path_to_save_filtered_data, qc_file_gene_id, save_dir,
+                                base_bar_path, qc_file_gene_name, base_scatter_path, base_model_path)
 
 
 def get_pathways_gene_names(ensembl_version: int, pathway_data: Path) -> pd.DataFrame:
