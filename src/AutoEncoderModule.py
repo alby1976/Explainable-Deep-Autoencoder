@@ -98,7 +98,7 @@ class AutoGenoShallow(pl.LightningModule):
         # self.training_spearman(preds=output, target=x)
         # self.training_pearson(preds=output, target=x)
         loss = f.mse_loss(input=output, target=x)
-        return {'input': x, 'output': output, 'model': coder.cpu().detach().numpy(), 'loss': loss}
+        return {'input': x, 'output': output, 'model': coder, 'loss': loss}
 
     # end of training epoch
     def training_epoch_end(self, training_step_outputs):
@@ -144,7 +144,7 @@ class AutoGenoShallow(pl.LightningModule):
     def validation_step(self, batch, batch_idx) -> Dict[str, Tensor]:
         x = batch[0]
         output, _ = self.forward(x)
-        self.testing_r2score(preds=output, target=x)
+        self.testing_r2score.forward(preds=output, target=x)
         # self.training_spearman(preds=output, target=x)
         # self.training_pearson(preds=output, target=x)
         loss = f.mse_loss(input=output, target=x)
@@ -152,7 +152,7 @@ class AutoGenoShallow(pl.LightningModule):
         print(f'{batch_idx} val step batch size: {self.hparams.batch_size} output dim: {output.size()} '
               f'batch dim: {x.size()} loss dim: {loss.size()}')
         '''
-        return {'input': x, 'output': output, 'loss': loss}
+        return {'loss': loss}
 
     # end of validation epoch
     def validation_epoch_end(self, testing_step_outputs):
