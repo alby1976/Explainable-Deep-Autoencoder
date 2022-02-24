@@ -183,14 +183,15 @@ if __name__ == '__main__':
         sys.exit(-1)
 
     # data setup
-    print(f'slurm: {sys.argv[6]} {bool(sys.argv[6])}')
-    if bool(sys.argv[6]):
+    tmp = distutils.util.strtobool(sys.argv[6])
+    print(f'slurm: {sys.argv[6]} {bool(tmp)}')
+    if bool(tmp):
         os.environ['PYENSEMBL_CACHE_DIR'] = '/scratch/' + sys.argv[7]
     if Path(sys.argv[2]).is_file():
-        process_pathways(slurm=bool(sys.argv[6]), ensembl_version=int(sys.argv[1]), filename=Path(sys.argv[2]),
+        process_pathways(slurm=bool(tmp), ensembl_version=int(sys.argv[1]), filename=Path(sys.argv[2]),
                          pathways=get_pathways_gene_names(ensembl_version=int(sys.argv[1]),
                                                           pathway_data=Path(sys.argv[3])),
                          base_to_save_filtered_data=Path(sys.argv[4]), dir_to_model=Path(sys.argv[5]))
     else:
-        main(bool(sys.argv[6]), int(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3]), Path(sys.argv[4]),
+        main(bool(tmp), int(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3]), Path(sys.argv[4]),
              Path(sys.argv[5]))
