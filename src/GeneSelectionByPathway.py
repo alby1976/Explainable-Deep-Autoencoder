@@ -1,6 +1,6 @@
 # Filters Dataset by KEGG Pathway and uses PyEnsembl to get EnsemblID
 import concurrent.futures
-import distutils
+import distutils.util
 
 from pyensembl import EnsemblRelease
 from pathlib import Path
