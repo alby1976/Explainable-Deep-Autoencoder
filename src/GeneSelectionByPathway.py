@@ -84,17 +84,29 @@ def create_sbatch_files(job_file, base_name, path_to_save_filtered_data, qc_file
 
 def create_model(base_name, path_to_save_filtered_data, qc_file_gene_id, save_dir, base_bar_path,
                  qc_file_gene_name, base_scatter_path, base_model_path):
-    output = subprocess.run(('python', 'src/AutoEncoder.py',  f'{base_name}_AE_Geno',
-                             path_to_save_filtered_data, qc_file_gene_id, save_dir, 32, ), capture_output=True, text=True, check=True)
+    print("\n####### Run script ##############################\n")
+    print(f"python src/AutoEncoder.py {base_name}_AE_Geno {path_to_save_filtered_data} " +
+          f"{qc_file_gene_id} {save_dir} 64\n")
+    print(f"python src/SHAP_combo.py {qc_file_gene_name} {qc_file_gene_id} {save_dir} "
+          f"{base_bar_path} {base_scatter_path} {base_model_path}\n")
+'''
+    out = subprocess.run(('python', 'src/AutoEncoder.py',  f'{base_name}_AE_Geno', path_to_save_filtered_data,
+                          qc_file_gene_id, save_dir, 32, 10000, 4096), capture_output=True, text=True, check=True)
 
     print('####################')
-    print('Return code:', output.returncode)
-    print('Output:\n', output.stdout)
-    print('Error:\n', output.stderr)
+    print('Return code:', out.returncode)
+    print('Output:\n', out.stdout)
+    print('Error:\n', out.stderr)
 
+    out = subprocess.run(('python', 'src/SHAP_combo.py', qc_file_gene_name, qc_file_gene_id, save_dir,
+                          base_bar_path, base_scatter_path, base_model_path), capture_output=True, text=True, check=True)
 
-def test(index, item):
-    pass
+    print('####################')
+    print('Return code:', out.returncode)
+    print('Output:\n', out.stdout)
+    print('Error:\n', out.stderr)
+'''
+
 
 def process_pathways(slurm: bool, ensembl_version: int, filename: Path, pathways: pd.DataFrame,
                      base_to_save_filtered_data: Path, dir_to_model: Path):
@@ -129,7 +141,7 @@ def process_pathways(slurm: bool, ensembl_version: int, filename: Path, pathways
             create_sbatch_files(job_file, base_name, path_to_save_filtered_data, qc_file_gene_id, save_dir,
                                 base_bar_path, qc_file_gene_name, base_scatter_path, base_model_path)
         else:
-            with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
                 executor.submit(create_model, (base_name, path_to_save_filtered_data, qc_file_gene_id, save_dir,
                                                base_bar_path, qc_file_gene_name, base_scatter_path, base_model_path))
 
