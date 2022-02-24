@@ -64,7 +64,7 @@ class AutoGenoShallow(pl.LightningModule):
         # Hyper-parameters
         self.learning_rate = learning_rate
         self.hparams.batch_size = batch_size
-        self.min_lf = learning_rate / 6.0
+        self.min_lr = learning_rate / 6.0
         self.save_hyperparameters()
 
         # def the encoder function
@@ -190,7 +190,7 @@ class AutoGenoShallow(pl.LightningModule):
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
         step_size = 4 * len(self.train_dataloader())
-        clr = self.cyclical_lr(step_size, min_lr=self.min_lf, max_lr=self.learning_rate)
+        clr = self.cyclical_lr(step_size, min_lr=self.min_lr, max_lr=self.learning_rate)
         scheduler: LambdaLR = torch.optim.lr_scheduler.LambdaLR(optimizer, [clr])
         return {"optimizer": optimizer, "lr_scheduler": scheduler}
 

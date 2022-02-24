@@ -49,14 +49,16 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
                              callbacks=[early_stop_loss, early_stop_r2score],
                              auto_scale_batch_size='binsearch')
 
-    print('test1')
+    print('...Finding ideal learning rate....')
     model.learning_rate = trainer.tuner.lr_find(model).suggestion()
-    model.min_lf = model.learning_rate / 6.0
-    print('test2')
+    model.min_lr = model.learning_rate / 6.0
+    print(f'min lr: {model.min_lr} max lr: {model.learning_rate}')
+    print(f'...Finding ideal batch size....')
     # find ideal batch size
     trainer.tune(model)
     # train & validate model
-    # trainer.fit(model=model, train_dataloaders=model.train_dataloader(), val_dataloaders=model.val_dataloader())
+    print(f'...Training and Validating model...')
+    trainer.fit(model=model, train_dataloaders=model.train_dataloader(), val_dataloaders=model.val_dataloader())
 
 
 if __name__ == '__main__':
