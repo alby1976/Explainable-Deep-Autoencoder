@@ -98,13 +98,11 @@ class AutoGenoShallow(pl.LightningModule):
         # self.training_spearman(preds=output, target=x)
         # self.training_pearson(preds=output, target=x)
         loss = f.mse_loss(input=output, target=x)
-        return {'input': x, 'output': output, 'model': coder, 'loss': loss}
+        return {'model': coder, 'loss': loss}
 
     # end of training epoch
     def training_epoch_end(self, training_step_outputs):
         losses: Tensor = get_dict_values_1d('loss', training_step_outputs)
-        pred: Tensor = get_dict_values_2d('output', training_step_outputs)
-        target: Tensor = get_dict_values_2d('input', training_step_outputs)
         epoch = self.trainer.current_epoch
 
         # ===========save model============
@@ -159,8 +157,6 @@ class AutoGenoShallow(pl.LightningModule):
         values = merge_list_dict(testing_step_outputs)
 
         losses = get_dict_values_1d('loss', testing_step_outputs)
-        pred = get_dict_values_2d('output', testing_step_outputs)
-        target = get_dict_values_2d('input', testing_step_outputs)
         # print(f'regular losses: {losses.size()} pred: {pred.size()} target: {target.size()}')
 
         # ======goodness of fit======
