@@ -28,9 +28,12 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
     early_stop_r2score = EarlyStopping(monitor='test_r2score', verbose=True, mode='max', check_on_train_epoch_end=False)
     trainer: Trainer
     log_dir = path_to_save_ae.joinpath('log')
+    ckpt_dir = path_to_save_ae.joinpath('ckpt')
     create_dir(log_dir)
+    create_dir(ckpt_dir)
     if torch.cuda.is_available():
         trainer = pl.Trainer(max_epochs=num_epochs,
+                             default_root_dir=ckpt_dir,
                              log_every_n_steps=1,
                              logger=CSVLogger(save_dir=str(log_dir), name=model_name),
                              deterministic=True,
@@ -39,6 +42,7 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
                              auto_scale_batch_size='binsearch')
     else:
         trainer = pl.Trainer(max_epochs=num_epochs,
+                             default_root_dir=ckpt_dir,
                              log_every_n_steps=1,
                              logger=CSVLogger(save_dir=str(log_dir), name=model_name),
                              deterministic=True,
