@@ -58,7 +58,7 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
     trainer.tune(model)
     # train & validate model
     print(f'...Training and Validating model...')
-    trainer.fit(model=model, train_dataloaders=model.train_dataloader(), val_dataloaders=model.val_dataloader())
+    trainer.fit(model=model)
 
 
 if __name__ == '__main__':
