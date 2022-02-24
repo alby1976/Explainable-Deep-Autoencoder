@@ -42,6 +42,7 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
                              deterministic=True,
                              gpus=1,
                              callbacks=[early_stop_loss, early_stop_r2score],
+                             progress_bar_refresh_rate=0,
                              auto_scale_batch_size='binsearch')
     else:
         trainer = pl.Trainer(min_epochs=num_epochs,
@@ -51,6 +52,7 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
                              logger=CSVLogger(save_dir=str(log_dir), name=model_name),
                              deterministic=True,
                              callbacks=[early_stop_loss, early_stop_r2score],
+                             progress_bar_refresh_rate=0,
                              auto_scale_batch_size='binsearch')
 
     print('...Finding ideal learning rate....')
