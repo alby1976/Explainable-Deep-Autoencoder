@@ -109,7 +109,7 @@ class AutoGenoShallow(pl.LightningModule):
         output_coder_list: Tensor = get_dict_values_2d('model', training_step_outputs)
         coder_np: Union[np.ndarray, int] = output_coder_list.cpu().detach().numpy()
         coder_file = self.save_dir.joinpath(f"{self.model_name}-{epoch}.csv")
-        print(f'\n*** save_dir: {self.save_dir} coder_file: {coder_file} ***\n')
+        #print(f'\n*** save_dir: {self.save_dir} coder_file: {coder_file} ***\n')
         np.savetxt(fname=coder_file, X=coder_np, fmt='%f', delimiter=',')
 
         # ======goodness of fit======
