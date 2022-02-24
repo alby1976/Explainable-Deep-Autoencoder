@@ -197,7 +197,7 @@ class AutoGenoShallow(pl.LightningModule):
     def setup(self, stage: Optional[str] = None):
         # setup of training and testing
         geno_train, geno_test = train_test_split(self.geno, test_size=0.1, random_state=42)
-        print(f'geno_train dim:{geno_train.shape} geno_test dim: {geno_test.shape}')
+        # print(f'geno_train dim:{geno_train.shape} geno_test dim: {geno_test.shape}')
         # Assign train/val datasets for using in data-loaders
         if stage == 'fit' or stage is None:
             self.input_list = torch.from_numpy(geno_train).type(torch.FloatTensor)
