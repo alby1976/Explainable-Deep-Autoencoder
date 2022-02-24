@@ -32,7 +32,7 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
     create_dir(log_dir)
     create_dir(ckpt_dir)
     if torch.cuda.is_available():
-        trainer = pl.Trainer(max_epochs=num_epochs,
+        trainer = pl.Trainer(min_epochs=num_epochs,
                              default_root_dir=ckpt_dir,
                              log_every_n_steps=1,
                              logger=CSVLogger(save_dir=str(log_dir), name=model_name),

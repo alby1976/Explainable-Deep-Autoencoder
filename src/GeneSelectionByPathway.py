@@ -1,8 +1,7 @@
 # Filters Dataset by KEGG Pathway and uses PyEnsembl to get EnsemblID
 from pyensembl import EnsemblRelease
 from pathlib import Path
-from AutoEncoderModule import create_dir
-from AutoEncoder import get_filtered_data
+from CommonTools import create_dir, get_filtered_data
 import pandas as pd
 import numpy as np
 import subprocess
@@ -38,26 +37,71 @@ def get_gene_names(ensembl_release: int, gene_list: np.ndarray) -> np.ndarray:
     return np.array(names)
 
 
-def process_pathways(ensembl_version: int, filename: Path, pathways: pd.DataFrame,
+def create_sbatch_files(job_file, base_name, path_to_save_filtered_data, qc_file_gene_id, save_dir, base_bar_path,
+                        qc_file_gene_name, base_scatter_path, base_model_path):
+    # process filtered dataset
+    with open(job_file, "w") as fh:
+        fh.writelines("#!/bin/bash\n")
+        fh.writelines("#SBATCH --mail-user=%uR@ucalgary.ca\n")
+        fh.writelines("#SBATCH --mail-type=ALL\n")
+        fh.writelines("#SBATCH --partition=gpu-v100\n")
+        fh.writelines("#SBATCH --gres=gpu:1\n")
+        fh.writelines("#SBATCH --time=2:0:0\n")
+        fh.writelines("#SBATCH --mem=16GB\n")
+        fh.writelines("#SBATCH --cpus-per-task=8")
+        fh.writelines(f"#SBATCH --job-name={base_name}-job.slurm\n")
+        fh.writelines("#SBATCH --out=%x-%N-%j.out\n")
+        fh.writelines("#SBATCH --error=%x-%N-%j.error\n")
+
+        fh.writelines("\n####### Set environment variables ###############\n\n")
+        fh.writelines("module load python/anaconda3-2019.10-tensorflowgpu\n")
+        fh.writelines("source $HOME/.bash_profile\n")
+        fh.writelines("conda activate XAI\n")
+
+        fh.writelines("\n####### Run script ##############################\n")
+        fh.writelines(f"echo \"python src/AutoEncoder.py {base_name}_AE_Geno " +
+                      f"{path_to_save_filtered_data} {qc_file_gene_id} {save_dir} 64\"\n")
+        fh.writelines(f"python src/AutoEncoder.py {base_name}_AE_Geno {path_to_save_filtered_data} " +
+                      f"{qc_file_gene_id} {save_dir} 64\n")
+        fh.writelines(f"echo \"python src/SHAP_combo.py {qc_file_gene_name} {qc_file_gene_id} {save_dir} "
+                      f"{base_bar_path} {base_scatter_path} {base_model_path}\"\n")
+        fh.writelines(f"python src/SHAP_combo.py {qc_file_gene_name} {qc_file_gene_id} {save_dir} "
+                      f"{base_bar_path} {base_scatter_path} {base_model_path}\n")
+
+        fh.writelines("\n####### Clean up ################################\n")
+        fh.writelines("module unload python/anaconda3-2019.10-tensorflowgpu\n")
+        fh.close()
+    print(f"sbatch {job_file}")
+    output = subprocess.run(('sbatch', job_file), capture_output=True, text=True, check=True)
+
+    print('####################')
+    print('Return code:', output.returncode)
+    print('Output:\n', output.stdout)
+    print('Error:\n', output.stderr)
+
+
+def create_models(base_name, path_to_save_filtered_data, qc_file_gene_id, save_dir, base_bar_path,
+                  qc_file_gene_name, base_scatter_path, base_model_path):
+    pass
+
+
+def process_pathways(slurm: bool, ensembl_version: int, filename: Path, pathways: pd.DataFrame,
                      base_to_save_filtered_data: Path, dir_to_model: Path):
     geno: pd.DataFrame = pd.read_csv(filename, index_col=0)  # original data
     for index, gene_set in enumerate(pathways.All_Genes):
         pathway = pathways.iloc[index, 0]
         input_data: pd.DataFrame = geno[geno.columns.intersection(gene_set)]
         base_name = f'{pathway}-{filename.stem}'
-        job_directory = Path(f'{os.getcwd()}/.job')
-        filtered_data_dir = base_to_save_filtered_data.joinpath(base_name)
+        filtered_data_dir = base_to_save_filtered_data.joinpath(filename.stem)
         save_dir = dir_to_model.joinpath(base_name)
 
         # Make top level directories
-        create_dir(job_directory)
         create_dir(filtered_data_dir)
         create_dir(save_dir)
 
         path_to_save_filtered_data = filtered_data_dir.joinpath(f'{base_name}.csv')
         input_data.to_csv(path_to_save_filtered_data)
 
-        job_file = job_directory.joinpath(f'{base_name}.job')
         qc_file_gene_id = filtered_data_dir.joinpath(f'{base_name}_gene_id_QC.csv')
 
         qc_file_gene_name = filtered_data_dir.joinpath(f'{base_name}_gene_name_QC.csv')
@@ -67,46 +111,14 @@ def process_pathways(ensembl_version: int, filename: Path, pathways: pd.DataFram
         base_bar_path: Path = save_dir.joinpath('shap/bar')
         base_scatter_path: Path = save_dir.joinpath('shap/scatter')
         base_model_path: Path = save_dir.joinpath('shap/model')
-
-        # process filtered dataset
-        with open(job_file, "w") as fh:
-            fh.writelines("#!/bin/bash\n")
-            fh.writelines("#SBATCH --mail-user=%uR@ucalgary.ca\n")
-            fh.writelines("#SBATCH --mail-type=ALL\n")
-            fh.writelines("#SBATCH --partition=gpu-v100\n")
-            fh.writelines("#SBATCH --gres=gpu:1\n")
-            fh.writelines("#SBATCH --time=2:0:0\n")
-            fh.writelines("#SBATCH --mem=16GB\n")
-            fh.writelines("#SBATCH --cpus-per-task=8")
-            fh.writelines(f"#SBATCH --job-name={base_name}-job.slurm\n")
-            fh.writelines("#SBATCH --out=%x-%N-%j.out\n")
-            fh.writelines("#SBATCH --error=%x-%N-%j.error\n")
-
-            fh.writelines("\n####### Set environment variables ###############\n\n")
-            fh.writelines("module load python/anaconda3-2019.10-tensorflowgpu\n")
-            fh.writelines("source $HOME/.bash_profile\n")
-            fh.writelines("conda activate XAI\n")
-
-            fh.writelines("\n####### Run script ##############################\n")
-            fh.writelines(f"echo \"python src/AutoEncoder.py {base_name}_AE_Geno " +
-                          f"{path_to_save_filtered_data} {qc_file_gene_id} {save_dir} 64\"\n")
-            fh.writelines(f"python src/AutoEncoder.py {base_name}_AE_Geno {path_to_save_filtered_data} " +
-                          f"{qc_file_gene_id} {save_dir} 64\n")
-            fh.writelines(f"echo \"python src/SHAP_combo.py {qc_file_gene_name} {qc_file_gene_id} {save_dir} "
-                          f"{base_bar_path} {base_scatter_path} {base_model_path}\"\n")
-            fh.writelines(f"python src/SHAP_combo.py {qc_file_gene_name} {qc_file_gene_id} {save_dir} "
-                          f"{base_bar_path} {base_scatter_path} {base_model_path}\n")
-
-            fh.writelines("\n####### Clean up ################################\n")
-            fh.writelines("module unload python/anaconda3-2019.10-tensorflowgpu\n")
-            fh.close()
-        print(f"sbatch {job_file}")
-        output = subprocess.run(('sbatch', job_file), capture_output=True, text=True, check=True)
-
-        print('####################')
-        print('Return code:', output.returncode)
-        print('Output:\n', output.stdout)
-        print('Error:\n', output.stderr)
+        if slurm:
+            job_directory = Path(f'{os.getcwd()}/.job')
+            create_dir(job_directory)
+            job_file = job_directory.joinpath(f'{base_name}.job')
+            create_sbatch_files(job_file, base_name, path_to_save_filtered_data, qc_file_gene_id, save_dir,
+                                base_bar_path, qc_file_gene_name, base_scatter_path, base_model_path)
+        else:
+            pass
 
 
 def get_pathways_gene_names(ensembl_version: int, pathway_data: Path) -> pd.DataFrame:
@@ -118,8 +130,8 @@ def get_pathways_gene_names(ensembl_version: int, pathway_data: Path) -> pd.Data
     return pathways
 
 
-def main(ensembl_version: int, path_to_original_data: Path, pathway_data: Path, base_to_save_filtered_data: Path,
-         dir_to_model: Path):
+def main(slurm: bool, ensembl_version: int, path_to_original_data: Path, pathway_data: Path,
+         base_to_save_filtered_data: Path, dir_to_model: Path):
     if not (pathway_data.is_file()):
         print(f'{pathway_data} is not a file')
         sys.exit(-1)
@@ -127,13 +139,13 @@ def main(ensembl_version: int, path_to_original_data: Path, pathway_data: Path, 
     pathways = get_pathways_gene_names(ensembl_version=ensembl_version, pathway_data=pathway_data)
     for filename in path_to_original_data.glob('*.csv'):
         # filter data and create sbatch script
-        process_pathways(ensembl_version=ensembl_version, filename=filename, pathways=pathways,
+        process_pathways(slurm=slurm, ensembl_version=ensembl_version, filename=filename, pathways=pathways,
                          base_to_save_filtered_data=base_to_save_filtered_data, dir_to_model=dir_to_model)
 
 
 if __name__ == '__main__':
     if len(sys.argv) < 6:
-        print('less than 6 command line arguments')
+        print('less than 7 command line arguments')
         print('python GeneSelectionPathway.py ensemble_version dir_original_data '
               'filename_pathway_data dir_filtered_data dir_AE_model session_id')
         print('\tensembl_version - Ensembl Release version e.g. 104')
@@ -141,15 +153,18 @@ if __name__ == '__main__':
         print('\tfilename_pathway_data - filename of pathway data e.g. ./data/pathway.csv')
         print('\tdir_filtered_data - base dir to saved filtered original data e.g. ./data/filter')
         print('\tdir_AE_model - base dir to saved AE models e.g. .data/filter/AE')
+        print('\tslurm - where to run program on slurm')
         print('\tsession_id - slurm job id')
         sys.exit(-1)
 
     # data setup
-    os.environ['PYENSEMBL_CACHE_DIR'] = '/scratch/' + sys.argv[6]
+    if sys.argv[6]:
+        os.environ['PYENSEMBL_CACHE_DIR'] = '/scratch/' + sys.argv[7]
     if Path(sys.argv[2]).is_file():
-        process_pathways(ensembl_version=int(sys.argv[1]), filename=Path(sys.argv[2]),
+        process_pathways(slurm=bool(sys.argv[6]), ensembl_version=int(sys.argv[1]), filename=Path(sys.argv[2]),
                          pathways=get_pathways_gene_names(ensembl_version=int(sys.argv[1]),
                                                           pathway_data=Path(sys.argv[3])),
                          base_to_save_filtered_data=Path(sys.argv[4]), dir_to_model=Path(sys.argv[5]))
     else:
-        main(int(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3]), Path(sys.argv[4]), Path(sys.argv[5]))
+        main(bool(sys.argv[6]), int(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3]), Path(sys.argv[4]),
+             Path(sys.argv[5]))

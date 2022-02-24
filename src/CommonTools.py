@@ -11,11 +11,15 @@ from torch import device, Tensor
 
 
 def get_data(geno: DataFrame, path_to_save_qc: Path) -> ndarray:
+    return get_normalized_data(data=get_filtered_data(geno, path_to_save_qc)).to_numpy()
+
+
+def get_filtered_data(geno: DataFrame, path_to_save_qc: Path) -> DataFrame:
     geno_var: Union[Series, int] = geno.var()
     geno.drop(geno_var[geno_var < 1].index.values, axis=1, inplace=True)
     create_dir(path_to_save_qc.parent)
     geno.to_csv(path_to_save_qc)
-    return get_normalized_data(data=geno).to_numpy()
+    return geno
 
 
 # merge list to single dict
