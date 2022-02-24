@@ -115,7 +115,7 @@ class AutoGenoShallow(pl.LightningModule):
         # ======goodness of fit======
         r2 = self.training_r2score.compute().item()
         coefficient: float
-        result: bool = data_parametric(np.array(x.cpu().detach().numpy(), output.cpu().detach().numpy()))
+        result: bool = data_parametric(np.asarray([x.cpu().detach().numpy(), output.cpu().detach().numpy()]))
         if result:
             coefficient = self.testing_pearson.compute().item()
         else:
@@ -163,7 +163,7 @@ class AutoGenoShallow(pl.LightningModule):
         # self.testing_spearman.update(preds=pred, target=target)
         r2 = self.testing_r2score.compute().item()
         coefficient: float
-        result: bool = data_parametric(np.array(x.cpu().detach().numpy(), output.cpu().detach().numpy()))
+        result: bool = data_parametric(np.asarray([x.cpu().detach().numpy(), output.cpu().detach().numpy()]))
         if result:
             coefficient = self.testing_pearson.compute().item()
         else:
