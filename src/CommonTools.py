@@ -33,7 +33,7 @@ def merge_list_dict(lists) -> Dict[Any, Any]:
 
 # get dictionary values in a Tensor for a particular key in a list of dictionary
 def get_dict_values_1d(key: str, lists: List[Dict[str, Tensor]], dim: int = 0) -> Tensor:
-    return torch.stack([item[key] for item in lists], dim = dim)
+    return torch.stack([item[key] for item in lists], dim=dim)
 
 
 def get_dict_values_2d(key: str, lists: List[Dict[str, Tensor]], dim: int = 0) -> Tensor:
@@ -41,9 +41,10 @@ def get_dict_values_2d(key: str, lists: List[Dict[str, Tensor]], dim: int = 0) -
 
 
 def data_parametric(*samples: Tuple[ndarray, ...]) -> bool:
-    result1, _, _ = same_distribution_test(samples)
-    result2, _, _ = normality_test(samples[0])
-    result3, _, _ = equality_of_variance_test(samples)
+    print(f'samples: {type(samples)}, {len(samples)}')
+    result1, _, _ = same_distribution_test(*samples)
+    result2, _, _ = normality_test(*samples[0])
+    result3, _, _ = equality_of_variance_test(*samples)
     return result1 and result2 and result3
 
 
