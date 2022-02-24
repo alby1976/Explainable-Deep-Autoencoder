@@ -99,7 +99,8 @@ def create_model(base_name, path_to_save_filtered_data, qc_file_gene_id, save_di
     print(f"python src/SHAP_combo.py {qc_file_gene_name} {qc_file_gene_id} {save_dir} "
           f"{base_bar_path} {base_scatter_path} {base_model_path}\n")
     out = subprocess.run(('python', 'src/SHAP_combo.py', qc_file_gene_name, qc_file_gene_id, save_dir,
-                          base_bar_path, base_scatter_path, base_model_path), capture_output=True, text=True, check=True)
+                          base_bar_path, base_scatter_path, base_model_path),
+                         capture_output=True, text=True, check=True)
 
     print('####################')
     print('Return code:', out.returncode)
