@@ -183,6 +183,7 @@ if __name__ == '__main__':
         sys.exit(-1)
 
     # data setup
+    print(f'slurm: {sys.argv[6]} {bool(sys.argv[6])}')
     if bool(sys.argv[6]):
         os.environ['PYENSEMBL_CACHE_DIR'] = '/scratch/' + sys.argv[7]
     if Path(sys.argv[2]).is_file():
