@@ -115,7 +115,7 @@ class AutoGenoShallow(pl.LightningModule):
         # ======goodness of fit======
         r2 = self.training_r2score.compute().item()
         coefficient: float
-        result: bool = data_parametric(x.cpu().detach().numpy(), output.cpu().detach().numpy())
+        result: bool = data_parametric(np.array(x.cpu().detach().numpy(), output.cpu().detach().numpy()))
         if result:
             coefficient = self.testing_pearson.compute().item()
         else:
@@ -163,7 +163,7 @@ class AutoGenoShallow(pl.LightningModule):
         # self.testing_spearman.update(preds=pred, target=target)
         r2 = self.testing_r2score.compute().item()
         coefficient: float
-        result: bool = data_parametric(x.cpu().detach().numpy(), output.cpu().detach().numpy())
+        result: bool = data_parametric(np.array(x.cpu().detach().numpy(), output.cpu().detach().numpy()))
         if result:
             coefficient = self.testing_pearson.compute().item()
         else:
@@ -186,7 +186,7 @@ class AutoGenoShallow(pl.LightningModule):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
         scheduler: CyclicLR = torch.optim.lr_scheduler.CyclicLR(optimizer, base_lr=self.min_lr,
                                                                 cycle_momentum=False,
-                                                                max_lr=self.learning_rate, verbose=True)
+                                                                max_lr=self.learning_rate)
         # step_size = 4 * len(self.train_dataloader())
         # clr = self.cyclical_lr(step_size, min_lr=self.min_lr, max_lr=self.learning_rate)
         # scheduler: LambdaLR = torch.optim.lr_scheduler.LambdaLR(optimizer, [clr])
