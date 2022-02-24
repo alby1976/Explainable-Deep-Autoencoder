@@ -82,9 +82,15 @@ def create_sbatch_files(job_file, base_name, path_to_save_filtered_data, qc_file
     print('Error:\n', output.stderr)
 
 
-def create_models(base_name, path_to_save_filtered_data, qc_file_gene_id, save_dir, base_bar_path,
-                  qc_file_gene_name, base_scatter_path, base_model_path):
-    pass
+def create_model(base_name, path_to_save_filtered_data, qc_file_gene_id, save_dir, base_bar_path,
+                 qc_file_gene_name, base_scatter_path, base_model_path):
+    output = subprocess.run(('python', 'src/AutoEncoder.py',  f'{base_name}_AE_Geno',
+                             path_to_save_filtered_data, qc_file_gene_id, save_dir, 32, ), capture_output=True, text=True, check=True)
+
+    print('####################')
+    print('Return code:', output.returncode)
+    print('Output:\n', output.stdout)
+    print('Error:\n', output.stderr)
 
 
 def test(index, item):
@@ -124,7 +130,8 @@ def process_pathways(slurm: bool, ensembl_version: int, filename: Path, pathways
                                 base_bar_path, qc_file_gene_name, base_scatter_path, base_model_path)
         else:
             with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-                executor.map(download_site, sites)
+                executor.submit(create_model, (base_name, path_to_save_filtered_data, qc_file_gene_id, save_dir,
+                                               base_bar_path, qc_file_gene_name, base_scatter_path, base_model_path))
 
 
 def get_pathways_gene_names(ensembl_version: int, pathway_data: Path) -> pd.DataFrame:
