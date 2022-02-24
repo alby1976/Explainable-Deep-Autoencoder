@@ -92,7 +92,7 @@ class AutoGenoShallow(pl.LightningModule):
     # define training step
     def training_step(self, batch, batch_idx) -> Dict[str, Tensor]:
         x = batch[0]
-        print(f'{batch_idx} training batch size: {self.hparams.batch_size} x: {x.size()}')
+        # print(f'{batch_idx} training batch size: {self.hparams.batch_size} x: {x.size()}')
         output, coder = self.forward(x)
         self.training_r2score.forward(preds=output, target=x)
         # self.training_spearman(preds=output, target=x)
