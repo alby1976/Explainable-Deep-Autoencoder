@@ -36,7 +36,7 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
     if torch.cuda.is_available():
         trainer = pl.Trainer(min_epochs=num_epochs,
                              max_epochs=-1,
-                             default_root_dir=ckpt_dir,
+                             default_root_dir=str(ckpt_dir),
                              log_every_n_steps=1,
                              logger=CSVLogger(save_dir=str(log_dir), name=model_name),
                              deterministic=True,
@@ -46,7 +46,7 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
     else:
         trainer = pl.Trainer(min_epochs=num_epochs,
                              max_epochs=-1,
-                             default_root_dir=ckpt_dir,
+                             default_root_dir=str(ckpt_dir),
                              log_every_n_steps=1,
                              logger=CSVLogger(save_dir=str(log_dir), name=model_name),
                              deterministic=True,
