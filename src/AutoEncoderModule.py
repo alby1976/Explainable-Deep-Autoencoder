@@ -98,7 +98,7 @@ class AutoGenoShallow(pl.LightningModule):
         # self.training_spearman(preds=output, target=x)
         # self.training_pearson(preds=output, target=x)
         loss = f.mse_loss(input=output, target=x)
-        return {'input': x, 'output': output, 'model': coder, 'loss': loss}
+        return {'input': x, 'output': output, 'model': coder.cpu().detach().numpy(), 'loss': loss}
 
     # end of training epoch
     def training_epoch_end(self, training_step_outputs):
