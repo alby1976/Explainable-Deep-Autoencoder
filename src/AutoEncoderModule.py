@@ -135,10 +135,10 @@ class AutoGenoShallow(pl.LightningModule):
         print(f"epoch[{epoch + 1:4d}], "
               f"loss: {losses.sum():.4f}, coefficient: {coefficient:.4f}, r2: {r2:.4f},",
               end=' ')
-        '''
         print(f"epoch[{epoch + 1:4d}], "
               f"loss: {losses.sum():.4f}, r2: {r2:.4f},",
               end=' ')
+        '''
 
     # define validation step
     def validation_step(self, batch, batch_idx) -> Dict[str, Tensor]:
@@ -183,8 +183,8 @@ class AutoGenoShallow(pl.LightningModule):
         '''
         print(f"test_loss: {losses.sum():.4f}, "
               f"test_coefficient: {coefficient:.4f}, test_r2: {r2:.4f}")
-        '''
         print(f"test_loss: {losses.sum():.4f}, test_r2: {r2:.4f}")
+        '''
 
     # configures the optimizers through learning rate
     def configure_optimizers(self):
