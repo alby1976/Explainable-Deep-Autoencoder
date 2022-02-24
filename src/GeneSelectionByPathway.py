@@ -1,4 +1,6 @@
 # Filters Dataset by KEGG Pathway and uses PyEnsembl to get EnsemblID
+import concurrent
+
 from pyensembl import EnsemblRelease
 from pathlib import Path
 from CommonTools import create_dir, get_filtered_data
@@ -85,6 +87,9 @@ def create_models(base_name, path_to_save_filtered_data, qc_file_gene_id, save_d
     pass
 
 
+def test(index, item):
+    pass
+
 def process_pathways(slurm: bool, ensembl_version: int, filename: Path, pathways: pd.DataFrame,
                      base_to_save_filtered_data: Path, dir_to_model: Path):
     geno: pd.DataFrame = pd.read_csv(filename, index_col=0)  # original data
@@ -118,7 +123,8 @@ def process_pathways(slurm: bool, ensembl_version: int, filename: Path, pathways
             create_sbatch_files(job_file, base_name, path_to_save_filtered_data, qc_file_gene_id, save_dir,
                                 base_bar_path, qc_file_gene_name, base_scatter_path, base_model_path)
         else:
-            pass
+            with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+                executor.map(download_site, sites)
 
 
 def get_pathways_gene_names(ensembl_version: int, pathway_data: Path) -> pd.DataFrame:
