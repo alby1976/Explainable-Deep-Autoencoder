@@ -9,7 +9,7 @@ from pytorch_lightning.utilities.types import EVAL_DATALOADERS
 from sklearn.model_selection import train_test_split
 from torch import nn, Tensor
 from torch.nn import functional as f
-from torch.optim.lr_scheduler import LambdaLR
+from torch.optim.lr_scheduler import CyclicLR
 from torch.utils.data import Dataset, DataLoader
 import pytorch_lightning as pl
 import numpy as np
@@ -62,7 +62,7 @@ class AutoGenoShallow(pl.LightningModule):
         # Hyper-parameters
         self.learning_rate = learning_rate
         self.hparams.batch_size = batch_size
-        self.min_lr = learning_rate / 6.0
+        self.min_lr = self.learning_rate / 6.0
         self.save_hyperparameters()
 
         # def the encoder function
@@ -184,9 +184,10 @@ class AutoGenoShallow(pl.LightningModule):
     # configures the optimizers through learning rate
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
-        step_size = 4 * len(self.train_dataloader())
-        clr = self.cyclical_lr(step_size, min_lr=self.min_lr, max_lr=self.learning_rate)
-        scheduler: LambdaLR = torch.optim.lr_scheduler.LambdaLR(optimizer, [clr])
+        scheduler: CyclicLR = torch.optim.lr_scheduler.CyclicLR(optimizer, base_lr=self.min_lr, max_lr=self.learning_rate)
+        # step_size = 4 * len(self.train_dataloader())
+        # clr = self.cyclical_lr(step_size, min_lr=self.min_lr, max_lr=self.learning_rate)
+        # scheduler: LambdaLR = torch.optim.lr_scheduler.LambdaLR(optimizer, [clr])
         return {"optimizer": optimizer, "lr_scheduler": scheduler}
 
     def setup(self, stage: Optional[str] = None):
