@@ -25,9 +25,9 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
     # find ideal learning rate
     seed_everything(42)
     early_stop_loss = EarlyStopping(monitor='test_loss', verbose=True, mode='min', patience=50, min_delta=0.00000001,
-                                    check_on_train_epoch_end=True)
+                                    check_on_train_epoch_end=False)
     early_stop_r2score = EarlyStopping(monitor='test_r2score', verbose=True, mode='max', stopping_threshold=0.98,
-                                       patience=50, check_on_train_epoch_end=True)
+                                       patience=50, check_on_train_epoch_end=False)
     trainer: Trainer
     log_dir = path_to_save_ae.joinpath('log')
     ckpt_dir = path_to_save_ae.joinpath('ckpt')
@@ -35,6 +35,7 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
     create_dir(ckpt_dir)
     if torch.cuda.is_available():
         trainer = pl.Trainer(min_epochs=num_epochs,
+                             max_epochs=-1,
                              default_root_dir=ckpt_dir,
                              log_every_n_steps=1,
                              logger=CSVLogger(save_dir=str(log_dir), name=model_name),
@@ -43,7 +44,8 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
                              callbacks=[early_stop_loss, early_stop_r2score],
                              auto_scale_batch_size='binsearch')
     else:
-        trainer = pl.Trainer(max_epochs=num_epochs,
+        trainer = pl.Trainer(min_epochs=num_epochs,
+                             max_epochs=-1,
                              default_root_dir=ckpt_dir,
                              log_every_n_steps=1,
                              logger=CSVLogger(save_dir=str(log_dir), name=model_name),
