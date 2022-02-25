@@ -29,8 +29,8 @@ def get_filtered_data(geno: DataFrame, path_to_save_qc: Path) -> DataFrame:
     geno_var = geno_var[geno_var < 1]
     tmp = geno_var.index.values
     print(f'geno_var:\n{geno_var}\ntmp:\n{tmp}\n')
-    sys.exit(-1)
     geno.drop(geno_var[geno_var < 1].index.values, axis=1, inplace=True)
+    sys.exit(-1)
     create_dir(path_to_save_qc.parent)
     geno.to_csv(path_to_save_qc)
     return geno
