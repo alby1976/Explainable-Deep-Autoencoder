@@ -141,6 +141,7 @@ class AutoGenoShallow(pl.LightningModule):
     def validation_step(self, batch, batch_idx) -> Dict[str, Tensor]:
         x = batch[0]
         output, _ = self.forward(x)
+        get_column_values(x, output)
         self.testing_r2score.forward(preds=torch.reshape(output, (-1,)), target=torch.reshape(x, (-1,)))
         self.training_spearman(preds=torch.reshape(output, (-1,)), target=torch.reshape(x, (-1,)))
         self.training_pearson(preds=torch.reshape(output, (-1,)), target=torch.reshape(x, (-1,)))
