@@ -141,8 +141,7 @@ class AutoGenoShallow(pl.LightningModule):
     def validation_step(self, batch, batch_idx) -> Dict[str, Tensor]:
         x = batch[0]
         output, _ = self.forward(x)
-        spear = torch.cat([
-                           for index in range(x.size(dim=1))])
+        # spear = torch.cat([for index in range(x.size(dim=1))])
         '''
         for index in range(x.size(dim=1)):
             self.training_spearman.update(preds=output.index_select(1, torch.tensor(index)),
