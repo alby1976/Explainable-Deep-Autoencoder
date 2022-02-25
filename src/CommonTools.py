@@ -10,11 +10,11 @@ from scipy.stats import anderson_ksamp, levene
 from torch import device, Tensor
 
 
-def get_column_values(x: Union[Tensor, ndarray], y: Union[Tensor, ndarray]):
+def get_column_value(x: Union[Tensor, ndarray], y: Union[Tensor, ndarray], index: int):
     if type(x) != type(y):
         raise TypeError(f'The type of x does not match y. x: {type(x)} y: {type(y)}')
     if type(x) == Tensor:
-        print('hello world')
+        pass
     else:
         print('Good-bye world')
 
