@@ -110,8 +110,7 @@ class AutoGenoShallow(pl.LightningModule):
             r2: Tensor = get_dict_values_1d('r2', training_step_outputs)
         except:
             r2 = self.training_r2score.compute()
-        print(f'r2:\n{r2}')
-        sys.exit(-1)
+        # print(f'r2:\n{r2}')
         epoch = self.trainer.current_epoch
 
         # ===========save model============
@@ -174,7 +173,6 @@ class AutoGenoShallow(pl.LightningModule):
             r2 = get_dict_values_1d('r2', testing_step_outputs)
         except TypeError:
             r2 = self.testing_r2score.compute()
-        print(f'r2:\n{r2}')
         # print(f'regular losses: {losses.size()} pred: {pred.size()} target: {target.size()}')
 
         # ======goodness of fit======
