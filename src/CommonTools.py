@@ -28,16 +28,13 @@ def get_filtered_data(geno: DataFrame, path_to_save_qc: Path) -> DataFrame:
     geno_var: Union[Series, int] = geno.var()
     geno_var = geno_var[geno_var < 1]
     tmp = geno_var.index.values
-    print(f'geno_var:\n{geno_var}\ntmp:\n{tmp}\ngeno\n{geno.head(5)}')
     geno.drop(tmp, axis=1, inplace=True)
     try:
         geno.drop(columns='phen', inplace=True)
     except KeyError:
         pass
-    print(f'geno_var:\n{geno_var}\ntmp:\n{tmp}\ngeno\n{geno.head(5)}')
     create_dir(path_to_save_qc.parent)
     geno.to_csv(path_to_save_qc)
-    sys.exit(-1)
     return geno
 
 
