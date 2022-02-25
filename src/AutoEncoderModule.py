@@ -170,7 +170,11 @@ class AutoGenoShallow(pl.LightningModule):
         losses = get_dict_values_1d('loss', testing_step_outputs)
         x = get_dict_values_2d('input', testing_step_outputs)
         output = get_dict_values_2d('output', testing_step_outputs)
-        r2 = get_dict_values_1d('r2', testing_step_outputs)
+        try:
+            r2 = get_dict_values_1d('r2', testing_step_outputs)
+        except TypeError:
+            r2 = self.testing_r2score.compute()
+        print(f'r2:\n{r2}')
         # print(f'regular losses: {losses.size()} pred: {pred.size()} target: {target.size()}')
 
         # ======goodness of fit======
