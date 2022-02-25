@@ -52,11 +52,11 @@ class AutoGenoShallow(pl.LightningModule):
         self.smallest_layer = math.ceil(self.input_features / compression_ratio)
         self.hidden_layer = int(2 * self.smallest_layer)
         self.training_r2score = torchmetrics.R2Score(num_outputs=self.input_features,
-                                                     multioutput='raw_values', compute_on_step=False)
+                                                     multioutput='raw_values', compute_on_step=True)
         # self.training_pearson = torchmetrics.regression.pearson.PearsonCorrcoef(compute_on_step=False)
         # self.training_spearman = torchmetrics.regression.spearman.SpearmanCorrcoef(compute_on_step=False)
         self.testing_r2score = torchmetrics.R2Score(num_outputs=self.input_features,
-                                                    multioutput='raw_values', compute_on_step=False)
+                                                    multioutput='raw_values', compute_on_step=True)
         # self.testing_pearson = torchmetrics.regression.pearson.PearsonCorrcoef(compute_on_step=False)
         # self.testing_spearman = torchmetrics.regression.spearman.SpearmanCorrcoef(compute_on_step=False)
         self.save_dir = save_dir
@@ -108,7 +108,7 @@ class AutoGenoShallow(pl.LightningModule):
         output: Tensor = get_dict_values_2d('output', training_step_outputs)
         try:
             r2: Tensor = get_dict_values_1d('r2', training_step_outputs)
-        except:
+        except TypeError:
             r2 = self.training_r2score.compute()
         # print(f'r2:\n{r2}')
         epoch = self.trainer.current_epoch
