@@ -30,10 +30,14 @@ def get_filtered_data(geno: DataFrame, path_to_save_qc: Path) -> DataFrame:
     tmp = geno_var.index.values
     print(f'geno_var:\n{geno_var}\ntmp:\n{tmp}\ngeno\n{geno.head(5)}')
     geno.drop(tmp, axis=1, inplace=True)
+    try:
+        geno.drop(columns='pheno', inplace=True)
+    finally:
+        pass
     print(f'geno_var:\n{geno_var}\ntmp:\n{tmp}\ngeno\n{geno.head(5)}')
-    sys.exit(-1)
     create_dir(path_to_save_qc.parent)
     geno.to_csv(path_to_save_qc)
+    sys.exit(-1)
     return geno
 
 
