@@ -43,7 +43,7 @@ def get_dict_values_2d(key: str, lists: List[Dict[str, Tensor]], dim: int = 0) -
 def data_parametric(*samples: [ndarray, ...]) -> bool:
     print(f'samples: {type(samples)}\n\n{samples}\n\n')
     result1, _, _ = same_distribution_test(*samples)
-    result2, _, _ = normality_test(*samples[0])
+    result2, _, _ = normality_test(samples[0])
     result3, _, _ = equality_of_variance_test(*samples)
     return result1 and result2 and result3
 
