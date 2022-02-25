@@ -38,7 +38,7 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
         trainer = pl.Trainer(min_epochs=num_epochs,
                              max_epochs=-1,
                              default_root_dir=str(ckpt_dir),
-                             log_every_n_steps=1,
+                             # log_every_n_steps=1,
                              logger=CSVLogger(save_dir=str(log_dir), name=model_name),
                              deterministic=True,
                              gpus=1,
@@ -49,7 +49,7 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
         trainer = pl.Trainer(min_epochs=num_epochs,
                              max_epochs=-1,
                              default_root_dir=str(ckpt_dir),
-                             log_every_n_steps=1,
+                             # log_every_n_steps=1,
                              logger=CSVLogger(save_dir=str(log_dir), name=model_name),
                              deterministic=True,
                              callbacks=[early_stop_r2score],
@@ -69,11 +69,9 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
 
 
 if __name__ == '__main__':
-    if torch.cuda.is_available():
-        device_index = "0"
-        os.environ["CUDA_VISIBLE_DEVICES"] = device_index
-        os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = 'true'
-        sys.exit(-1)
+    device_index = "0"
+    os.environ["CUDA_VISIBLE_DEVICES"] = device_index
+    os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = 'true'
 
     if len(sys.argv) < 7:
         print('Default setting are used. Either change AutoEncoder.py to change settings or type:\n')
