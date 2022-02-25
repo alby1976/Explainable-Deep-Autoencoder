@@ -1,4 +1,5 @@
 import math
+import sys
 from pathlib import Path
 from typing import Any, Union, Dict, Optional
 
@@ -50,10 +51,12 @@ class AutoGenoShallow(pl.LightningModule):
         self.output_features = self.input_features
         self.smallest_layer = math.ceil(self.input_features / compression_ratio)
         self.hidden_layer = int(2 * self.smallest_layer)
-        self.training_r2score = torchmetrics.R2Score(num_outputs=self.input_features, compute_on_step=True)
+        self.training_r2score = torchmetrics.R2Score(num_outputs=self.input_features,
+                                                     multioutput='raw_values', compute_on_step=False)
         # self.training_pearson = torchmetrics.regression.pearson.PearsonCorrcoef(compute_on_step=False)
         # self.training_spearman = torchmetrics.regression.spearman.SpearmanCorrcoef(compute_on_step=False)
-        self.testing_r2score = torchmetrics.R2Score(num_outputs=self.input_features, compute_on_step=True)
+        self.testing_r2score = torchmetrics.R2Score(num_outputs=self.input_features,
+                                                    multioutput='raw_values', compute_on_step=False)
         # self.testing_pearson = torchmetrics.regression.pearson.PearsonCorrcoef(compute_on_step=False)
         # self.testing_spearman = torchmetrics.regression.spearman.SpearmanCorrcoef(compute_on_step=False)
         self.save_dir = save_dir
@@ -104,6 +107,8 @@ class AutoGenoShallow(pl.LightningModule):
         x: Tensor = get_dict_values_2d('input', training_step_outputs)
         output: Tensor = get_dict_values_2d('output', training_step_outputs)
         r2: Tensor = get_dict_values_1d('r2', training_step_outputs)
+        print(f'r2:\n{r2}')
+        sys.exit(-1)
         epoch = self.trainer.current_epoch
 
         # ===========save model============
@@ -124,7 +129,7 @@ class AutoGenoShallow(pl.LightningModule):
         '''
         self.log('step', epoch + 1)
         # self.log('parametric', result)
-        self.log('loss', losses.sum())
+        self.log('loss', losses.sum(), on_step=False, on_epoch=True)
         # self.log('coefficient', coefficient)
         self.log('r2score', torch.mean(r2), on_step=False, on_epoch=True)
 
@@ -194,6 +199,7 @@ class AutoGenoShallow(pl.LightningModule):
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
         scheduler: CyclicLR = torch.optim.lr_scheduler.CyclicLR(optimizer, base_lr=self.min_lr,
+                                                                mode='exp_range',
                                                                 cycle_momentum=False,
                                                                 max_lr=self.learning_rate)
         # step_size = 4 * len(self.train_dataloader())
