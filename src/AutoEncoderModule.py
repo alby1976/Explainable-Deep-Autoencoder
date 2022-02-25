@@ -106,7 +106,10 @@ class AutoGenoShallow(pl.LightningModule):
         losses: Tensor = get_dict_values_1d('loss', training_step_outputs)
         x: Tensor = get_dict_values_2d('input', training_step_outputs)
         output: Tensor = get_dict_values_2d('output', training_step_outputs)
-        r2: Tensor = get_dict_values_1d('r2', training_step_outputs)
+        try:
+            r2: Tensor = get_dict_values_1d('r2', training_step_outputs)
+        except:
+            r2 = self.training_r2score.compute()
         print(f'r2:\n{r2}')
         sys.exit(-1)
         epoch = self.trainer.current_epoch
