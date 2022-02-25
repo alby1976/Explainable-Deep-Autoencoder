@@ -31,8 +31,8 @@ def get_filtered_data(geno: DataFrame, path_to_save_qc: Path) -> DataFrame:
     print(f'geno_var:\n{geno_var}\ntmp:\n{tmp}\ngeno\n{geno.head(5)}')
     geno.drop(tmp, axis=1, inplace=True)
     try:
-        geno.drop(columns='pheno', inplace=True)
-    finally:
+        geno.drop(columns='phen', inplace=True)
+    except KeyError:
         pass
     print(f'geno_var:\n{geno_var}\ntmp:\n{tmp}\ngeno\n{geno.head(5)}')
     create_dir(path_to_save_qc.parent)
