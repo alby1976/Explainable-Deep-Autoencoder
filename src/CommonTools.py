@@ -10,6 +10,14 @@ from scipy.stats import anderson_ksamp, levene
 from torch import device, Tensor
 
 
+def get_column_values(x: Union[Tensor, ndarray], y: Union[Tensor,ndarray]):
+    if type(x) == type(y):
+        raise TypeError(f'The type of x does not match y. x: {type(x)} y: {type(y)}')
+    if type(x) == Tensor:
+        print('hello world')
+    else:
+        print('Good-bye world')
+
 def get_data(geno: DataFrame, path_to_save_qc: Path) -> ndarray:
     return get_normalized_data(data=get_filtered_data(geno, path_to_save_qc)).to_numpy()
 
@@ -40,10 +48,10 @@ def get_dict_values_2d(key: str, lists: List[Dict[str, Tensor]], dim: int = 0) -
     return torch.cat([item[key] for item in lists], dim=dim)
 
 
-def data_parametric(*samples: [ndarray, ...]) -> bool:
+def data_parametric(*samples: Tuple[ndarray, ...]) -> bool:
     print(f'samples: {type(samples)}\n\n{samples}\n\n')
     result1, _, _ = same_distribution_test(*samples)
-    result2, _, _ = normality_test(samples[0])
+    result2, _, _ = normality_test(*samples[0])
     result3, _, _ = equality_of_variance_test(*samples)
     return result1 and result2 and result3
 

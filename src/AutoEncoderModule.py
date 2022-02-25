@@ -15,7 +15,7 @@ import pytorch_lightning as pl
 import numpy as np
 import pandas as pd
 
-from CommonTools import data_parametric, get_dict_values_1d, get_dict_values_2d, get_data
+from CommonTools import data_parametric, get_dict_values_1d, get_dict_values_2d, get_data, get_column_values
 
 
 class GPDataSet(Dataset):
@@ -50,10 +50,10 @@ class AutoGenoShallow(pl.LightningModule):
         self.output_features = self.input_features
         self.smallest_layer = math.ceil(self.input_features / compression_ratio)
         self.hidden_layer = int(2 * self.smallest_layer)
-        self.training_r2score = torchmetrics.R2Score(compute_on_step=False)
+        self.training_r2score = torchmetrics.R2Score(num_outputs=self.input_features, compute_on_step=True)
         self.training_pearson = torchmetrics.regression.pearson.PearsonCorrcoef(compute_on_step=False)
         self.training_spearman = torchmetrics.regression.spearman.SpearmanCorrcoef(compute_on_step=False)
-        self.testing_r2score = torchmetrics.R2Score(compute_on_step=False)
+        self.testing_r2score = torchmetrics.R2Score(num_outputs=self.input_features, compute_on_step=True)
         self.testing_pearson = torchmetrics.regression.pearson.PearsonCorrcoef(compute_on_step=False)
         self.testing_spearman = torchmetrics.regression.spearman.SpearmanCorrcoef(compute_on_step=False)
         self.save_dir = save_dir
@@ -92,6 +92,7 @@ class AutoGenoShallow(pl.LightningModule):
         x = batch[0]
         # print(f'{batch_idx} training batch size: {self.hparams.batch_size} x: {x.size()}')
         output, coder = self.forward(x)
+        get_column_values(x, output)
         self.training_r2score.forward(preds=torch.reshape(output, (-1,)), target=torch.reshape(x, (-1,)))
         self.training_spearman.update(preds=torch.reshape(output, (-1,)), target=torch.reshape(x, (-1,)))
         self.training_pearson(preds=torch.reshape(output, (-1,)), target=torch.reshape(x, (-1,)))
