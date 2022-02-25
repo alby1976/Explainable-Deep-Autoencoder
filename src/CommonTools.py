@@ -27,8 +27,8 @@ def get_data(geno: DataFrame, path_to_save_qc: Path) -> ndarray:
 def get_filtered_data(geno: DataFrame, path_to_save_qc: Path) -> DataFrame:
     geno_var: Union[Series, int] = geno.var()
     geno_var = geno_var[geno_var < 1]
-    geno_var = geno_var.index.values
-    print(geno_var)
+    tmp = geno_var.index.values
+    print(f'geno_var:\n{geno_var}\ntmp:\n{tmp}\n')
     sys.exit(-1)
     geno.drop(geno_var[geno_var < 1].index.values, axis=1, inplace=True)
     create_dir(path_to_save_qc.parent)
