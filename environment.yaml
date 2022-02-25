@@ -17,6 +17,7 @@ dependencies:
   - scipy
   - pytorch-lightning
   - torchmetrics
+  - cudatoolkits=10.1.*
   - pip
     - torch~=1.10.2
   # R requirements
