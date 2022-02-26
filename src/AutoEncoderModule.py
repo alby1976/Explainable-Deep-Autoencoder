@@ -16,7 +16,7 @@ import pytorch_lightning as pl
 import numpy as np
 import pandas as pd
 
-from CommonTools import data_parametric, get_dict_values_1d, get_dict_values_2d, get_data
+from CommonTools import data_parametric, get_dict_values_1d, get_dict_values_2d, get_data, r2_value
 
 
 class GPDataSet(Dataset):
@@ -201,7 +201,8 @@ class AutoGenoShallow(pl.LightningModule):
         self.log('test_loss', torch.sum(losses))
         # self.log('test_parametric', result)
         # self.log('coefficient', coefficient)
-        self.log('test_r2score', torch.mean(r2), on_step=False, on_epoch=True)
+        self.log('test_r2score', r2_value(y_true=x.cpu().detach().numpy(), y_pred=output.cpu().detach().numpy()),
+                 on_step=False, on_epoch=True, axis=0)
         self.log('test_r2score_node', torch.mean(r2_node), on_step=False, on_epoch=True)
 
         '''
