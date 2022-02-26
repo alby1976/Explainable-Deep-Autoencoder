@@ -14,9 +14,9 @@ from torch import device, Tensor
 
 def r2_value(y_true: ndarray, y_pred: ndarray, axis=None):
     y_ave = y_true.mean(axis=axis)
-    sse: int = (np.square(y_pred - y_ave)).sum(axis=axis)
-    ssr: int = (np.square(y_true - y_pred)).sum(axis=axis)
-    sst: int = (np.square(y_true - y_ave)).sum(axis=axis)
+    sse = np.sum(np.power(y_pred - y_ave, 2), axis=axis)
+    ssr = np.sum(np.power(y_true - y_pred, 2), axis=axis)
+    sst = np.sum(np.power(y_true - y_ave, 2), axis=axis)
     if np.all(np.divide(sse, sst) == 1 - np.divide(ssr, sst)):
         return np.divide(sse, sst)
     else:
