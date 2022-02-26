@@ -19,7 +19,7 @@ dependencies:
   - torchmetrics
   - cudatoolkits=10.1.*
   - pip
-    - torch~=1.10.2
+    - torch
   # R requirements
   - r-base
   - r-biocmanager
