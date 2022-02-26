@@ -17,7 +17,7 @@ def r2_value(y_true: ndarray, y_pred: ndarray, axis=None):
     sse: int = (np.square(y_pred - y_ave)).sum(axis=axis)
     ssr: int = (np.square(y_true - y_pred)).sum(axis=axis)
     sst: int = (np.square(y_true - y_ave)).sum(axis=axis)
-    if np.divide(sse, sst) == 1 - np.divide(ssr, sst):
+    if np.all(np.divide(sse, sst) == 1 - np.divide(ssr, sst)):
         return np.divide(sse, sst)
     else:
         return 1 - np.divide(ssr, sst)
