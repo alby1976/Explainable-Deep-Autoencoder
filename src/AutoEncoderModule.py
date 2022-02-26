@@ -208,7 +208,7 @@ class AutoGenoShallow(pl.LightningModule):
         print(f"test_loss: {losses.sum():.4f},
               f"test_coefficient: {coefficient:.4f}, test_r2: {r2:.4f}")
         '''
-        print(f"test_loss: {losses.detach():.4f}, test_r2_node: {r2_node.detach():.4f} test_r2: {r2.detach():.4f}")
+        # print(f"test_loss: {losses.detach():.4f}, test_r2_node: {r2_node.detach():.4f} test_r2: {r2.detach():.4f}")
 
     # configures the optimizers through learning rate
     def configure_optimizers(self):
