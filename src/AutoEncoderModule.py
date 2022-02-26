@@ -165,7 +165,7 @@ class AutoGenoShallow(pl.LightningModule):
         r2 = self.testing_r2score.forward(preds=torch.flatten(output), target=torch.flatten(x))
         r2_node = self.testing_r2score_node.forward(preds=output, target=x)
         loss = f.mse_loss(input=output, target=x)
-        print(f'learning rate: {self.learning_rate}')
+        print(f'learning rate: {self.lr_schedulers()}')
         '''
         print(f'{batch_idx} val step batch size: {self.hparams.batch_size} output dim: {output.size()} '
               f'batch dim: {x.size()} loss dim: {loss.size()}')
@@ -215,15 +215,16 @@ class AutoGenoShallow(pl.LightningModule):
 
     # configures the optimizers through learning rate
     def configure_optimizers(self):
-        optimizer = torch.optim.SGD(self.parameters(), lr=self.learning_rate)
+        optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
         scheduler: CyclicLR = torch.optim.lr_scheduler.CyclicLR(optimizer, base_lr=self.min_lr,
                                                                 mode='exp_range',
-                                                                cycle_momentum=True,
+                                                                cycle_momentum=False,
                                                                 step_size_up=4 * len(self.train_dataloader()),
                                                                 max_lr=self.learning_rate)
         # step_size = 4 * len(self.train_dataloader())
         # clr = self.cyclical_lr(step_size, min_lr=self.min_lr, max_lr=self.learning_rate)
         # scheduler: LambdaLR = torch.optim.lr_scheduler.LambdaLR(optimizer, [clr])
+
         return {"optimizer": optimizer, "lr_scheduler": scheduler}
 
     def setup(self, stage: Optional[str] = None):
