@@ -162,7 +162,7 @@ class AutoGenoShallow(pl.LightningModule):
             self.training_pearson.update(preds=output.index_select(1, torch.tensor(index)),
                                          target=x.index_select(1, torch.tensor(index)))
         '''
-        r2 = self.testing_r2score.forward(preds=torch.flatten(output), target=torch.flatten(x))
+        # r2 = self.testing_r2score.forward(preds=torch.flatten(output), target=torch.flatten(x))
         r2_node = self.testing_r2score_node.forward(preds=output, target=x)
         loss = f.mse_loss(input=output, target=x)
         '''
@@ -177,10 +177,10 @@ class AutoGenoShallow(pl.LightningModule):
         x = get_dict_values_2d('input', testing_step_outputs)
         output = get_dict_values_2d('output', testing_step_outputs)
         try:
-            r2 = get_dict_values_1d('r2', testing_step_outputs)
+            # r2 = get_dict_values_1d('r2', testing_step_outputs)
             r2_node = get_dict_values_1d('r2_node', testing_step_outputs)
         except TypeError:
-            r2 = self.testing_r2score.compute()
+            # r2 = self.testing_r2score.compute()
             r2_node = self.testing_r2score_node.compute()
         # print(f'regular losses: {losses.size()} pred: {pred.size()} target: {target.size()}')
 
