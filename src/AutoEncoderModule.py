@@ -162,7 +162,7 @@ class AutoGenoShallow(pl.LightningModule):
             self.training_pearson.update(preds=output.index_select(1, torch.tensor(index)),
                                          target=x.index_select(1, torch.tensor(index)))
         '''
-        # r2 = self.testing_r2score.forward(preds=torch.flatten(output), target=torch.flatten(x))
+        r2 = self.testing_r2score.forward(preds=torch.flatten(output), target=torch.flatten(x))
         r2_node = self.testing_r2score_node.forward(preds=output, target=x)
         loss = f.mse_loss(input=output, target=x)
         '''
