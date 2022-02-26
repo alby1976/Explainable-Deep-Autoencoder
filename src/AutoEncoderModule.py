@@ -205,10 +205,10 @@ class AutoGenoShallow(pl.LightningModule):
         self.log('test_r2score_node', torch.mean(r2_node), on_step=False, on_epoch=True)
 
         '''
-        print(f"test_loss: {losses.sum():.4f}, "
+        print(f"test_loss: {losses.sum():.4f},
               f"test_coefficient: {coefficient:.4f}, test_r2: {r2:.4f}")
-        print(f"test_loss: {losses.sum():.4f}, test_r2: {r2:.4f}")
         '''
+        print(f"test_loss: {losses.sum():.4f}, test_r2_node: {r2_node:.4f} test_r2: {r2:.4f}")
 
     # configures the optimizers through learning rate
     def configure_optimizers(self):
