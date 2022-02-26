@@ -181,8 +181,6 @@ class AutoGenoShallow(pl.LightningModule):
             r2_node = get_dict_values_1d('r2_node', testing_step_outputs)
         except TypeError:
             # r2 = self.testing_r2score.compute()
-            r2: np.mean(np_r2_value(y_true=x.cpu().detach().numpy(),
-                                    y_pred=output.cpu().detach().numpy(), axis=1))
             r2_node = self.testing_r2score_node.compute()
         # print(f'regular losses: {losses.size()} pred: {pred.size()} target: {target.size()}')
 
@@ -199,6 +197,8 @@ class AutoGenoShallow(pl.LightningModule):
         else:
             coefficient = self.testing_spearman.compute().item()
         '''
+        r2 = np.mean(np_r2_value(y_true=x.cpu().detach().numpy(),
+                                 y_pred=output.cpu().detach().numpy(), axis=0))
         # self.log('step', epoch + 1)
         self.log('test_loss', torch.sum(losses))
         # self.log('test_parametric', result)
@@ -212,6 +212,7 @@ class AutoGenoShallow(pl.LightningModule):
         '''
         # scheduler: CyclicLR = self.lr_schedulers()
         # print(f'learning rate: {scheduler.get_last_lr()}')
+        print(f'numpy r2score: {r2:.4f} tensor r2score: {torch.mean(r2_value(y_pred=output, y_true=x)):.4f}')
         print(f'numpy r2score: {r2:.4f} tensor r2score: {torch.mean(r2_value(y_pred=output, y_true=x)):.4f}')
         sys.exit(-1)
         # print(f"test_loss: {losses.detach():.4f}, test_r2_node: {r2_node.detach():.4f} test_r2: {r2.detach():.4f}")
