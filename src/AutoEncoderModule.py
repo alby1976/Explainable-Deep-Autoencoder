@@ -51,12 +51,14 @@ class AutoGenoShallow(pl.LightningModule):
         self.output_features = self.input_features
         self.smallest_layer = math.ceil(self.input_features / compression_ratio)
         self.hidden_layer = int(2 * self.smallest_layer)
-        self.training_r2score = torchmetrics.R2Score(num_outputs=self.input_features,
-                                                     multioutput='raw_values', compute_on_step=True)
+        self.training_r2score = torchmetrics.R2Score(compute_on_step=False)
+        self.training_r2score_node = torchmetrics.R2Score(num_outputs=self.input_features,
+                                                          multioutput='raw_values', compute_on_step=False)
         # self.training_pearson = torchmetrics.regression.pearson.PearsonCorrcoef(compute_on_step=False)
         # self.training_spearman = torchmetrics.regression.spearman.SpearmanCorrcoef(compute_on_step=False)
-        self.testing_r2score = torchmetrics.R2Score(num_outputs=self.input_features,
-                                                    multioutput='raw_values', compute_on_step=True)
+        self.testing_r2score = torchmetrics.R2Score(compute_on_step=False)
+        self.testing_r2score_node = torchmetrics.R2Score(num_outputs=self.input_features,
+                                                         multioutput='raw_values', compute_on_step=False)
         # self.testing_pearson = torchmetrics.regression.pearson.PearsonCorrcoef(compute_on_step=False)
         # self.testing_spearman = torchmetrics.regression.spearman.SpearmanCorrcoef(compute_on_step=False)
         self.save_dir = save_dir
@@ -95,11 +97,12 @@ class AutoGenoShallow(pl.LightningModule):
         x = batch[0]
         # print(f'{batch_idx} training batch size: {self.hparams.batch_size} x: {x.size()}')
         output, coder = self.forward(x)
-        r2 = self.training_r2score.forward(preds=output, target=x)
+        r2 = self.training_r2score.forward(preds=torch.flatten(output), target=torch.flatten(x))
+        r2_node = self.training_r2score_node.forward(preds=output, target=x)
         # self.training_spearman.forward(preds=torch.reshape(output, (-1,)), target=torch.reshape(x, (-1,)))
         # self.training_pearson(preds=torch.reshape(output, (-1,)), target=torch.reshape(x, (-1,)))
         loss = f.mse_loss(input=output, target=x)
-        return {'model': coder, 'loss': loss, 'r2': r2, 'input': x, 'output': output}
+        return {'model': coder, 'loss': loss, 'r2': r2, 'r2_node': r2_node, 'input': x, 'output': output}
 
     # end of training epoch
     def training_epoch_end(self, training_step_outputs):
@@ -108,8 +111,10 @@ class AutoGenoShallow(pl.LightningModule):
         output: Tensor = get_dict_values_2d('output', training_step_outputs)
         try:
             r2: Tensor = get_dict_values_1d('r2', training_step_outputs)
+            r2_node: Tensor = get_dict_values_1d('r2_node', training_step_outputs)
         except TypeError:
             r2 = self.training_r2score.compute()
+            r2_node = self.training_r2score_node.compute()
         # print(f'r2:\n{r2}')
         epoch = self.trainer.current_epoch
 
@@ -131,9 +136,10 @@ class AutoGenoShallow(pl.LightningModule):
         '''
         self.log('step', epoch + 1)
         # self.log('parametric', result)
-        self.log('loss', losses.sum(), on_step=False, on_epoch=True)
+        self.log('loss', torch.sum(losses).detach(), on_step=False, on_epoch=True)
         # self.log('coefficient', coefficient)
-        self.log('r2score', torch.mean(r2), on_step=False, on_epoch=True)
+        self.log('r2score_node', torch.mean(r2_node).detach(), on_step=False, on_epoch=True)
+        self.log('r2score', torch.mean(r2).detach, on_step=False, on_epoch=True)
 
         '''
         print(f"epoch[{epoch + 1:4d}], "
@@ -156,13 +162,14 @@ class AutoGenoShallow(pl.LightningModule):
             self.training_pearson.update(preds=output.index_select(1, torch.tensor(index)),
                                          target=x.index_select(1, torch.tensor(index)))
         '''
-        r2 = self.testing_r2score.forward(preds=output, target=x)
+        r2 = self.testing_r2score.forward(preds=torch.flatten(output), target=torch.flatten(x))
+        r2_node = self.testing_r2score_node.forward(preds=output, target=x)
         loss = f.mse_loss(input=output, target=x)
         '''
         print(f'{batch_idx} val step batch size: {self.hparams.batch_size} output dim: {output.size()} '
               f'batch dim: {x.size()} loss dim: {loss.size()}')
         '''
-        return {'loss': loss, 'r2': r2, 'input': x, 'output': output}
+        return {'loss': loss, 'r2': r2, 'r2_node': r2_node, 'input': x, 'output': output}
 
     # end of validation epoch
     def validation_epoch_end(self, testing_step_outputs):
@@ -171,8 +178,10 @@ class AutoGenoShallow(pl.LightningModule):
         output = get_dict_values_2d('output', testing_step_outputs)
         try:
             r2 = get_dict_values_1d('r2', testing_step_outputs)
+            r2_node = get_dict_values_1d('r2_node', testing_step_outputs)
         except TypeError:
             r2 = self.testing_r2score.compute()
+            r2_node = self.testing_r2score_node.compute()
         # print(f'regular losses: {losses.size()} pred: {pred.size()} target: {target.size()}')
 
         # ======goodness of fit======
@@ -189,10 +198,11 @@ class AutoGenoShallow(pl.LightningModule):
             coefficient = self.testing_spearman.compute().item()
         '''
         # self.log('step', epoch + 1)
-        self.log('test_loss', losses.sum())
+        self.log('test_loss', torch.mean(losses))
         # self.log('test_parametric', result)
         # self.log('coefficient', coefficient)
         self.log('test_r2score', torch.mean(r2), on_step=False, on_epoch=True)
+        self.log('test_r2score_node', torch.mean(r2_node), on_step=False, on_epoch=True)
 
         '''
         print(f"test_loss: {losses.sum():.4f}, "

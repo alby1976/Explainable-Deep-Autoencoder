@@ -3,12 +3,24 @@ from itertools import islice
 from pathlib import Path
 from typing import Tuple, Union, Iterable, Dict, Any, List
 
+import numpy as np
 import torch
 from numpy import ndarray
 from pandas import DataFrame, Series
 from scipy.optimize import anderson
 from scipy.stats import anderson_ksamp, levene
 from torch import device, Tensor
+
+
+def r2_value(y_true: ndarray, y_pred: ndarray) -> float:
+    y_ave = y_true.mean()
+    sse: int = (np.square(y_pred - y_ave)).sum()
+    ssr: int = (np.square(y_true - y_pred)).sum()
+    sst: int = (np.square(y_true - y_ave)).sum()
+    if sse / sst == 1 - ssr / sst:
+        return sse / sst
+    else:
+        return 1 - ssr / sst
 
 
 def get_column_value(x: Union[Tensor, ndarray], y: Union[Tensor, ndarray], index: int):
