@@ -116,7 +116,7 @@ class AutoGenoShallow(pl.LightningModule):
             r2 = self.training_r2score.compute()
             r2_node = self.training_r2score_node.compute()
         # print(f'r2:\n{r2}')
-        epoch = self.trainer.current_epoch
+        epoch = self.current_epoch
 
         # ===========save model============
         output_coder_list: Tensor = get_dict_values_2d('model', training_step_outputs)
@@ -136,10 +136,10 @@ class AutoGenoShallow(pl.LightningModule):
         '''
         self.log('step', epoch + 1)
         # self.log('parametric', result)
-        self.log('loss', torch.sum(losses).detach(), on_step=False, on_epoch=True)
+        self.log('loss', torch.sum(losses), on_step=False, on_epoch=True)
         # self.log('coefficient', coefficient)
-        self.log('r2score_node', torch.mean(r2_node).detach(), on_step=False, on_epoch=True)
-        self.log('r2score', torch.mean(r2).detach, on_step=False, on_epoch=True)
+        self.log('r2score_node', torch.mean(r2_node), on_step=False, on_epoch=True)
+        self.log('r2score', torch.mean(r2), on_step=False, on_epoch=True)
 
         '''
         print(f"epoch[{epoch + 1:4d}], "
