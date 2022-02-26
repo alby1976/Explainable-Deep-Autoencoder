@@ -198,7 +198,7 @@ class AutoGenoShallow(pl.LightningModule):
             coefficient = self.testing_spearman.compute().item()
         '''
         # self.log('step', epoch + 1)
-        self.log('test_loss', torch.mean(losses))
+        self.log('test_loss', torch.sum(losses))
         # self.log('test_parametric', result)
         # self.log('coefficient', coefficient)
         self.log('test_r2score', torch.mean(r2), on_step=False, on_epoch=True)
@@ -208,7 +208,7 @@ class AutoGenoShallow(pl.LightningModule):
         print(f"test_loss: {losses.sum():.4f},
               f"test_coefficient: {coefficient:.4f}, test_r2: {r2:.4f}")
         '''
-        print(f"test_loss: {losses.sum():.4f}, test_r2_node: {r2_node:.4f} test_r2: {r2:.4f}")
+        print(f"test_loss: {losses.detach():.4f}, test_r2_node: {r2_node.detach():.4f} test_r2: {r2.detach():.4f}")
 
     # configures the optimizers through learning rate
     def configure_optimizers(self):
