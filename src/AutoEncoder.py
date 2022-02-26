@@ -25,12 +25,12 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
                             model_name=model_name, compression_ratio=compression_ratio, batch_size=batch_size)
     # find ideal learning rate
     seed_everything(42)
-    early_stop_loss = EarlyStopping(monitor='test_loss', verbose=True, mode='min', patience=50, min_delta=0.00000001,
+    early_stop_loss = EarlyStopping(monitor='test_loss', verbose=True, mode='min', patience=50,
                                     check_on_train_epoch_end=False)
     stop_r2score = EarlyStopping(monitor='test_r2score_calc', verbose=True, mode='max', stopping_threshold=0.98,
-                                 min_delta=0.00000001, patience=100, check_on_train_epoch_end=False)
+                                 patience=100, check_on_train_epoch_end=False)
     stop_r2score_node = EarlyStopping(monitor='test_r2score_node', verbose=True, mode='max', stopping_threshold=0.98,
-                                      min_delta=0.00000001, patience=5, check_on_train_epoch_end=False)
+                                      patience=5, check_on_train_epoch_end=False)
     trainer: Trainer
     log_dir = path_to_save_ae.joinpath('log')
     ckpt_dir = path_to_save_ae.joinpath('ckpt')
