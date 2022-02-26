@@ -17,10 +17,8 @@ def r2_value(y_true: ndarray, y_pred: ndarray, axis=None):
     sse = np.sum(np.power(y_pred - y_ave, 2), axis=axis)
     ssr = np.sum(np.power(y_true - y_pred, 2), axis=axis)
     sst = np.sum(np.power(y_true - y_ave, 2), axis=axis)
-    if np.all(np.divide(sse, sst) == 1 - np.divide(ssr, sst)):
-        return np.divide(sse, sst)
-    else:
-        return 1 - np.divide(ssr, sst)
+
+    return 1 - np.divide(ssr, sst)
 
 
 def r2_value(y_true: Tensor, y_pred: Tensor, dim: int = 0):
