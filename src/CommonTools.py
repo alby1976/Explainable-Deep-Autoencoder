@@ -42,7 +42,7 @@ def get_filtered_data(geno: DataFrame, path_to_save_qc: Path) -> DataFrame:
     tmp = geno_var.index.values
     geno.drop(tmp, axis=1, inplace=True)
     try:
-        geno.drop(columns='phen', inplace=True)
+        geno.drop(labels='phen', axis=1, inplace=True)
     except KeyError:
         pass
     create_dir(path_to_save_qc.parent)
