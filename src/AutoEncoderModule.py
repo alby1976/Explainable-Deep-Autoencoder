@@ -202,8 +202,8 @@ class AutoGenoShallow(pl.LightningModule):
         self.log('test_loss', torch.sum(losses))
         # self.log('test_parametric', result)
         # self.log('coefficient', coefficient)
-        r2: float = np.mean(r2_value(y_true=x.cpu().detach().numpy(),
-                                     y_pred=output.cpu().detach().numpy(), axis=None))
+        r2: np.mean(r2_value(y_true=x.cpu().detach().numpy(),
+                             y_pred=output.cpu().detach().numpy(), axis=0))
         self.log('test_r2score', r2, on_step=False, on_epoch=True)
         self.log('test_r2score_node', torch.mean(r2_node), on_step=False, on_epoch=True)
 
