@@ -220,7 +220,8 @@ class AutoGenoShallow(pl.LightningModule):
         scheduler: CyclicLR = torch.optim.lr_scheduler.CyclicLR(optimizer, base_lr=self.min_lr,
                                                                 mode='exp_range',
                                                                 cycle_momentum=False,
-                                                                step_size_up=4 * len(self.train_dataloader()),
+                                                                step_size_up=10,
+                                                                # step_size_up=4 * len(self.train_dataloader()),
                                                                 max_lr=self.learning_rate)
         # step_size = 4 * len(self.train_dataloader())
         # clr = self.cyclical_lr(step_size, min_lr=self.min_lr, max_lr=self.learning_rate)
