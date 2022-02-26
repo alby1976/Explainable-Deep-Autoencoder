@@ -17,8 +17,8 @@ def r2_value(y_true: ndarray, y_pred: ndarray, axis=None):
     # sse = np.sum(np.power(y_pred - y_ave, 2), axis=axis)
     ssr = np.sum(np.power(y_true - y_pred, 2), axis=axis)
     sst = np.sum(np.power(y_true - y_ave, 2), axis=axis)
-    print(f'y_ave:\n {y_ave:.4f}\nssr:\n{ssr:.4f}\nsst:\n{sst:.4f}\nssr/sst:{ssr/sst:.4f}\n'
-          f'1 - (ssr/sst):\n{1 - (ssr/sst)}\n1 - np.divide(ssr, sst):\n{1 - np.divide(ssr, sst)::.4f}')
+    print(f'y_ave:\n {y_ave}\nssr:\n{ssr}\nsst:\n{sst}\nssr/sst:{ssr/sst}\n'
+          f'1 - (ssr/sst):\n{1 - (ssr/sst)}\n1 - np.divide(ssr, sst):\n{1 - np.divide(ssr, sst)}')
     return 1 - np.divide(ssr, sst)
 
 
@@ -27,8 +27,8 @@ def r2_value(y_true: Tensor, y_pred: Tensor, dim: int = 0):
     # sse = torch.sum(torch.pow(y_pred - y_ave, 2), dim=dim)
     ssr = torch.sum(torch.pow(y_true - y_pred, 2), dim=dim)
     sst = torch.sum(torch.pow(y_true - y_ave, 2), dim=dim)
-    print(f'y_ave:\n {y_ave:.4f}\nssr:\n{ssr:.4f}\nsst:\n{sst:.4f}\nssr/sst:{ssr/sst:.4f}\n'
-          f'1 - (ssr/sst):\n{1 - (ssr / sst):.4f}\n')
+    print(f'y_ave:\n {y_ave}\nssr:\n{ssr}\nsst:\n{sst}\nssr/sst:{ssr/sst}\n'
+          f'1 - (ssr/sst):\n{1 - (ssr / sst)}\n')
     return 1 - (ssr / sst)
 
 
