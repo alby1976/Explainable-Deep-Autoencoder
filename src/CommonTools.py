@@ -24,12 +24,12 @@ def r2_value(y_true: ndarray, y_pred: ndarray, axis=None):
 
 
 def r2_value(y_true: Tensor, y_pred: Tensor, dim: int = 0):
-        y_ave = torch.mean(y_true, dim=dim)
-        sse = torch.sum(torch.power(y_pred - y_ave, 2), dim=dim)
-        ssr = torch.sum(torch.power(y_true - y_pred, 2), dim=dim)
-        sst = torch.sum(torch.power(y_true - y_ave, 2), dim=dim)
+    y_ave = torch.mean(y_true, dim=dim)
+    sse = torch.sum(torch.pow(y_pred - y_ave, 2), dim=dim)
+    ssr = torch.sum(torch.pow(y_true - y_pred, 2), dim=dim)
+    sst = torch.sum(torch.pow(y_true - y_ave, 2), dim=dim)
 
-        return 1 - (ssr / sst)
+    return 1 - (ssr / sst)
 
 
 def get_column_value(x: Union[Tensor, ndarray], y: Union[Tensor, ndarray], index: int):
