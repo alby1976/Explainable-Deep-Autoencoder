@@ -44,7 +44,7 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
                              logger=CSVLogger(save_dir=str(log_dir), name=model_name),
                              deterministic=True,
                              gpus=1,
-                             callbacks=[early_stop_r2score],
+                             callbacks=[stop_r2score,stop_r2score_node],
                              # enable_progress_bar=True,
                              auto_scale_batch_size='binsearch')
     else:
@@ -54,7 +54,7 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
                              log_every_n_steps=1,
                              logger=CSVLogger(save_dir=str(log_dir), name=model_name),
                              deterministic=True,
-                             callbacks=[early_stop_r2score],
+                             callbacks=[stop_r2score,stop_r2score_node],
                              # enable_progress_bar=True,
                              auto_scale_batch_size='binsearch')
 
