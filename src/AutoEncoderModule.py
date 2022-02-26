@@ -165,7 +165,6 @@ class AutoGenoShallow(pl.LightningModule):
         r2 = self.testing_r2score.forward(preds=torch.flatten(output), target=torch.flatten(x))
         r2_node = self.testing_r2score_node.forward(preds=output, target=x)
         loss = f.mse_loss(input=output, target=x)
-        print(f'learning rate: {self.lr_schedulers()}')
         '''
         print(f'{batch_idx} val step batch size: {self.hparams.batch_size} output dim: {output.size()} '
               f'batch dim: {x.size()} loss dim: {loss.size()}')
@@ -204,13 +203,15 @@ class AutoGenoShallow(pl.LightningModule):
         # self.log('coefficient', coefficient)
         r2: np.mean(r2_value(y_true=x.cpu().detach().numpy(),
                              y_pred=output.cpu().detach().numpy(), axis=0))
-        self.log('test_r2score', r2, on_step=False, on_epoch=True)
+        self.log('test_r2score', torch.mean(r2_value(y_pred=output, y_true=x)), on_step=False, on_epoch=True)
         self.log('test_r2score_node', torch.mean(r2_node), on_step=False, on_epoch=True)
 
         '''
         print(f"test_loss: {losses.sum():.4f},
               f"test_coefficient: {coefficient:.4f}, test_r2: {r2:.4f}")
         '''
+        print(f'learning rate: {self.lr_schedulers()}')
+        print(f'numpy r2score: {r2:.4f} tensor r2score: {torch.mean(r2_value(y_pred=output, y_true=x)):.4f}')
         # print(f"test_loss: {losses.detach():.4f}, test_r2_node: {r2_node.detach():.4f} test_r2: {r2.detach():.4f}")
 
     # configures the optimizers through learning rate
