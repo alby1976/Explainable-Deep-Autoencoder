@@ -12,12 +12,12 @@ from scipy.stats import anderson_ksamp, levene
 from torch import device, Tensor
 
 
-def r2_value(y_true: ndarray, y_pred: ndarray, axis=None):
+def np_r2_value(y_true: ndarray, y_pred: ndarray, axis=None):
     y_ave = y_true.mean(axis=axis)
     # sse = np.sum(np.power(y_pred - y_ave, 2), axis=axis)
     ssr = np.sum(np.power(y_true - y_pred, 2), axis=axis)
     sst = np.sum(np.power(y_true - y_ave, 2), axis=axis)
-    print(f'y_ave:\n {y_ave}\nssr:\n{ssr}\nsst:\n{sst}\nssr/sst:{ssr/sst}\n'
+    print(f'y_ave: {y_ave.shape}\n{y_ave}\nssr: {ssr.shape}\n{ssr}}\nsst: {sst.shape}\n{sst}\nssr/sst:{ssr/sst}\n'
           f'1 - (ssr/sst):\n{1 - (ssr/sst)}\n1 - np.divide(ssr, sst):\n{1 - np.divide(ssr, sst)}')
     return 1 - np.divide(ssr, sst)
 
@@ -27,7 +27,7 @@ def r2_value(y_true: Tensor, y_pred: Tensor, dim: int = 0):
     # sse = torch.sum(torch.pow(y_pred - y_ave, 2), dim=dim)
     ssr = torch.sum(torch.pow(y_true - y_pred, 2), dim=dim)
     sst = torch.sum(torch.pow(y_true - y_ave, 2), dim=dim)
-    print(f'y_ave:\n {y_ave}\nssr:\n{ssr}\nsst:\n{sst}\nssr/sst:{ssr/sst}\n'
+    print(f'y_ave: {y_ave.size()}\n{y_ave}\nssr: {ssr.size()}\n{ssr}}\nsst: {sst.size()}\n{sst}\nssr/sst:{ssr/sst}\n'
           f'1 - (ssr/sst):\n{1 - (ssr / sst)}\n')
     return 1 - (ssr / sst)
 
