@@ -181,6 +181,8 @@ class AutoGenoShallow(pl.LightningModule):
             r2_node = get_dict_values_1d('r2_node', testing_step_outputs)
         except TypeError:
             # r2 = self.testing_r2score.compute()
+            r2: np.mean(np_r2_value(y_true=x.cpu().detach().numpy(),
+                                    y_pred=output.cpu().detach().numpy(), axis=1))
             r2_node = self.testing_r2score_node.compute()
         # print(f'regular losses: {losses.size()} pred: {pred.size()} target: {target.size()}')
 
@@ -201,8 +203,6 @@ class AutoGenoShallow(pl.LightningModule):
         self.log('test_loss', torch.sum(losses))
         # self.log('test_parametric', result)
         # self.log('coefficient', coefficient)
-        r2: np.mean(np_r2_value(y_true=x.cpu().detach().numpy(),
-                                y_pred=output.cpu().detach().numpy(), axis=1))
         self.log('test_r2score', torch.mean(r2_value(y_pred=output, y_true=x)), on_step=False, on_epoch=True)
         self.log('test_r2score_node', torch.mean(r2_node), on_step=False, on_epoch=True)
 
