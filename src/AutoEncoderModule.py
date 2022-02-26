@@ -165,6 +165,7 @@ class AutoGenoShallow(pl.LightningModule):
         r2 = self.testing_r2score.forward(preds=torch.flatten(output), target=torch.flatten(x))
         r2_node = self.testing_r2score_node.forward(preds=output, target=x)
         loss = f.mse_loss(input=output, target=x)
+        print(f'learning rate: {self.learning_rate}')
         '''
         print(f'{batch_idx} val step batch size: {self.hparams.batch_size} output dim: {output.size()} '
               f'batch dim: {x.size()} loss dim: {loss.size()}')
@@ -216,7 +217,7 @@ class AutoGenoShallow(pl.LightningModule):
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
         scheduler: CyclicLR = torch.optim.lr_scheduler.CyclicLR(optimizer, base_lr=self.min_lr,
-                                                                mode='exp_range',
+                                                                # mode='exp_range',
                                                                 cycle_momentum=False,
                                                                 max_lr=self.learning_rate)
         # step_size = 4 * len(self.train_dataloader())
