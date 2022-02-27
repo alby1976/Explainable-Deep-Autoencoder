@@ -177,8 +177,8 @@ class AutoGenoShallow(pl.LightningModule):
         losses = get_dict_values_1d('loss', testing_step_outputs)
         x = get_dict_values_2d('input', testing_step_outputs)
         output = get_dict_values_2d('output', testing_step_outputs)
-        numpy_x:ndarray = x.cpu().detach().numpy()
-        numpy_output:ndarray = output.cpu().detach().numpy()
+        numpy_x: ndarray = x.cpu().detach().numpy()
+        numpy_output: ndarray = output.cpu().detach().numpy()
 
         result = np.asarray([same_distribution_test(numpy_x[:, i], numpy_output[:, i])
                              for i in range(self.input_features)])
@@ -213,7 +213,6 @@ class AutoGenoShallow(pl.LightningModule):
         self.log('test_r2score_node', torch.mean(r2_node), on_step=False, on_epoch=True)
         self.log('test_r2score_calc_raw', r2, on_step=False, on_epoch=True)
         self.log('test_r2score_node_raw', r2_node, on_step=False, on_epoch=True)
-
 
         '''
         print(f"test_loss: {losses.sum():.4f},
