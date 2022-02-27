@@ -213,7 +213,7 @@ class AutoGenoShallow(pl.LightningModule):
         self.log('test_r2score_calc_raw', r2, on_step=False, on_epoch=True)
         self.log('test_r2score_node_raw', r2_node, on_step=False, on_epoch=True)
 
-        print(f"test_loss: {losses.sum().detach():.4f}, "
+        print(f"test_loss: {losses.sum().cpu().detach():.4f}, "
               f"test_coefficient: {coefficient:.4f}, test_r2: {r2:.4f}")
         scheduler: CyclicLR = self.lr_schedulers()
         print(f'learning rate: {scheduler.get_last_lr()}')
