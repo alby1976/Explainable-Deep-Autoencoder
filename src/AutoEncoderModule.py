@@ -218,10 +218,10 @@ class AutoGenoShallow(pl.LightningModule):
         print(f"test_loss: {losses.sum():.4f},
               f"test_coefficient: {coefficient:.4f}, test_r2: {r2:.4f}")
         '''
-        # scheduler: CyclicLR = self.lr_schedulers()
-        # print(f'learning rate: {scheduler.get_last_lr()}')
-        # print(f'numpy r2score: {r2:.4f} calc r2score: {torch.mean(r2_value(y_pred=output, y_true=x)):.4f}')
-        # print(f"test_loss: {losses.detach():.4f}, test_r2_node: {r2_node.detach():.4f} test_r2: {r2.detach():.4f}")
+        scheduler: CyclicLR = self.lr_schedulers()
+        print(f'learning rate: {scheduler.get_last_lr()}')
+        print(f'numpy r2score: {r2:.4f} calc r2score: {torch.mean(r2_value(y_pred=output, y_true=x)):.4f}')
+        print(f"test_loss: {losses.detach():.4f}, test_r2_node: {r2_node.detach():.4f} test_r2: {r2.detach():.4f}")
 
     # configures the optimizers through learning rate
     def configure_optimizers(self):
