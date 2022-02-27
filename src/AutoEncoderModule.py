@@ -16,7 +16,8 @@ import pytorch_lightning as pl
 import numpy as np
 import pandas as pd
 
-from CommonTools import data_parametric, get_dict_values_1d, get_dict_values_2d, get_data, r2_value, np_r2_value
+from CommonTools import data_parametric, get_dict_values_1d, get_dict_values_2d, get_data, r2_value, np_r2_value, \
+    same_distribution_test
 
 
 class GPDataSet(Dataset):
@@ -176,6 +177,12 @@ class AutoGenoShallow(pl.LightningModule):
         losses = get_dict_values_1d('loss', testing_step_outputs)
         x = get_dict_values_2d('input', testing_step_outputs)
         output = get_dict_values_2d('output', testing_step_outputs)
+        numpy_x:ndarray = x.cpu().detach().numpy()
+        numpy_output:ndarray = output.cpu().detach().numpy()
+
+        result = np.asarray([same_distribution_test(numpy_x[:,i]., numpy_output[:,i])
+                             for i in range(self.input_features)])
+        print(f'Anderson - Darling test: {len(result)} {np.all(result)}\n{result}')
         try:
             # r2 = get_dict_values_1d('r2', testing_step_outputs)
             r2_node = get_dict_values_1d('r2_node', testing_step_outputs)
