@@ -203,7 +203,7 @@ class AutoGenoShallow(pl.LightningModule):
         else:
             coefficient = self.testing_spearman.compute().item()
         '''
-        r2 = r2_value(y_pred=output, y_true=x)
+        r2 = torch.mean(r2_value(y_pred=output, y_true=x))
         # self.log('step', epoch + 1)
         self.log('test_loss', torch.sum(losses))
         # self.log('test_parametric', result)
@@ -214,7 +214,7 @@ class AutoGenoShallow(pl.LightningModule):
         self.log('test_r2score_node_raw', r2_node, on_step=False, on_epoch=True)
         tmp = losses.sum().item()
         print(f"test_loss: {tmp: .4f}, "
-              f"test_coefficient: {coefficient:.4f}, test_r2: {r2:.4f}")
+              f"test_coefficient: {coefficient:.4f}, test_r2: {r2:}")
         scheduler: CyclicLR = self.lr_schedulers()
         print(f'learning rate: {scheduler.get_last_lr()}')
         print(f'input: {x.size()}\n{x}\n\noutput: {output.size()}\n{output}\n\n')
