@@ -195,7 +195,7 @@ class AutoGenoShallow(pl.LightningModule):
         # self.testing_pearson.update(preds=pred, target=target)
         # self.testing_spearman.update(preds=pred, target=target)
         # r2 = self.testing_r2score.compute().item()
-        coefficient: float
+        coefficient: float = 0.0
         '''
         result: bool = data_parametric(x.cpu().detach().numpy(), output.cpu().detach().numpy())
         if result:
