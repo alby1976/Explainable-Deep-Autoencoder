@@ -146,10 +146,10 @@ class AutoGenoShallow(pl.LightningModule):
         print(f"epoch[{epoch + 1:4d}], "
               f"loss: {losses.sum():.4f}, coefficient: {coefficient:.4f}, r2: {r2:.4f},",
               end=' ')
+        '''
         print(f"epoch[{epoch + 1:4d}], "
               f"loss: {losses.sum():.4f}, r2: {r2:.4f},",
               end=' ')
-        '''
 
     # define validation step
     def validation_step(self, batch, batch_idx) -> Dict[str, Tensor]:
@@ -182,7 +182,6 @@ class AutoGenoShallow(pl.LightningModule):
 
         result = np.asarray([same_distribution_test(numpy_x[:, i], numpy_output[:, i])
                              for i in range(self.input_features)])
-        print(f'\nAnderson - Darling test: {len(result)} {np.all(result[:,0][0])}\n{result}')
         try:
             # r2 = get_dict_values_1d('r2', testing_step_outputs)
             r2_node = get_dict_values_1d('r2_node', testing_step_outputs)
@@ -214,12 +213,12 @@ class AutoGenoShallow(pl.LightningModule):
         self.log('test_r2score_calc_raw', r2, on_step=False, on_epoch=True)
         self.log('test_r2score_node_raw', r2_node, on_step=False, on_epoch=True)
 
-        '''
-        print(f"test_loss: {losses.sum():.4f},
+        print(f"test_loss: {losses.sum():.4f}, "
               f"test_coefficient: {coefficient:.4f}, test_r2: {r2:.4f}")
-        '''
         scheduler: CyclicLR = self.lr_schedulers()
         print(f'learning rate: {scheduler.get_last_lr()}')
+        print(f'input: {x.size()}\n{x}\n\noutput: {output.size()}\n{output}\n\n')
+        print(f'\nAnderson - Darling test: {len(result)} {np.all(result[:,0][0])}\n{result}')
         print(f'calc r2score: {(r2_value(y_pred=output, y_true=x))}')
         # print(f"test_loss: {losses.detach():.4f}, test_r2_node: {r2_node.detach():.4f} test_r2: {r2.detach():.4f}")
 
