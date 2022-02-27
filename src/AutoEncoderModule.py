@@ -182,7 +182,7 @@ class AutoGenoShallow(pl.LightningModule):
 
         result = np.asarray([same_distribution_test(numpy_x[:, i], numpy_output[:, i])
                              for i in range(self.input_features)])
-        print(f'Anderson - Darling test: {len(result)} {np.all(result[:,0][0])}\n{result}')
+        print(f'\nAnderson - Darling test: {len(result)} {np.all(result[:,0][0])}\n{result}')
         try:
             # r2 = get_dict_values_1d('r2', testing_step_outputs)
             r2_node = get_dict_values_1d('r2_node', testing_step_outputs)
