@@ -203,7 +203,7 @@ class AutoGenoShallow(pl.LightningModule):
         else:
             coefficient = self.testing_spearman.compute().item()
         '''
-        r2 = r2_value(y_pred=output, y_true=x)
+        r2 = r2_value(y_pred=output, y_true=x).item()
         # self.log('step', epoch + 1)
         self.log('test_loss', torch.sum(losses))
         # self.log('test_parametric', result)
