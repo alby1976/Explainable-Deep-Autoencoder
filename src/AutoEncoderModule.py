@@ -180,7 +180,7 @@ class AutoGenoShallow(pl.LightningModule):
         numpy_x:ndarray = x.cpu().detach().numpy()
         numpy_output:ndarray = output.cpu().detach().numpy()
 
-        result = np.asarray([same_distribution_test(numpy_x[:,i]., numpy_output[:,i])
+        result = np.asarray([same_distribution_test(numpy_x[:, i], numpy_output[:, i])
                              for i in range(self.input_features)])
         print(f'Anderson - Darling test: {len(result)} {np.all(result)}\n{result}')
         try:
