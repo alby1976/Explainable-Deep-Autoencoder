@@ -17,7 +17,7 @@ import numpy as np
 import pandas as pd
 
 from CommonTools import data_parametric, get_dict_values_1d, get_dict_values_2d, get_data, r2_value, \
-    r2_value_weighted, same_distribution_test
+    r2_value_weighted, same_distribution_test, get_filtered_data
 
 
 class GPDataSet(Dataset):
@@ -47,7 +47,8 @@ class AutoGenoShallow(pl.LightningModule):
         self.test_input_list = None
         self.input_list = None
         # get normalized data quality control
-        self.geno: ndarray = get_data(pd.read_csv(path_to_data, index_col=0), path_to_save_qc)
+        # self.geno: ndarray = get_data(pd.read_csv(path_to_data, index_col=0), path_to_save_qc)
+        self.geno: ndarray = get_filtered_data(pd.read_csv(path_to_data, index_col=0), path_to_save_qc)
         self.input_features = len(self.geno[0])
         self.output_features = self.input_features
         self.smallest_layer = math.ceil(self.input_features / compression_ratio)
