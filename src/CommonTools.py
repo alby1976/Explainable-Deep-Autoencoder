@@ -84,7 +84,7 @@ def get_dict_values_2d(key: str, lists: List[Dict[str, Tensor]], dim: int = 0) -
 
 
 def data_parametric(*samples: Tuple[ndarray, ...]) -> bool:
-    print(f'samples: {type(samples)}\n\n{samples}\n\n')
+    # print(f'samples: {type(samples)}\n\n{samples}\n\n')
     result1, _, _ = same_distribution_test(*samples)
     result2, _, _ = normality_test(*samples[0])
     result3, _, _ = equality_of_variance_test(*samples)
@@ -131,6 +131,7 @@ def get_normalized_data(data: DataFrame) -> DataFrame:
 
     scaler = MinMaxScaler()
     result = DataFrame(data=scaler.fit_transform(data), columns=data.columns)
+    print(f'data: {data.shape}\n{data}')
     print(f'result: {result.shape}\n{scaler.feature_names_in_}\n{result}')
     return result
 
