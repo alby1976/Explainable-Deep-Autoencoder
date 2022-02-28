@@ -110,6 +110,8 @@ class AutoGenoShallow(pl.LightningModule):
         losses: Tensor = get_dict_values_1d('loss', training_step_outputs)
         x: Tensor = get_dict_values_2d('input', training_step_outputs)
         output: Tensor = get_dict_values_2d('output', training_step_outputs)
+        numpy_x: ndarray = x.cpu().detach().numpy()
+        numpy_output: ndarray = output.cpu().detach().numpy()
         try:
             r2: Tensor = get_dict_values_1d('r2', training_step_outputs)
             r2_node: Tensor = get_dict_values_1d('r2_node', training_step_outputs)
@@ -127,6 +129,8 @@ class AutoGenoShallow(pl.LightningModule):
         np.savetxt(fname=coder_file, X=coder_np, fmt='%f', delimiter=',')
 
         # ======goodness of fit======
+        result = np.asarray([same_distribution_test(numpy_x[:, i], numpy_output[:, i])
+                             for i in range(self.input_features)])
         coefficient: float
         '''
         result: bool = data_parametric(x.cpu().detach().numpy(), output.cpu().detach().numpy())
@@ -136,6 +140,7 @@ class AutoGenoShallow(pl.LightningModule):
             coefficient = self.testing_spearman.compute().item()
         '''
         self.log('step', epoch + 1)
+        self.log('Anderson - Darling test', torch.from_numpy(result).type(torch.FloatTensor), on_step=False, on_epoch=True)
         # self.log('parametric', result)
         self.log('loss', torch.sum(losses), on_step=False, on_epoch=True)
         # self.log('coefficient', coefficient)
@@ -182,8 +187,6 @@ class AutoGenoShallow(pl.LightningModule):
         numpy_x: ndarray = x.cpu().detach().numpy()
         numpy_output: ndarray = output.cpu().detach().numpy()
 
-        result = np.asarray([same_distribution_test(numpy_x[:, i], numpy_output[:, i])
-                             for i in range(self.input_features)])
         try:
             # r2 = get_dict_values_1d('r2', testing_step_outputs)
             r2_node = get_dict_values_1d('r2_node', testing_step_outputs)
@@ -193,6 +196,8 @@ class AutoGenoShallow(pl.LightningModule):
         # print(f'regular losses: {losses.size()} pred: {pred.size()} target: {target.size()}')
 
         # ======goodness of fit======
+        result = np.asarray([same_distribution_test(numpy_x[:, i], numpy_output[:, i])
+                             for i in range(self.input_features)])
         # self.testing_r2score.update(preds=pred, target=target)
         # self.testing_pearson.update(preds=pred, target=target)
         # self.testing_spearman.update(preds=pred, target=target)
@@ -211,7 +216,7 @@ class AutoGenoShallow(pl.LightningModule):
         # self.log('test_parametric', result)
         # self.log('coefficient', coefficient)
         # print(f'\nAnderson - Darling test: {len(result)} {np.all(result[:,0][0])}\n{result}')
-        self.log('Anderson - Darling test', result, on_step=False, on_epoch=True)
+        self.log('Anderson - Darling test', torch.from_numpy(result).type(torch.FloatTensor), on_step=False, on_epoch=True)
         self.log('test_r2score', r2_value_weighted(y_pred=output, y_true=x), on_step=False, on_epoch=True)
         self.log('test_r2score_raw', r2_node, on_step=False, on_epoch=True)
         # tmp = losses.sum().item()
