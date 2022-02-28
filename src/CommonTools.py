@@ -131,7 +131,7 @@ def get_normalized_data(data: DataFrame) -> DataFrame:
 
     scaler = MinMaxScaler()
     result = DataFrame(data=scaler.fit_transform(data), columns=data.columns)
-    print(f'data: {data.shape}\n{scaler.get_feature_names_out(result)}')
+    print(f'data: {data.shape}\n{scaler.get_feature_names_out(data)}')
     return result
 
 
