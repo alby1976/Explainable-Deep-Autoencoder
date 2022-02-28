@@ -139,15 +139,18 @@ class AutoGenoShallow(pl.LightningModule):
         else:
             coefficient = self.testing_spearman.compute().item()
         '''
-        self.log('step', epoch + 1, on_step=False, on_epoch=True)
-        self.log('anderson_darling_test', torch.from_numpy(result).type(torch.FloatTensor), on_step=False, on_epoch=True)
+        self.log('train_anderson_darling_test', torch.from_numpy(result).type(torch.FloatTensor),
+                 on_step=False, on_epoch=True)
+        scheduler: CyclicLR = self.lr_schedulers()
+        self.log('learning_rate', scheduler.get_last_lr()[0], on_step=False, on_epoch=True)
         # self.log('parametric', result)
         self.log('loss', torch.sum(losses), on_step=False, on_epoch=True)
         # self.log('coefficient', coefficient)
-        self.log('r2score', r2_value_weighted(y_true=x, y_pred=output), on_step=False, on_epoch=True)
-        self.log('r2score_raw', r2_node, on_step=False, on_epoch=True)
-        scheduler: CyclicLR = self.lr_schedulers()
-        self.log('learning_rate', scheduler.get_last_lr()[0], on_step=False, on_epoch=True)
+        self.log('r2score_flattened', r2_value_weighted(y_true=torch.flatten(x), y_pred=torch.flatten(output)),
+                 on_step=False, on_epoch=True)
+        self.log('r2score_flatten', r2, on_step=False, on_epoch=True)
+        self.log('r2score_per_node', r2_value_weighted(y_true=x, y_pred=output), on_step=False, on_epoch=True)
+        self.log('r2score_per_node_raw', r2_node, on_step=False, on_epoch=True)
 
         '''
         print(f"epoch[{epoch + 1:4d}], "
@@ -188,10 +191,10 @@ class AutoGenoShallow(pl.LightningModule):
         numpy_output: ndarray = output.cpu().detach().numpy()
 
         try:
-            # r2 = get_dict_values_1d('r2', testing_step_outputs)
+            r2 = get_dict_values_1d('r2', testing_step_outputs)
             r2_node = get_dict_values_1d('r2_node', testing_step_outputs)
         except TypeError:
-            # r2 = self.testing_r2score.compute()
+            r2 = self.testing_r2score.compute()
             r2_node = self.testing_r2score_node.compute()
         # print(f'regular losses: {losses.size()} pred: {pred.size()} target: {target.size()}')
 
@@ -210,15 +213,19 @@ class AutoGenoShallow(pl.LightningModule):
         else:
             coefficient = self.testing_spearman.compute().item()
         '''
-        r2 = torch.mean(r2_value(y_pred=output, y_true=x))
+        r2_ave = torch.mean(r2_value(y_pred=output, y_true=x))
         # self.log('step', epoch + 1)
         self.log('test_loss', torch.sum(losses))
         # self.log('test_parametric', result)
         # self.log('coefficient', coefficient)
         # print(f'\nAnderson - Darling test: {len(result)} {np.all(result[:,0][0])}\n{result}')
-        self.log('anderson_darling_test', torch.from_numpy(result).type(torch.FloatTensor), on_step=False, on_epoch=True)
-        self.log('test_r2score', r2_value_weighted(y_pred=output, y_true=x), on_step=False, on_epoch=True)
-        self.log('test_r2score_raw', r2_node, on_step=False, on_epoch=True)
+        self.log('testing_anderson_darling_test', torch.from_numpy(result).type(torch.FloatTensor),
+                 on_step=False, on_epoch=True)
+        self.log('testing_r2score_flattened', r2_value_weighted(y_true=torch.flatten(x), y_pred=torch.flatten(output)),
+                 on_step=False, on_epoch=True)
+        self.log('testing_r2score_flatten', r2, on_step=False, on_epoch=True)
+        self.log('testing_r2score_per_node', r2_value_weighted(y_true=x, y_pred=output), on_step=False, on_epoch=True)
+        self.log('testing_r2score_per_node_raw', r2_node, on_step=False, on_epoch=True)
         # tmp = losses.sum().item()
         # print(f"test_loss: {tmp: .4f}, test_coefficient: {coefficient:.4f}, test_r2: {r2:}")
         # scheduler: CyclicLR = self.lr_schedulers()
