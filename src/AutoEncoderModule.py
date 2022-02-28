@@ -221,7 +221,7 @@ class AutoGenoShallow(pl.LightningModule):
         '''
         r2_ave = torch.mean(r2_value(y_pred=output, y_true=x))
         # self.log('step', epoch + 1)
-        self.log('test_loss', torch.sum(losses))
+        self.log('testing_loss', torch.sum(losses))
         # self.log('test_parametric', result)
         # self.log('coefficient', coefficient)
         # print(f'\nAnderson - Darling test: {len(result)} {np.all(result[:,0][0])}\n{result}')
@@ -240,7 +240,7 @@ class AutoGenoShallow(pl.LightningModule):
         # print(f'\nAnderson - Darling test: {len(result)} {np.all(result[:,0][0])}\n{result}')
         # print(f'calc r2score:\n{(r2_value(y_pred=output, y_true=x))}')
         # print(f'mean r2score: {r2} {r2_value_weighted(y_pred=output, y_true=x)}')
-        print(f"testing_loss: {torch.sum(losses).item():.4f}, "
+        print(f"test_loss: {torch.sum(losses).item():.4f}, "
               f"test_r2_node: {r2_value_weighted(y_true=x, y_pred=output):.4f}")
 
     # configures the optimizers through learning rate
