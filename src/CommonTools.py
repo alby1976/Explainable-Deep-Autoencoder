@@ -1,7 +1,7 @@
 import sys
 from itertools import islice
 from pathlib import Path
-from typing import Tuple, Union, Iterable, Dict, Any, List
+from typing import Tuple, Union, Iterable, Dict, Any, List, Mapping
 
 import numpy as np
 import torch
@@ -11,7 +11,7 @@ from scipy.optimize import anderson
 from scipy.stats import anderson_ksamp, levene
 from torch import device, Tensor
 # from multipledispatch import dispatch
-
+from torchmetrics import Metric
 
 """
 @dispatch(ndarray, ndarray, object)
@@ -42,7 +42,9 @@ def r2_value(y_true: Tensor, y_pred: Tensor, dim: int = 0) -> object:
     return 1 - (ssr / sst)
 
 
-def r2_value_weighted(y_true: Tensor, y_pred: Tensor, dim: int = 0) -> object:
+def r2_value_weighted(y_true: Tensor, y_pred: Tensor, dim: int = 0) -> Union[Metric, Tensor, int, float,
+                                                                             Mapping[str, Union[Metric, Tensor, int,
+                                                                                                float]]]:
     y_ave = torch.mean(y_true, dim=dim)
     sst = torch.sum(torch.pow(y_true - y_ave, 2), dim=dim)
     sst_sum = torch.sum(sst)
