@@ -29,7 +29,7 @@ def r2_value(y_true: ndarray, y_pred: ndarray, axis: object = None) -> object:
 """
 
 
-@dispatch(Tensor, Tensor, int)
+@dispatch(torch.Tensor, torch.Tensor, int)
 def r2_value(y_true: Tensor, y_pred: Tensor, dim: int = 0) -> object:
     y_ave = torch.mean(y_true, dim=dim)
     # sse = torch.sum(torch.pow(y_pred - y_ave, 2), dim=dim)
