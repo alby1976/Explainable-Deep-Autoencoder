@@ -10,9 +10,11 @@ from pandas import DataFrame, Series
 from scipy.optimize import anderson
 from scipy.stats import anderson_ksamp, levene
 from torch import device, Tensor
+from multipledispatch import dispatch
 
 
-def np_r2_value(y_true: ndarray, y_pred: ndarray, axis=None):
+@dispatch(ndarray, ndarray)
+def r2_value(y_true: ndarray, y_pred: ndarray, axis=None):
     y_ave = y_true.mean(axis=axis)
     # sse = np.sum(np.power(y_pred - y_ave, 2), axis=axis)
     ssr = np.sum(np.power(y_true - y_pred, 2), axis=axis)
@@ -25,6 +27,7 @@ def np_r2_value(y_true: ndarray, y_pred: ndarray, axis=None):
     return 1 - np.divide(ssr, sst)
 
 
+@dispatch(Tensor, Tensor)
 def r2_value(y_true: Tensor, y_pred: Tensor, dim: int = 0):
     y_ave = torch.mean(y_true, dim=dim)
     # sse = torch.sum(torch.pow(y_pred - y_ave, 2), dim=dim)
@@ -130,10 +133,9 @@ def get_normalized_data(data: DataFrame) -> DataFrame:
     from sklearn.preprocessing import MinMaxScaler
 
     scaler = MinMaxScaler()
-    result = DataFrame(data=scaler.fit_transform(data), columns=data.columns)
-    print(f'data: {data.shape}\n{data}')
-    print(f'result: {result.shape}\n{scaler.feature_names_in_}\n{result}')
-    return result
+    # print(f'data: {data.shape}\n{data}')
+    # print(f'result: {result.shape}\n{scaler.feature_names_in_}\n{result}')
+    return DataFrame(data=scaler.fit_transform(data), columns=data.columns)
 
 
 def create_dir(directory: Path):
