@@ -158,7 +158,7 @@ class AutoGenoShallow(pl.LightningModule):
               f"loss: {losses.sum():.4f}, coefficient: {coefficient:.4f}, r2: {r2:.4f},",
               end=' ')
         '''
-        print(f"epoch[{epoch + 1:4d}], learning_rate: {scheduler.get_lr():.6f} "
+        print(f"epoch[{epoch + 1:4d}], learning_rate: {scheduler.get_lr()[0]:.6f} "
               f"loss: {losses.sum():.4f}, r2_mode: {r2_value_weighted(y_true=x, y_pred=output).item():.4f},",
               end=' ')
 
