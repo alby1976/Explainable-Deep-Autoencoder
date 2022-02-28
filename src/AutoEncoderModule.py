@@ -158,8 +158,8 @@ class AutoGenoShallow(pl.LightningModule):
               f"loss: {losses.sum():.4f}, coefficient: {coefficient:.4f}, r2: {r2:.4f},",
               end=' ')
         '''
-        print(f"epoch[{epoch + 1:4d}], learning_rate: {scheduler.get_lr()}"
-              f"loss: {losses.sum():.4f}, r2: {r2_value_weighted(y_true=x, y_pred=output).item():.4f},",
+        print(f"epoch[{epoch + 1:4d}], learning_rate: {scheduler.get_lr():.6g} "
+              f"loss: {losses.sum():.4f}, r2_mode: {r2_value_weighted(y_true=x, y_pred=output).item():.4f},",
               end=' ')
 
     # define validation step
@@ -240,9 +240,8 @@ class AutoGenoShallow(pl.LightningModule):
         # print(f'\nAnderson - Darling test: {len(result)} {np.all(result[:,0][0])}\n{result}')
         # print(f'calc r2score:\n{(r2_value(y_pred=output, y_true=x))}')
         # print(f'mean r2score: {r2} {r2_value_weighted(y_pred=output, y_true=x)}')
-        print(f"test_loss: {torch.sum(losses).item():.4f}, "
-              f"test_r2_node: {r2_value_weighted(y_true=x, y_pred=output):.4f} "
-              f"test_r2: {r2.detach():.4f}")
+        print(f"testing_loss: {torch.sum(losses).item():.4f}, "
+              f"test_r2_node: {r2_value_weighted(y_true=x, y_pred=output):.4f}")
 
     # configures the optimizers through learning rate
     def configure_optimizers(self):
