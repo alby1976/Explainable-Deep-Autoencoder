@@ -199,8 +199,13 @@ class AutoGenoShallow(pl.LightningModule):
         # print(f'regular losses: {losses.size()} pred: {pred.size()} target: {target.size()}')
 
         # ======goodness of fit======
-        result = np.asarray([same_distribution_test(numpy_x[:, i], numpy_output[:, i])
-                             for i in range(self.input_features)])
+        result: list = []
+        for i in range(self.input_features):
+            try:
+                result.append(same_distribution_test(numpy_x[:, i], numpy_output[:, i]))
+            except ValueError:
+                result.append((True, np.nan, np.nan))
+        result: ndarray = np.asarray(result)
         # self.testing_r2score.update(preds=pred, target=target)
         # self.testing_pearson.update(preds=pred, target=target)
         # self.testing_spearman.update(preds=pred, target=target)
