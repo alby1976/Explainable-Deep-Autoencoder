@@ -220,7 +220,7 @@ class AutoGenoShallow(pl.LightningModule):
         print(f'input: {x.size()}\n{x}\n\noutput: {output.size()}\n{output}\n\n')
         print(f'\nAnderson - Darling test: {len(result)} {np.all(result[:,0][0])}\n{result}')
         print(f'calc r2score:\n{(r2_value(y_pred=output, y_true=x))}')
-        print(f'mean r2score:\n{r2_value_weighted(y_pred=output, y_true=x)}')
+        print(f'mean r2score: {r2} {r2_value_weighted(y_pred=output, y_true=x)}')
         # print(f"test_loss: {losses.detach():.4f}, test_r2_node: {r2_node.detach():.4f} test_r2: {r2.detach():.4f}")
         sys.exit(-1)
 
