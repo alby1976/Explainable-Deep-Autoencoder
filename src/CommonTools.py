@@ -130,7 +130,9 @@ def get_normalized_data(data: DataFrame) -> DataFrame:
     from sklearn.preprocessing import MinMaxScaler
 
     scaler = MinMaxScaler()
-    return DataFrame(data=scaler.fit_transform(data), columns=data.columns)
+    result = DataFrame(data=scaler.fit_transform(data), columns=data.columns)
+    print(f'data: {data.shape}\n{scaler.get_feature_names_out(result)}')
+    return result
 
 
 def create_dir(directory: Path):
