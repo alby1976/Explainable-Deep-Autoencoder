@@ -13,6 +13,7 @@ from torch import device, Tensor
 from multipledispatch import dispatch
 
 
+"""
 @dispatch(ndarray, ndarray, object)
 def r2_value(y_true: ndarray, y_pred: ndarray, axis: object = None) -> object:
     y_ave = y_true.mean(axis=axis)
@@ -25,6 +26,7 @@ def r2_value(y_true: ndarray, y_pred: ndarray, axis: object = None) -> object:
           f'1 - (ssr/sst):\n{1 - (ssr/sst)}\n1 - np.divide(ssr, sst):\n{1 - np.divide(ssr, sst)}')
     '''
     return 1 - np.divide(ssr, sst)
+"""
 
 
 @dispatch(Tensor, Tensor, int)
