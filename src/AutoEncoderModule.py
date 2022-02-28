@@ -162,7 +162,6 @@ class AutoGenoShallow(pl.LightningModule):
               f"loss: {losses.sum():.4f}, r2: {r2_value_weighted(y_true=x, y_pred=output).item():.4f},",
               end=' ')
 
-
     # define validation step
     def validation_step(self, batch, batch_idx) -> Dict[str, Tensor]:
         x = batch[0]
@@ -241,7 +240,8 @@ class AutoGenoShallow(pl.LightningModule):
         # print(f'\nAnderson - Darling test: {len(result)} {np.all(result[:,0][0])}\n{result}')
         # print(f'calc r2score:\n{(r2_value(y_pred=output, y_true=x))}')
         # print(f'mean r2score: {r2} {r2_value_weighted(y_pred=output, y_true=x)}')
-        print(f"test_loss: {losses.item():.4f}, test_r2_node: {r2_value_weighted(y_true=x, y_pred=output), on_step=False, on_epoch=True):.4f} test_r2: {r2.detach():.4f}")
+        print(f"test_loss: {losses.item():.4f}, test_r2_node: {r2_value_weighted(y_true=x, y_pred=output):.4f} "
+              f"test_r2: {r2.detach():.4f}")
 
     # configures the optimizers through learning rate
     def configure_optimizers(self):
