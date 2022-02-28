@@ -139,17 +139,17 @@ class AutoGenoShallow(pl.LightningModule):
         # self.log('parametric', result)
         self.log('loss', torch.sum(losses), on_step=False, on_epoch=True)
         # self.log('coefficient', coefficient)
-        self.log('r2score_node', torch.mean(r2_node), on_step=False, on_epoch=True)
-        self.log('r2score', torch.mean(r2), on_step=False, on_epoch=True)
+        self.log('r2score', r2_value_weighted(y_true=x, y_pred=output), on_step=False, on_epoch=True)
+        self.log('r2score_raw', r2_node, on_step=False, on_epoch=True)
 
         '''
         print(f"epoch[{epoch + 1:4d}], "
               f"loss: {losses.sum():.4f}, coefficient: {coefficient:.4f}, r2: {r2:.4f},",
               end=' ')
-        '''
         print(f"epoch[{epoch + 1:4d}], "
               f"loss: {losses.sum():.4f}, r2: {r2:.4f},",
               end=' ')
+        '''
 
     # define validation step
     def validation_step(self, batch, batch_idx) -> Dict[str, Tensor]:
@@ -208,19 +208,21 @@ class AutoGenoShallow(pl.LightningModule):
         self.log('test_loss', torch.sum(losses))
         # self.log('test_parametric', result)
         # self.log('coefficient', coefficient)
+        # print(f'\nAnderson - Darling test: {len(result)} {np.all(result[:,0][0])}\n{result}')
+        scheduler: CyclicLR = self.lr_schedulers()
+        self.log('learning rate', scheduler.get_lr(), on_step=False, on_epoch=True)
+        self.log('Anderson - Darling test', result, on_step=False, on_epoch=True)
         self.log('test_r2score', r2_value_weighted(y_pred=output, y_true=x), on_step=False, on_epoch=True)
         self.log('test_r2score_raw', r2_node, on_step=False, on_epoch=True)
-        tmp = losses.sum().item()
-        print(f"test_loss: {tmp: .4f}, "
-              f"test_coefficient: {coefficient:.4f}, test_r2: {r2:}")
-        scheduler: CyclicLR = self.lr_schedulers()
-        print(f'learning rate: {scheduler.get_last_lr()}')
-        print(f'input: {x.size()}\n{x}\n\noutput: {output.size()}\n{output}\n\n')
-        print(f'\nAnderson - Darling test: {len(result)} {np.all(result[:,0][0])}\n{result}')
-        print(f'calc r2score:\n{(r2_value(y_pred=output, y_true=x))}')
-        print(f'mean r2score: {r2} {r2_value_weighted(y_pred=output, y_true=x)}')
+        # tmp = losses.sum().item()
+        # print(f"test_loss: {tmp: .4f}, test_coefficient: {coefficient:.4f}, test_r2: {r2:}")
+        # scheduler: CyclicLR = self.lr_schedulers()
+        # print(f'learning rate: {scheduler.get_last_lr()}')
+        # print(f'input: {x.size()}\n{x}\n\noutput: {output.size()}\n{output}\n\n')
+        # print(f'\nAnderson - Darling test: {len(result)} {np.all(result[:,0][0])}\n{result}')
+        # print(f'calc r2score:\n{(r2_value(y_pred=output, y_true=x))}')
+        # print(f'mean r2score: {r2} {r2_value_weighted(y_pred=output, y_true=x)}')
         # print(f"test_loss: {losses.detach():.4f}, test_r2_node: {r2_node.detach():.4f} test_r2: {r2.detach():.4f}")
-        sys.exit(-1)
 
     # configures the optimizers through learning rate
     def configure_optimizers(self):
