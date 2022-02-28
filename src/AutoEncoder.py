@@ -61,8 +61,6 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
     model.min_lr = model.learning_rate / 6.0
     print(f'min lr: {model.min_lr} max lr: {model.learning_rate}')
     print(f'...Finding ideal batch size....')
-    # find ideal batch size
-    trainer.tune(model)
     # train & validate model
     print(f'...Training and Validating model...')
     trainer.fit(model=model)
