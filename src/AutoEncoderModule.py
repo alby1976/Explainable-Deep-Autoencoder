@@ -147,7 +147,7 @@ class AutoGenoShallow(pl.LightningModule):
         self.log('r2score', r2_value_weighted(y_true=x, y_pred=output), on_step=False, on_epoch=True)
         self.log('r2score_raw', r2_node, on_step=False, on_epoch=True)
         scheduler: CyclicLR = self.lr_schedulers()
-        self.log('learning rate', scheduler.get_lr()[0], on_step=False, on_epoch=True)
+        self.log('learning_rate', scheduler.get_last_lr()[0], on_step=False, on_epoch=True)
 
         '''
         print(f"epoch[{epoch + 1:4d}], "
