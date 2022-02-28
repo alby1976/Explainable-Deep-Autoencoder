@@ -16,7 +16,7 @@ import pytorch_lightning as pl
 import numpy as np
 import pandas as pd
 
-from CommonTools import data_parametric, get_dict_values_1d, get_dict_values_2d, get_data, r2_value, np_r2_value, \
+from CommonTools import data_parametric, get_dict_values_1d, get_dict_values_2d, get_data, r2_value, \
     same_distribution_test
 
 
