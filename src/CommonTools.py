@@ -43,7 +43,7 @@ def r2_value(y_true: Tensor, y_pred: Tensor, dim: int = 0) -> object:
 
 
 def r2_value_weighted(y_true: Tensor, y_pred: Tensor, dim: int = 0) -> object:
-    raw = r2_value_weighted(y_true=y_true, y_pred=y_pred, dim=dim)
+    raw = r2_value(y_true=y_true, y_pred=y_pred, dim=dim)
     y_ave = torch.mean(y_true, dim=dim)
     sst = torch.sum(torch.pow(y_true - y_ave, 2), dim=dim)
     sst_sum = torch.sum(sst)
