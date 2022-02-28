@@ -27,10 +27,8 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
     seed_everything(42)
     early_stop_loss = EarlyStopping(monitor='test_loss', verbose=True, mode='min', patience=50,
                                     check_on_train_epoch_end=False)
-    stop_r2score = EarlyStopping(monitor='test_r2score_calc', verbose=True, mode='max', stopping_threshold=0.98,
-                                 patience=100, check_on_train_epoch_end=False)
-    stop_r2score_node = EarlyStopping(monitor='test_r2score_node', verbose=True, mode='max', stopping_threshold=0.98,
-                                      patience=5, check_on_train_epoch_end=False)
+    stop_r2score = EarlyStopping(monitor='test_r2score', verbose=True, mode='max', stopping_threshold=0.98,
+                                 patience=50, check_on_train_epoch_end=False)
     trainer: Trainer
     log_dir = path_to_save_ae.joinpath('log')
     ckpt_dir = path_to_save_ae.joinpath('ckpt')
@@ -44,7 +42,7 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
                              logger=CSVLogger(save_dir=str(log_dir), name=model_name),
                              deterministic=True,
                              gpus=1,
-                             callbacks=[stop_r2score, stop_r2score_node],
+                             callbacks=[stop_r2score],
                              # enable_progress_bar=True,
                              auto_scale_batch_size='binsearch')
     else:
@@ -54,7 +52,7 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
                              log_every_n_steps=1,
                              logger=CSVLogger(save_dir=str(log_dir), name=model_name),
                              deterministic=True,
-                             callbacks=[stop_r2score, stop_r2score_node],
+                             callbacks=[stop_r2score],
                              # enable_progress_bar=True,
                              auto_scale_batch_size='binsearch')
 
