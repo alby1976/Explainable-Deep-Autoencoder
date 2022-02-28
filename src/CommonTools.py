@@ -13,7 +13,7 @@ from torch import device, Tensor
 from multipledispatch import dispatch
 
 
-@dispatch(ndarray, ndarray)
+@dispatch(ndarray, ndarray, int)
 def r2_value(y_true: ndarray, y_pred: ndarray, axis=None):
     y_ave = y_true.mean(axis=axis)
     # sse = np.sum(np.power(y_pred - y_ave, 2), axis=axis)
@@ -27,8 +27,8 @@ def r2_value(y_true: ndarray, y_pred: ndarray, axis=None):
     return 1 - np.divide(ssr, sst)
 
 
-@dispatch(Tensor, Tensor)
-def r2_value(y_true: Tensor, y_pred: Tensor, dim: int = 0):
+@dispatch(Tensor, Tensor, int)
+def r2_value(y_true: Tensor, y_pred: Tensor, dim: int = 0) -> object:
     y_ave = torch.mean(y_true, dim=dim)
     # sse = torch.sum(torch.pow(y_pred - y_ave, 2), dim=dim)
     ssr = torch.sum(torch.pow(y_true - y_pred, 2), dim=dim)
