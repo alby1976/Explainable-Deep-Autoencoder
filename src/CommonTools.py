@@ -47,7 +47,7 @@ def r2_value_weighted(y_true: Tensor, y_pred: Tensor, dim: int = 0) -> object:
     y_ave = torch.mean(y_true, dim=dim)
     sst = torch.sum(torch.pow(y_true - y_ave, 2), dim=dim)
     sst_sum = torch.sum(sst)
-    r2 = torch.sum(sst / sst_sum * raw)
+    return torch.sum(sst / sst_sum * raw)
 
 
 def get_column_value(x: Union[Tensor, ndarray], y: Union[Tensor, ndarray], index: int):
