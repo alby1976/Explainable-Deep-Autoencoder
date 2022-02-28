@@ -141,6 +141,8 @@ class AutoGenoShallow(pl.LightningModule):
         # self.log('coefficient', coefficient)
         self.log('r2score', r2_value_weighted(y_true=x, y_pred=output), on_step=False, on_epoch=True)
         self.log('r2score_raw', r2_node, on_step=False, on_epoch=True)
+        scheduler: CyclicLR = self.lr_schedulers()
+        self.log('learning rate', scheduler.get_lr()[0], on_step=False, on_epoch=True)
 
         '''
         print(f"epoch[{epoch + 1:4d}], "
@@ -209,8 +211,6 @@ class AutoGenoShallow(pl.LightningModule):
         # self.log('test_parametric', result)
         # self.log('coefficient', coefficient)
         # print(f'\nAnderson - Darling test: {len(result)} {np.all(result[:,0][0])}\n{result}')
-        scheduler: CyclicLR = self.lr_schedulers()
-        self.log('learning rate', scheduler.get_lr(), on_step=False, on_epoch=True)
         self.log('Anderson - Darling test', result, on_step=False, on_epoch=True)
         self.log('test_r2score', r2_value_weighted(y_pred=output, y_true=x), on_step=False, on_epoch=True)
         self.log('test_r2score_raw', r2_node, on_step=False, on_epoch=True)
