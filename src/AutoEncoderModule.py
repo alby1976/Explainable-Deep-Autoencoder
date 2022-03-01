@@ -1,5 +1,4 @@
 import math
-import sys
 from pathlib import Path
 from typing import Any, Union, Dict, Optional
 
@@ -17,7 +16,7 @@ import numpy as np
 import pandas as pd
 
 from CommonTools import data_parametric, get_dict_values_1d, get_dict_values_2d, get_data, \
-    r2_value_weighted, same_distribution_test, get_filtered_data
+    r2_value_weighted, same_distribution_test
 
 
 class GPDataSet(Dataset):
@@ -53,16 +52,14 @@ class AutoGenoShallow(pl.LightningModule):
         self.output_features = self.input_features
         self.smallest_layer = math.ceil(self.input_features / compression_ratio)
         self.hidden_layer = int(2 * self.smallest_layer)
-        self.training_r2score = torchmetrics.R2Score(compute_on_step=False)
         self.training_r2score_node = torchmetrics.R2Score(num_outputs=self.input_features,
                                                           multioutput='raw_values', compute_on_step=False)
-        # self.training_pearson = torchmetrics.regression.pearson.PearsonCorrcoef(compute_on_step=False)
-        # self.training_spearman = torchmetrics.regression.spearman.SpearmanCorrcoef(compute_on_step=False)
-        self.testing_r2score = torchmetrics.R2Score(compute_on_step=False)
+        self.training_pearson = torchmetrics.regression.pearson.PearsonCorrcoef(compute_on_step=False)
+        self.training_spearman = torchmetrics.regression.spearman.SpearmanCorrcoef(compute_on_step=False)
         self.testing_r2score_node = torchmetrics.R2Score(num_outputs=self.input_features,
                                                          multioutput='raw_values', compute_on_step=False)
-        # self.testing_pearson = torchmetrics.regression.pearson.PearsonCorrcoef(compute_on_step=False)
-        # self.testing_spearman = torchmetrics.regression.spearman.SpearmanCorrcoef(compute_on_step=False)
+        self.testing_pearson = torchmetrics.regression.pearson.PearsonCorrcoef(compute_on_step=False)
+        self.testing_spearman = torchmetrics.regression.spearman.SpearmanCorrcoef(compute_on_step=False)
         self.save_dir = save_dir
         self.model_name = model_name
 
@@ -99,12 +96,22 @@ class AutoGenoShallow(pl.LightningModule):
         x = batch[0]
         # print(f'{batch_idx} training batch size: {self.hparams.batch_size} x: {x.size()}')
         output, coder = self.forward(x)
-        r2 = self.training_r2score.forward(preds=torch.flatten(output), target=torch.flatten(x))
         r2_node = self.training_r2score_node.forward(preds=output, target=x)
-        # self.training_spearman.forward(preds=torch.reshape(output, (-1,)), target=torch.reshape(x, (-1,)))
-        # self.training_pearson(preds=torch.reshape(output, (-1,)), target=torch.reshape(x, (-1,)))
+
+        z = [(self.training_spearman.update(preds=output.index_select(1, torch.tensor(index)),
+                                            target=x.index_select(1, torch.tensor(index))),
+              self.training_pearson.update(preds=output.index_select(1, torch.tensor(index)),
+                                           target=x.index_select(1, torch.tensor(index)))
+              for index in range(x.size(dim=1)))]
+
+        for index in range(x.size(dim=1)):
+            self.training_spearman.update(preds=output.index_select(1, torch.tensor(index)),
+                                          target=x.index_select(1, torch.tensor(index)))
+            self.training_pearson.update(preds=output.index_select(1, torch.tensor(index)),
+                                         target=x.index_select(1, torch.tensor(index)))
+
         loss = f.mse_loss(input=output, target=x)
-        return {'model': coder, 'loss': loss, 'r2': r2, 'r2_node': r2_node, 'input': x, 'output': output}
+        return {'model': coder, 'loss': loss, 'r2_node': r2_node, 'input': x, 'output': output}
 
     # end of training epoch
     def training_epoch_end(self, training_step_outputs):
@@ -119,10 +126,8 @@ class AutoGenoShallow(pl.LightningModule):
         numpy_output: ndarray = output.cpu().detach().numpy()
 
         try:
-            r2: Tensor = get_dict_values_1d('r2', training_step_outputs)
             r2_node: Tensor = get_dict_values_1d('r2_node', training_step_outputs)
         except TypeError:
-            r2 = self.training_r2score.compute()
             r2_node = self.training_r2score_node.compute()
 
         # ===========save model============
@@ -133,59 +138,50 @@ class AutoGenoShallow(pl.LightningModule):
         np.savetxt(fname=coder_file, X=coder_np, fmt='%f', delimiter=',')
 
         # ======goodness of fit======
-        result = np.asarray([same_distribution_test(numpy_x[:, i], numpy_output[:, i])
-                             for i in range(self.input_features)])
-        coefficient: float
-        '''
-        result: bool = data_parametric(x.cpu().detach().numpy(), output.cpu().detach().numpy())
-        if result:
-            coefficient = self.testing_pearson.compute().item()
-        else:
-            coefficient = self.testing_spearman.compute().item()
-        '''
+        result: list = np.asarray([data_parametric(numpy_x[:, i], numpy_output[:, i])
+                                   for i in range(self.input_features)])
+        anderson: list = np.asarray([same_distribution_test(numpy_x[:, i], numpy_output[:, i])
+                                     for i in range(self.input_features)])
 
-        '''
-        print(f"epoch[{epoch + 1:4d}], "
-              f"loss: {losses.sum():.4f}, coefficient: {coefficient:.4f}, r2: {r2:.4f},",
-              end=' ')
-        '''
-        print(f"epoch[{epoch + 1:4d}], learning_rate: {scheduler.get_lr()[0]:.6f} "
-              f"loss: {losses.sum():.4f}, r2_mode: {r2_value_weighted(y_true=x, y_pred=output).item():.4f},",
+        coefficient: float
+        if np.all(result):
+            coefficient = self.training_pearson.compute().item()
+        else:
+            coefficient = self.training_spearman.compute().item()
+
+        print(f"epoch[{epoch + 1:4d}], learning_rate: {scheduler.get_lr():.6f} "
+              f"loss: {losses.sum():.4f}, parametric: {np.all(result)}, coefficient: {coefficient:.4f}"
+              f"r2_mode: {r2_value_weighted(y_true=x, y_pred=output).item():.4f},",
               end=' ')
 
         # logging metrics into log file
         self.log('learning_rate', scheduler.get_last_lr()[0], on_step=False, on_epoch=True)
-        self.log('train_anderson_darling_test', torch.from_numpy(result).type(torch.FloatTensor),
+        self.log('train_anderson_darling_test', torch.from_numpy(anderson).type(torch.FloatTensor),
                  on_step=False, on_epoch=True)
-        # self.log('parametric', result)
         self.log('loss', torch.sum(losses), on_step=False, on_epoch=True)
-        # self.log('coefficient', coefficient)
-        self.log('r2score_flatten', r2_value_weighted(y_true=torch.flatten(x), y_pred=torch.flatten(output)),
-                 on_step=False, on_epoch=True)
+        self.log('parametric', np.all(result))
+        self.log('coefficient', coefficient)
         self.log('r2score_per_node', r2_value_weighted(y_true=x, y_pred=output), on_step=False, on_epoch=True)
-        self.log('r2score_flatten_raw', r2, on_step=False, on_epoch=True)
         self.log('r2score_per_node_raw', r2_node, on_step=False, on_epoch=True)
 
     # define validation step
     def validation_step(self, batch, batch_idx) -> Dict[str, Tensor]:
         x = batch[0]
         output, _ = self.forward(x)
-        # spear = torch.cat([for index in range(x.size(dim=1))])
-        '''
-        for index in range(x.size(dim=1)):
-            self.training_spearman.update(preds=output.index_select(1, torch.tensor(index)),
-                                          target=x.index_select(1, torch.tensor(index)))
-            self.training_pearson.update(preds=output.index_select(1, torch.tensor(index)),
-                                         target=x.index_select(1, torch.tensor(index)))
-        '''
-        r2 = self.testing_r2score.forward(preds=torch.flatten(output), target=torch.flatten(x))
+
+        z = [(self.training_spearman.update(preds=output.index_select(1, torch.tensor(index)),
+                                            target=x.index_select(1, torch.tensor(index))),
+              self.training_pearson.update(preds=output.index_select(1, torch.tensor(index)),
+                                           target=x.index_select(1, torch.tensor(index)))
+              for index in range(x.size(dim=1)))]
+
         r2_node = self.testing_r2score_node.forward(preds=output, target=x)
         loss = f.mse_loss(input=output, target=x)
         '''
         print(f'{batch_idx} val step batch size: {self.hparams.batch_size} output dim: {output.size()} '
               f'batch dim: {x.size()} loss dim: {loss.size()}')
         '''
-        return {'loss': loss, 'r2': r2, 'r2_node': r2_node, 'input': x, 'output': output}
+        return {'loss': loss, 'r2_node': r2_node, 'input': x, 'output': output}
 
     # end of validation epoch
     def validation_epoch_end(self, testing_step_outputs):
@@ -204,49 +200,28 @@ class AutoGenoShallow(pl.LightningModule):
         # print(f'regular losses: {losses.size()} pred: {pred.size()} target: {target.size()}')
 
         # ======goodness of fit======
-        result: list = []
-        for i in range(self.input_features):
-            try:
-                result.append(same_distribution_test(numpy_x[:, i], numpy_output[:, i]))
-            except ValueError:
-                result.append((True, np.nan, np.nan))
-        result: ndarray = np.asarray(result)
-        # self.testing_r2score.update(preds=pred, target=target)
-        # self.testing_pearson.update(preds=pred, target=target)
-        # self.testing_spearman.update(preds=pred, target=target)
-        # r2 = self.testing_r2score.compute().item()
-        coefficient: float = 0.0
-        '''
-        result: bool = data_parametric(x.cpu().detach().numpy(), output.cpu().detach().numpy())
-        if result:
-            coefficient = self.testing_pearson.compute().item()
+        result: list = np.asarray([data_parametric(numpy_x[:, i], numpy_output[:, i])
+                                   for i in range(self.input_features)])
+        anderson: list = np.asarray([same_distribution_test(numpy_x[:, i], numpy_output[:, i])
+                                     for i in range(self.input_features)])
+
+        coefficient: float
+        if np.all(result):
+            coefficient = self.training_pearson.compute().item()
         else:
-            coefficient = self.testing_spearman.compute().item()
-        '''
+            coefficient = self.training_spearman.compute().item()
+
         print(f"test_loss: {torch.sum(losses).item():.4f}, "
               f"test_r2_node: {r2_value_weighted(y_true=x, y_pred=output):.4f}")
 
         # logging validation metrics into log file
-        # self.log('step', epoch + 1)
         self.log('testing_loss', torch.sum(losses))
-        # self.log('test_parametric', result)
-        # self.log('coefficient', coefficient)
-        # print(f'\nAnderson - Darling test: {len(result)} {np.all(result[:,0][0])}\n{result}')
-        self.log('testing_anderson_darling_test', torch.from_numpy(result).type(torch.FloatTensor),
+        self.log('testing_anderson_darling_test', torch.from_numpy(anderson).type(torch.FloatTensor),
                  on_step=False, on_epoch=True)
-        self.log('testing_r2score_flatten', r2_value_weighted(y_true=torch.flatten(x), y_pred=torch.flatten(output)),
-                 on_step=False, on_epoch=True)
+        self.log('testing_parametric', np.all(result), on_step=False, on_epoch=True)
+        self.log('coefficient', coefficient, on_step=False, on_epoch=True)
         self.log('testing_r2score_per_node', r2_value_weighted(y_true=x, y_pred=output), on_step=False, on_epoch=True)
         self.log('testing_r2score_per_node_raw', r2_node, on_step=False, on_epoch=True)
-        self.log('testing_r2score_flatten_raw', r2, on_step=False, on_epoch=True)
-        # tmp = losses.sum().item()
-        # print(f"test_loss: {tmp: .4f}, test_coefficient: {coefficient:.4f}, test_r2: {r2:}")
-        # scheduler: CyclicLR = self.lr_schedulers()
-        # print(f'learning rate: {scheduler.get_last_lr()}')
-        # print(f'input: {x.size()}\n{x}\n\noutput: {output.size()}\n{output}\n\n')
-        # print(f'\nAnderson - Darling test: {len(result)} {np.all(result[:,0][0])}\n{result}')
-        # print(f'calc r2score:\n{(r2_value(y_pred=output, y_true=x))}')
-        # print(f'mean r2score: {r2} {r2_value_weighted(y_pred=output, y_true=x)}')
 
     # configures the optimizers through learning rate
     def configure_optimizers(self):

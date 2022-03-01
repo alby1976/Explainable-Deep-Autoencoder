@@ -25,10 +25,8 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
                             model_name=model_name, compression_ratio=compression_ratio, batch_size=batch_size)
     # find ideal learning rate
     seed_everything(42)
-    stop_loss = EarlyStopping(monitor='testing_loss', mode='min', patience=50,
+    stop_loss = EarlyStopping(monitor='testing_loss', mode='min', patience=50, verbose=True,
                               check_on_train_epoch_end=False)
-    stop_r2score = EarlyStopping(monitor='testing_r2score_per_node', mode='max', stopping_threshold=0.97,
-                                 check_finite=False, patience=50, check_on_train_epoch_end=False)
     trainer: Trainer
     log_dir = path_to_save_ae.joinpath('log')
     ckpt_dir = path_to_save_ae.joinpath('ckpt')
@@ -42,7 +40,7 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
                              logger=CSVLogger(save_dir=str(log_dir), name=model_name),
                              deterministic=True,
                              gpus=1,
-                             callbacks=[stop_loss, stop_r2score],
+                             callbacks=[stop_loss],
                              # enable_progress_bar=True,
                              auto_scale_batch_size='binsearch')
     else:
