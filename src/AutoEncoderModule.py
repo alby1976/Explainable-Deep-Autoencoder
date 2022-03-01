@@ -47,8 +47,8 @@ class AutoGenoShallow(pl.LightningModule):
         self.test_input_list = None
         self.input_list = None
         # get normalized data quality control
-        # self.geno: ndarray = get_data(pd.read_csv(path_to_data, index_col=0), path_to_save_qc)
-        self.geno: ndarray = get_filtered_data(pd.read_csv(path_to_data, index_col=0), path_to_save_qc).to_numpy()
+        self.geno: ndarray = get_data(pd.read_csv(path_to_data, index_col=0), path_to_save_qc)
+        #self.geno: ndarray = get_filtered_data(pd.read_csv(path_to_data, index_col=0), path_to_save_qc).to_numpy()
         self.input_features = len(self.geno[0])
         self.output_features = self.input_features
         self.smallest_layer = math.ceil(self.input_features / compression_ratio)

@@ -9,6 +9,7 @@ from numpy import ndarray
 from pandas import DataFrame, Series
 from scipy.optimize import anderson
 from scipy.stats import anderson_ksamp, levene
+from sklearn.preprocessing import MaxAbsScaler
 from torch import device, Tensor
 # from multipledispatch import dispatch
 from torchmetrics import Metric
@@ -143,10 +144,13 @@ def equality_of_variance_test(*samples: Tuple[ndarray, ...]) -> Tuple[bool, floa
 def get_normalized_data(data: DataFrame) -> DataFrame:
     from sklearn.preprocessing import MinMaxScaler
 
+    abs = MaxAbsScaler()
     scaler = MinMaxScaler()
+    tmp = abs.fit_transform(data)
     # print(f'data: {data.shape}\n{data}')
     # print(f'result: {result.shape}\n{scaler.feature_names_in_}\n{result}')
-    return DataFrame(data=scaler.fit_transform(data), columns=data.columns)
+
+    return DataFrame(data=scaler.fit_transform(tmp), columns=data.columns)
 
 
 def create_dir(directory: Path):
