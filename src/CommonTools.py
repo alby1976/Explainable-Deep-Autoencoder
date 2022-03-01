@@ -142,9 +142,9 @@ def equality_of_variance_test(*samples: Tuple[ndarray, ...]) -> Tuple[bool, floa
 def get_normalized_data(data: DataFrame) -> DataFrame:
     from sklearn.preprocessing import MinMaxScaler
 
-    abs = MaxAbsScaler()
+    abs_scaler = MaxAbsScaler()
     scaler = MinMaxScaler()
-    tmp = abs.fit_transform(data)
+    tmp = abs_scaler.fit_transform(data)
     # print(f'data: {data.shape}\n{data}')
     # print(f'result: {result.shape}\n{scaler.feature_names_in_}\n{result}')
 
