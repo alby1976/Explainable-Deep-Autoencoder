@@ -146,7 +146,7 @@ class AutoGenoShallow(pl.LightningModule):
         else:
             coefficient = self.training_spearman.compute().item()
 
-        print(f"epoch[{epoch + 1:4d}], learning_rate: {scheduler.get_lr():.6f} "
+        print(f"epoch[{epoch + 1:4d}], learning_rate: {scheduler.get_last_lr()[0]:.6f} "
               f"loss: {losses.sum().item():.4f}, parametric: {np.all(result)}, coefficient: {coefficient:.4f}"
               f"r2_mode: {r2_value_weighted(y_true=x, y_pred=output).item():.4f},",
               end=' ')
