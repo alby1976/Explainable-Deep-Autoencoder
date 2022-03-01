@@ -147,7 +147,7 @@ class AutoGenoShallow(pl.LightningModule):
             coefficient = self.training_spearman.compute().item()
 
         print(f"epoch[{epoch + 1:4d}], learning_rate: {scheduler.get_lr():.6f} "
-              f"loss: {losses.sum():.4f}, parametric: {np.all(result)}, coefficient: {coefficient:.4f}"
+              f"loss: {losses.sum().item():.4f}, parametric: {np.all(result)}, coefficient: {coefficient:.4f}"
               f"r2_mode: {r2_value_weighted(y_true=x, y_pred=output).item():.4f},",
               end=' ')
 
@@ -207,7 +207,7 @@ class AutoGenoShallow(pl.LightningModule):
             coefficient = self.testing_spearman.compute().item()
 
         print(f"test_loss: {torch.sum(losses).item():.4f}, "
-              f"test_r2_node: {r2_value_weighted(y_true=x, y_pred=output):.4f}")
+              f"test_r2_node: {r2_value_weighted(y_true=x, y_pred=output).item():.4f}")
 
         # logging validation metrics into log file
         self.log('testing_loss', torch.sum(losses))
