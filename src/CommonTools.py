@@ -28,24 +28,26 @@ def r2_value(y_true: ndarray, y_pred: ndarray, axis: object = None) -> object:
 
 
 def r2_value(y_true: Tensor, y_pred: Tensor, dim: int = 0) -> object:
-    y_ave = torch.mean(y_true, dim=dim)
+    y_ave = torch.nanmean(y_true, dim=dim)
     # sse = torch.sum(torch.pow(y_pred - y_ave, 2), dim=dim)
-    ssr = torch.sum(torch.pow(y_true - y_pred, 2), dim=dim)
-    sst = torch.sum(torch.pow(y_true - y_ave, 2), dim=dim)
+    ssr = torch.nansum(torch.pow(y_true - y_pred, 2), dim=dim)
+    sst = torch.nansum(torch.pow(y_true - y_ave, 2), dim=dim)
+    '''
     print(f'y_true: {y_true.size()}')
     print(f'y_ave: {y_ave.size()}\n{y_ave}\nssr: {ssr.size()}\n{ssr}\nsst: {sst.size()}\n{sst}\nssr/sst:{ssr/sst}\n'
           f'1 - (ssr/sst):\n{1 - (ssr / sst)}\n')
+    '''
     return 1 - (ssr / sst)
 
 
 def r2_value_weighted(y_true: Tensor, y_pred: Tensor, dim: int = 0) -> Union[Metric, Tensor, int, float,
                                                                              Mapping[str, Union[Metric, Tensor, int,
                                                                                                 float]]]:
-    y_ave = torch.mean(y_true, dim=dim)
-    sst = torch.sum(torch.pow(y_true - y_ave, 2), dim=dim)
-    sst_sum = torch.sum(sst)
+    y_ave = torch.nanmean(y_true, dim=dim)
+    sst = torch.nansum(torch.pow(y_true - y_ave, 2), dim=dim)
+    sst_sum = torch.nansum(sst)
     raw = r2_value(y_true=y_true, y_pred=y_pred, dim=dim)
-    print(f'r2_value_weighted: {torch.sum(sst / sst_sum * raw)}')
+    # print(f'r2_value_weighted: {torch.nansum(sst / sst_sum * raw)}')
     return torch.sum(sst / sst_sum * raw)
 
 
