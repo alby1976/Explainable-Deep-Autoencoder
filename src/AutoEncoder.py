@@ -81,7 +81,7 @@ if __name__ == '__main__':
         print('\tquality_control_filename - filename of original data after quality control e.g. ./data_QC.csv')
         print('\tdir_AE_model - base dir to saved AE models e.g. ./AE')
         print('\tcompression_ratio - compression ratio for smallest layer NB: ideally a number that is power of 2')
-        print('\tnum_epoch - max number of epochs e.g. 200')
+        print('\tnum_epoch - min number of epochs e.g. 200')
         print('\tbatch_size - the size of each batch e.g. 4096')
 
         main('AE_Geno', Path('../data_example.csv'), Path('./data_QC.csv'), Path('./AE'), 32, 200, 4096)
