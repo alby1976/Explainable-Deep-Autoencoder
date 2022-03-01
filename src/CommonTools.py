@@ -52,15 +52,6 @@ def r2_value_weighted(y_true: Tensor, y_pred: Tensor, dim: int = 0) -> Union[Met
     return torch.sum(sst / sst_sum * raw)
 
 
-def get_column_value(x: Union[Tensor, ndarray], y: Union[Tensor, ndarray], index: int):
-    if type(x) != type(y):
-        raise TypeError(f'The type of x does not match y. x: {type(x)} y: {type(y)}')
-    if type(x) == Tensor:
-        pass
-    else:
-        print('Good-bye world')
-
-
 def get_data(geno: DataFrame, path_to_save_qc: Path) -> ndarray:
     return get_normalized_data(data=get_filtered_data(geno, path_to_save_qc)).to_numpy()
 
@@ -100,6 +91,8 @@ def get_dict_values_2d(key: str, lists: List[Dict[str, Tensor]], dim: int = 0) -
 def data_parametric(*samples: Tuple[ndarray, ...]) -> bool:
     # print(f'samples: {type(samples)}\n\n{samples}\n\n')
     result1, _, _ = same_distribution_test(*samples)
+    print(f'samples: {samples}')
+    print(f'first: {first}')
     first: Tuple[ndarray, ...] = samples[0]
     result2, _, _ = normality_test(first[0])
     result3, _, _ = equality_of_variance_test(*samples)
