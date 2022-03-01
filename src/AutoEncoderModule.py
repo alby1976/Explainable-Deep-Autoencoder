@@ -98,12 +98,6 @@ class AutoGenoShallow(pl.LightningModule):
         output, coder = self.forward(x)
         r2_node = self.training_r2score_node.forward(preds=output, target=x)
 
-        z = [(self.training_spearman.update(preds=output.index_select(1, torch.tensor(index)),
-                                            target=x.index_select(1, torch.tensor(index))),
-              self.training_pearson.update(preds=output.index_select(1, torch.tensor(index)),
-                                           target=x.index_select(1, torch.tensor(index)))
-              for index in range(x.size(dim=1)))]
-
         for index in range(x.size(dim=1)):
             self.training_spearman.update(preds=output.index_select(1, torch.tensor(index)),
                                           target=x.index_select(1, torch.tensor(index)))
@@ -169,11 +163,11 @@ class AutoGenoShallow(pl.LightningModule):
         x = batch[0]
         output, _ = self.forward(x)
 
-        z = [(self.training_spearman.update(preds=output.index_select(1, torch.tensor(index)),
-                                            target=x.index_select(1, torch.tensor(index))),
-              self.training_pearson.update(preds=output.index_select(1, torch.tensor(index)),
-                                           target=x.index_select(1, torch.tensor(index)))
-              for index in range(x.size(dim=1)))]
+        for index in range(x.size(dim=1)):
+            self.testing_spearman.update(preds=output.index_select(1, torch.tensor(index)),
+                                         target=x.index_select(1, torch.tensor(index)))
+            self.testing_pearson.update(preds=output.index_select(1, torch.tensor(index)),
+                                        target=x.index_select(1, torch.tensor(index)))
 
         r2_node = self.testing_r2score_node.forward(preds=output, target=x)
         loss = f.mse_loss(input=output, target=x)
