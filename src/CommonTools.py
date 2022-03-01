@@ -123,7 +123,7 @@ def equality_of_variance_test(*samples: Tuple[ndarray, ...]) -> Tuple[bool, floa
     stat: float
     p_value: float
 
-    stat, p_value = levene(samples, center='mean')
+    stat, p_value = levene(*samples, center='mean')
     if p_value < 0.5:
         return False, stat, p_value
     else:
