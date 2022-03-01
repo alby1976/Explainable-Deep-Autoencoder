@@ -2,6 +2,7 @@ from itertools import islice
 from pathlib import Path
 from typing import Tuple, Union, Iterable, Dict, Any, List, Mapping
 
+import numpy as np
 import torch
 from numpy import ndarray
 from pandas import DataFrame, Series
@@ -143,12 +144,17 @@ def get_normalized_data(data: DataFrame) -> DataFrame:
     from sklearn.preprocessing import MinMaxScaler
 
     abs_scaler = MaxAbsScaler()
-    scaler = MinMaxScaler()
-    tmp = abs_scaler.fit_transform(data)
+    if np.any(data < -0.0):
+        print('hello')
+        scaler = MinMaxScaler()
+        tmp = abs_scaler.fit_transform(data)
+        return DataFrame(data=scaler.fit_transform(tmp), columns=data.columns)
+    else:
+        return DataFrame(data=abs_scaler.fit_transform(data), columns=data.columns)
+
     # print(f'data: {data.shape}\n{data}')
     # print(f'result: {result.shape}\n{scaler.feature_names_in_}\n{result}')
 
-    return DataFrame(data=scaler.fit_transform(tmp), columns=data.columns)
 
 
 def create_dir(directory: Path):
