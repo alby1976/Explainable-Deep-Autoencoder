@@ -6,8 +6,7 @@ import numpy as np
 import torch
 from numpy import ndarray
 from pandas import DataFrame, Series
-from scipy.optimize import anderson
-from scipy.stats import anderson_ksamp, levene
+from scipy.stats import anderson_ksamp, levene, anderson
 from sklearn.preprocessing import MaxAbsScaler
 from torch import device, Tensor
 from torchmetrics import Metric
@@ -91,11 +90,7 @@ def get_dict_values_2d(key: str, lists: List[Dict[str, Tensor]], dim: int = 0) -
 def data_parametric(*samples: Tuple[ndarray, ...]) -> bool:
     # print(f'samples: {type(samples)}\n\n{samples}\n\n')
     result1, _, _ = same_distribution_test(*samples)
-    print(f'samples: {samples}')
-    first: Tuple[ndarray, ...] = samples[0]
-    print(f'first: {type(first)} {first}')
-    print(f'first[0]: {first[0]}')
-    result2, _, _ = normality_test(first)
+    result2, _, _ = normality_test(samples[0])
     result3, _, _ = equality_of_variance_test(*samples)
     return result1 and result2 and result3
 
@@ -112,7 +107,7 @@ def same_distribution_test(*samples: Tuple[ndarray, ...]) -> Tuple[bool, float, 
         return True, stat, crit[2]
 
 
-def normality_test(data: ndarray) -> Tuple[bool, float, float]:
+def normality_test(data: Iterable) -> Tuple[bool, float, float]:
     stat: float
     crit: Iterable
 
