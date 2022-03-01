@@ -1,9 +1,7 @@
-import sys
 from itertools import islice
 from pathlib import Path
 from typing import Tuple, Union, Iterable, Dict, Any, List, Mapping
 
-import numpy as np
 import torch
 from numpy import ndarray
 from pandas import DataFrame, Series
@@ -11,7 +9,6 @@ from scipy.optimize import anderson
 from scipy.stats import anderson_ksamp, levene
 from sklearn.preprocessing import MaxAbsScaler
 from torch import device, Tensor
-# from multipledispatch import dispatch
 from torchmetrics import Metric
 
 """
@@ -48,6 +45,7 @@ def r2_value_weighted(y_true: Tensor, y_pred: Tensor, dim: int = 0) -> Union[Met
     sst = torch.sum(torch.pow(y_true - y_ave, 2), dim=dim)
     sst_sum = torch.sum(sst)
     raw = r2_value(y_true=y_true, y_pred=y_pred, dim=dim)
+    print(f'r2_value_weighted: {torch.sum(sst / sst_sum * raw)}')
     return torch.sum(sst / sst_sum * raw)
 
 
