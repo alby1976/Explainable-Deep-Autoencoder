@@ -156,7 +156,6 @@ def get_normalized_data(data: DataFrame) -> DataFrame:
     # print(f'result: {result.shape}\n{scaler.feature_names_in_}\n{result}')
 
 
-
 def create_dir(directory: Path):
     """make a directory (directory) if it doesn't exist"""
     directory.mkdir(parents=True, exist_ok=True)
