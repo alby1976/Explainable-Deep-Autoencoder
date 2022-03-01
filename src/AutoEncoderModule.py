@@ -202,9 +202,9 @@ class AutoGenoShallow(pl.LightningModule):
 
         coefficient: float
         if np.all(result):
-            coefficient = self.training_pearson.compute().item()
+            coefficient = self.testing_pearson.compute().item()
         else:
-            coefficient = self.training_spearman.compute().item()
+            coefficient = self.testing_spearman.compute().item()
 
         print(f"test_loss: {torch.sum(losses).item():.4f}, "
               f"test_r2_node: {r2_value_weighted(y_true=x, y_pred=output):.4f}")
