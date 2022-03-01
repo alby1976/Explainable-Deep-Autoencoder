@@ -93,8 +93,9 @@ def data_parametric(*samples: Tuple[ndarray, ...]) -> bool:
     result1, _, _ = same_distribution_test(*samples)
     print(f'samples: {samples}')
     first: Tuple[ndarray, ...] = samples[0]
-    print(f'first: {first}')
-    result2, _, _ = normality_test(first[0])
+    print(f'first: {type(first)} {first}')
+    print(f'first[0]: {first[0]}')
+    result2, _, _ = normality_test(first)
     result3, _, _ = equality_of_variance_test(*samples)
     return result1 and result2 and result3
 
