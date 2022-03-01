@@ -50,7 +50,10 @@ class AutoGenoShallow(pl.LightningModule):
         # self.geno: ndarray = get_filtered_data(pd.read_csv(path_to_data, index_col=0), path_to_save_qc).to_numpy()
         self.input_features = len(self.geno[0])
         self.output_features = self.input_features
-        self.smallest_layer = math.ceil(self.input_features / compression_ratio)
+        if compression_ratio > self.input_features:
+            self.smallest_layer = 5
+        else:
+            self.smallest_layer = math.ceil(self.input_features / compression_ratio)
         self.hidden_layer = int(2 * self.smallest_layer)
         self.training_r2score_node = torchmetrics.R2Score(num_outputs=self.input_features,
                                                           multioutput='raw_values', compute_on_step=False)
@@ -99,10 +102,10 @@ class AutoGenoShallow(pl.LightningModule):
         r2_node = self.training_r2score_node.forward(preds=output, target=x)
 
         for index in range(x.size(dim=1)):
-            self.training_spearman.update(preds=output.index_select(1, torch.tensor(index)),
-                                          target=x.index_select(1, torch.tensor(index)))
-            self.training_pearson.update(preds=output.index_select(1, torch.tensor(index)),
-                                         target=x.index_select(1, torch.tensor(index)))
+            self.training_spearman.update(preds=output.index_select(1, torch.tensor(index, device=output.device)),
+                                          target=x.index_select(1, torch.tensor(index, device=x.device)))
+            self.training_pearson.update(preds=output.index_select(1, torch.tensor(index, device=x.device)),
+                                         target=x.index_select(1, torch.tensor(index, device=x.device)))
 
         loss = f.mse_loss(input=output, target=x)
         return {'model': coder, 'loss': loss, 'r2_node': r2_node, 'input': x, 'output': output}
@@ -164,10 +167,10 @@ class AutoGenoShallow(pl.LightningModule):
         output, _ = self.forward(x)
 
         for index in range(x.size(dim=1)):
-            self.testing_spearman.update(preds=output.index_select(1, torch.tensor(index)),
-                                         target=x.index_select(1, torch.tensor(index)))
-            self.testing_pearson.update(preds=output.index_select(1, torch.tensor(index)),
-                                        target=x.index_select(1, torch.tensor(index)))
+            self.testing_spearman.update(preds=output.index_select(1, torch.tensor(index, device=output.device)),
+                                         target=x.index_select(1, torch.tensor(index, device=x.device)))
+            self.testing_pearson.update(preds=output.index_select(1, torch.tensor(index, device=x.device)),
+                                        target=x.index_select(1, torch.tensor(index, device=x.device)))
 
         r2_node = self.testing_r2score_node.forward(preds=output, target=x)
         loss = f.mse_loss(input=output, target=x)
