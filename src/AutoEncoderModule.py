@@ -189,10 +189,8 @@ class AutoGenoShallow(pl.LightningModule):
         numpy_output: ndarray = output.cpu().detach().numpy()
 
         try:
-            r2 = get_dict_values_1d('r2', testing_step_outputs)
             r2_node = get_dict_values_1d('r2_node', testing_step_outputs)
         except TypeError:
-            r2 = self.testing_r2score.compute()
             r2_node = self.testing_r2score_node.compute()
         # print(f'regular losses: {losses.size()} pred: {pred.size()} target: {target.size()}')
 
