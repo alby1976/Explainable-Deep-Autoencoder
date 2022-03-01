@@ -87,11 +87,11 @@ def get_dict_values_2d(key: str, lists: List[Dict[str, Tensor]], dim: int = 0) -
     return torch.cat([item[key] for item in lists], dim=dim)
 
 
-def data_parametric(*samples: Tuple[ndarray, ...]) -> bool:
+def data_parametric(*samples) -> bool:
     # print(f'samples: {type(samples)}\n\n{samples}\n\n')
-    result1, _, _ = same_distribution_test(*samples)
+    result1, _, _ = same_distribution_test(samples)
     result2, _, _ = normality_test(samples[0])
-    result3, _, _ = equality_of_variance_test(*samples)
+    result3, _, _ = equality_of_variance_test(samples)
     return result1 and result2 and result3
 
 
@@ -107,7 +107,7 @@ def same_distribution_test(*samples: Tuple[ndarray, ...]) -> Tuple[bool, float, 
         return True, stat, crit[2]
 
 
-def normality_test(data: Iterable) -> Tuple[bool, float, float]:
+def normality_test(data: ndarray) -> Tuple[bool, float, float]:
     stat: float
     crit: Iterable
 
