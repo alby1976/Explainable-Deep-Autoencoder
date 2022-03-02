@@ -208,8 +208,10 @@ class AutoGenoShallow(pl.LightningModule):
                  for i in range(x.size(dim=1))])
         else:
             coefficient = torch.stack(
-                [self.testing_spearman.forward(preds=torch.index_select(output, 1, torch.tensor([i], output.device)),
-                                               target=torch.index_select(x, 1, torch.tensor([i], x.device)))
+                [self.testing_spearman.forward(preds=torch.index_select(output, 1, torch.tensor([i],
+                                                                                                device=output.device)),
+                                               target=torch.index_select(x, 1, torch.tensor([i],
+                                                                                            device=x.device)))
                  for i in range(x.size(dim=1))])
 
         print(f"test_loss: {torch.sum(losses).item():.4f} test_parm: {np.all(result)} test_coefficient: "
