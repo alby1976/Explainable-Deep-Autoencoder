@@ -154,7 +154,7 @@ class AutoGenoShallow(pl.LightningModule):
 
         print(f"epoch[{epoch + 1:4d}]  learning_rate: {scheduler.get_last_lr()[0]:.6f} "
               f"loss: {losses.sum().item():.4f}  parametric: {np.all(result)} "
-              f"coefficient: {torch.sum(coefficient).item():.4f} "
+              f"coefficient: {torch.mean(coefficient).item():.4f} "
               f"r2_mode: {r2_value_weighted(y_true=x, y_pred=output).item():.4f}",
               end=' ', file=sys.stderr)
 
@@ -164,7 +164,7 @@ class AutoGenoShallow(pl.LightningModule):
                  on_step=False, on_epoch=True)
         self.log('loss', torch.sum(losses), on_step=False, on_epoch=True)
         self.log('parametric', int(np.all(result)))
-        self.log('coefficient', coefficient)
+        self.log('coefficient', torch.mean(coefficient))
         self.log('r2score_per_node', r2_value_weighted(y_true=x, y_pred=output), on_step=False, on_epoch=True)
         self.log('r2score_per_node_raw', r2_node, on_step=False, on_epoch=True)
 
