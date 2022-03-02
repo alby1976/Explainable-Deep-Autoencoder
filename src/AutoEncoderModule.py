@@ -136,19 +136,19 @@ class AutoGenoShallow(pl.LightningModule):
         coefficient: Tensor
         if np.all(result):
             coefficient = torch.stack(
-                [self.training_pearson.forward(preds=torch.index_select(output, 1, torch.tensor([i])),
-                                               target=torch.index_select(x, 1, torch.tensor([i])))
+                [self.training_pearson.forward(preds=torch.index_select(output, 1, torch.tensor([i], output.device)),
+                                               target=torch.index_select(x, 1, torch.tensor([i], x.device)))
                  for i in range(x.size(dim=1))])
         else:
             coefficient = torch.stack(
-                [self.training_spearman.forward(preds=torch.index_select(output, 1, torch.tensor([i])),
-                                                target=torch.index_select(x, 1, torch.tensor([i])))
+                [self.training_spearman.forward(preds=torch.index_select(output, 1, torch.tensor([i], output.device)),
+                                                target=torch.index_select(x, 1, torch.tensor([i], x.device)))
                  for i in range(x.size(dim=1))])
 
-        print(f"epoch[{epoch + 1:4d}], learning_rate: {scheduler.get_last_lr()[0]:.6f} "
-              f"loss: {losses.sum().item():.4f}, parametric: {np.all(result)}, "
+        print(f"epoch[{epoch + 1:4d}]  learning_rate: {scheduler.get_last_lr()[0]:.6f} "
+              f"loss: {losses.sum().item():.4f}  parametric: {np.all(result)}, "
               f"coefficient: {torch.sum(coefficient).item():.4f} "
-              f"r2_mode: {r2_value_weighted(y_true=x, y_pred=output).item():.4f}, ",
+              f"r2_mode: {r2_value_weighted(y_true=x, y_pred=output).item():.4f} ",
               end=' ')
 
         # logging metrics into log file
@@ -197,16 +197,17 @@ class AutoGenoShallow(pl.LightningModule):
         coefficient: Tensor
         if np.all(result):
             coefficient = torch.stack(
-                [self.testing_pearson.forward(preds=torch.index_select(output, 1, torch.tensor([i])),
-                                              target=torch.index_select(x, 1, torch.tensor([i])))
+                [self.testing_pearson.forward(preds=torch.index_select(output, 1, torch.tensor([i], output.device)),
+                                              target=torch.index_select(x, 1, torch.tensor([i], x.device)))
                  for i in range(x.size(dim=1))])
         else:
             coefficient = torch.stack(
-                [self.testing_spearman.forward(preds=torch.index_select(output, 1, torch.tensor([i])),
-                                               target=torch.index_select(x, 1, torch.tensor([i])))
+                [self.testing_spearman.forward(preds=torch.index_select(output, 1, torch.tensor([i], output.device)),
+                                               target=torch.index_select(x, 1, torch.tensor([i], x.device)))
                  for i in range(x.size(dim=1))])
 
-        print(f"test_loss: {torch.sum(losses).item():.4f}, "
+        print(f"test_loss: {torch.sum(losses).item():.4f} test_parm: {np.all(result)} test_coefficient: "
+              f"{torch.mean(coefficient).item():.4f} "
               f"test_r2_node: {r2_value_weighted(y_true=x, y_pred=output).item():.4f}")
 
         # logging validation metrics into log file
@@ -214,7 +215,7 @@ class AutoGenoShallow(pl.LightningModule):
         self.log('testing_anderson_darling_test', torch.from_numpy(anderson).type(torch.FloatTensor),
                  on_step=False, on_epoch=True)
         self.log('testing_parametric', int(np.all(result)), on_step=False, on_epoch=True)
-        self.log('coefficient', torch.sum(coefficient).item(), on_step=False, on_epoch=True)
+        self.log('coefficient', torch.mean(coefficient).item(), on_step=False, on_epoch=True)
         self.log('testing_r2score_per_node', r2_value_weighted(y_true=x, y_pred=output), on_step=False, on_epoch=True)
         self.log('testing_r2score_per_node_raw', r2_node, on_step=False, on_epoch=True)
 
