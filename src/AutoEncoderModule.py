@@ -136,13 +136,17 @@ class AutoGenoShallow(pl.LightningModule):
         coefficient: Tensor
         if np.all(result):
             coefficient = torch.stack(
-                [self.training_pearson.forward(preds=torch.index_select(output, 1, torch.tensor([i], output.device)),
-                                               target=torch.index_select(x, 1, torch.tensor([i], x.device)))
+                [self.training_pearson.forward(preds=torch.index_select(output, 1, torch.tensor([i],
+                                                                                                device=output.device)),
+                                               target=torch.index_select(x, 1, torch.tensor([i],
+                                                                                            device=x.device)))
                  for i in range(x.size(dim=1))])
         else:
             coefficient = torch.stack(
-                [self.training_spearman.forward(preds=torch.index_select(output, 1, torch.tensor([i], output.device)),
-                                                target=torch.index_select(x, 1, torch.tensor([i], x.device)))
+                [self.training_spearman.forward(preds=torch.index_select(output, 1, torch.tensor([i],
+                                                                                                 device=output.device)),
+                                                target=torch.index_select(x, 1, torch.tensor([i],
+                                                                                             device=x.device)))
                  for i in range(x.size(dim=1))])
 
         print(f"epoch[{epoch + 1:4d}]  learning_rate: {scheduler.get_last_lr()[0]:.6f} "
