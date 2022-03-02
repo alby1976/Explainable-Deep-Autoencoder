@@ -54,8 +54,8 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
                              # enable_progress_bar=True,
                              auto_scale_batch_size='binsearch')
 
-    # summary(model, torch.tensor(model.input_features))
-    # sys.exit(-1)
+    summary(model, (1, model.input_features))
+    sys.exit(-1)
     print('...Finding ideal learning rate....')
     model.learning_rate = trainer.tuner.lr_find(model).suggestion()
     model.min_lr = model.learning_rate / 6.0
