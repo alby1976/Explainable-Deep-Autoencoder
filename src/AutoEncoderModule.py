@@ -201,8 +201,10 @@ class AutoGenoShallow(pl.LightningModule):
         coefficient: Tensor
         if np.all(result):
             coefficient = torch.stack(
-                [self.testing_pearson.forward(preds=torch.index_select(output, 1, torch.tensor([i], output.device)),
-                                              target=torch.index_select(x, 1, torch.tensor([i], x.device)))
+                [self.testing_pearson.forward(preds=torch.index_select(output, 1, torch.tensor([i],
+                                                                                               device=output.device)),
+                                              target=torch.index_select(x, 1, torch.tensor([i],
+                                                                                           device=x.device)))
                  for i in range(x.size(dim=1))])
         else:
             coefficient = torch.stack(
