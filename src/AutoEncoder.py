@@ -54,7 +54,7 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
                              # enable_progress_bar=True,
                              auto_scale_batch_size='binsearch')
 
-    summary(model, 28)
+    summary(model, torch(model.input_features).size())
     sys.exit(-1)
     print('...Finding ideal learning rate....')
     model.learning_rate = trainer.tuner.lr_find(model).suggestion()
