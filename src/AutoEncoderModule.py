@@ -1,4 +1,5 @@
 import math
+import sys
 from pathlib import Path
 from typing import Any, Union, Dict, Optional
 
@@ -155,7 +156,7 @@ class AutoGenoShallow(pl.LightningModule):
               f"loss: {losses.sum().item():.4f}  parametric: {np.all(result)} "
               f"coefficient: {torch.sum(coefficient).item():.4f} "
               f"r2_mode: {r2_value_weighted(y_true=x, y_pred=output).item():.4f}",
-              end=' ')
+              end=' ', file=sys.stderr)
 
         # logging metrics into log file
         self.log('learning_rate', scheduler.get_last_lr()[0], on_step=False, on_epoch=True)
@@ -220,7 +221,7 @@ class AutoGenoShallow(pl.LightningModule):
 
         print(f"test_loss: {torch.sum(losses).item():.4f} test_parm: {np.all(result)} test_coefficient: "
               f"{torch.mean(coefficient).item():.4f} "
-              f"test_r2_node: {r2_value_weighted(y_true=x, y_pred=output).item():.4f}")
+              f"test_r2_node: {r2_value_weighted(y_true=x, y_pred=output).item():.4f}", file=sys.stderr)
 
         # logging validation metrics into log file
         self.log('testing_loss', torch.sum(losses))
