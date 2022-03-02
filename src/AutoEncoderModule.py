@@ -149,7 +149,7 @@ class AutoGenoShallow(pl.LightningModule):
                                                                                              device=x.device)))
                  for i in range(x.size(dim=1))])
 
-        print(f'train coefficient: {coefficient.size()}\n{coefficient}')
+        # print(f'train coefficient: {coefficient.size()}\n{coefficient}')
 
         print(f"epoch[{epoch + 1:4d}]  learning_rate: {scheduler.get_last_lr()[0]:.6f} "
               f"loss: {losses.sum().item():.4f}  parametric: {np.all(result)} "
@@ -216,7 +216,7 @@ class AutoGenoShallow(pl.LightningModule):
                                                                                             device=x.device)))
                  for i in range(x.size(dim=1))])
 
-        print(f'test coefficient: {coefficient.size()}\n{coefficient}')
+        # print(f'test coefficient: {coefficient.size()}\n{coefficient}')
 
         print(f"test_loss: {torch.sum(losses).item():.4f} test_parm: {np.all(result)} test_coefficient: "
               f"{torch.mean(coefficient).item():.4f} "
