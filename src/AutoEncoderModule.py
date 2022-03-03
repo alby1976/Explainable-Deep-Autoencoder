@@ -5,10 +5,11 @@ from typing import Any, Union, Dict, Optional
 
 import numpy as np
 import pandas as pd
-import pytorch_lightning as pl
+from pytorch_lightning import LightningModule
 import torch
 import torchmetrics
 from numpy import ndarray
+from pytorch_lightning import LightningModule
 from pytorch_lightning.utilities.types import EVAL_DATALOADERS
 from sklearn.model_selection import train_test_split
 from torch import nn, Tensor
@@ -36,7 +37,7 @@ class GPDataSet(Dataset):
         return x
 
 
-class AutoGenoShallow(pl.LightningModule):
+class AutoGenoShallow(LightningModule):
     def __init__(self, save_dir: Path, path_to_data: Path, path_to_save_qc: Path,
                  model_name: str, compression_ratio: int, batch_size: int = 32,
                  learning_rate: float = 0.0001):

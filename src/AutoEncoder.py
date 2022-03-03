@@ -67,7 +67,6 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
     trainer.fit(model=model)
     print('f...Model Summary')
     tmp: Tuple[int, int] = pd.read_csv(path_to_data, index_col=0).shape
-    print(f'tmp: {tmp}')
     summary(model, (tmp[0], model.input_features))
 
 
