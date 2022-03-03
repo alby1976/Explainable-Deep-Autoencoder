@@ -28,7 +28,7 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
                             model_name=model_name, compression_ratio=compression_ratio, batch_size=batch_size)
     # find ideal learning rate
     seed_everything(42)
-    stop_loss = EarlyStopping(monitor='testing_loss', mode='min', patience=50, verbose=True,
+    stop_loss = EarlyStopping(monitor='testing_loss', mode='min', patience=10, verbose=True,
                               check_on_train_epoch_end=False)
     trainer: Trainer
     log_dir = path_to_save_ae.joinpath('log')
