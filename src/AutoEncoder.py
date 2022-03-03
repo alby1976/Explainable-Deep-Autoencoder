@@ -56,8 +56,7 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
                              # enable_progress_bar=True,
                              auto_scale_batch_size='binsearch')
 
-    summary(model, (1024, model.input_features))
-    sys.exit(-1)
+    model.summarize()
     print('...Finding ideal learning rate....')
     model.learning_rate = trainer.tuner.lr_find(model).suggestion()
     model.min_lr = model.learning_rate / 6.0
@@ -66,6 +65,9 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
     # train & validate model
     print(f'...Training and Validating model...')
     trainer.fit(model=model)
+    print('f...Model Summary')
+    model.summarize()
+    summary(model, (, model.input_features))
 
 
 if __name__ == '__main__':
