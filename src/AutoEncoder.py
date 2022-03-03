@@ -60,7 +60,7 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
     model.summarize()
     tmp: Tuple[int, int] = pd.read_csv(path_to_data, index_col=0).shape
     print(f'tmp: {tmp}')
-    summary(model, (tmp[0], tmp[1]))
+    summary(model, (tmp[0], model.input_features))
     sys.exit(-1)
     print('...Finding ideal learning rate....')
     model.learning_rate = trainer.tuner.lr_find(model).suggestion()
