@@ -57,11 +57,6 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
                              # enable_progress_bar=True,
                              auto_scale_batch_size='binsearch')
 
-    model.summarize()
-    tmp: Tuple[int, int] = pd.read_csv(path_to_data, index_col=0).shape
-    print(f'tmp: {tmp}')
-    summary(model, (tmp[0], model.input_features))
-    sys.exit(-1)
     print('...Finding ideal learning rate....')
     model.learning_rate = trainer.tuner.lr_find(model).suggestion()
     model.min_lr = model.learning_rate / 6.0
@@ -71,8 +66,9 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
     print(f'...Training and Validating model...')
     trainer.fit(model=model)
     print('f...Model Summary')
-    model.summarize()
-    #summary(model, (, model.input_features))
+    tmp: Tuple[int, int] = pd.read_csv(path_to_data, index_col=0).shape
+    print(f'tmp: {tmp}')
+    summary(model, (tmp[0], model.input_features))
 
 
 if __name__ == '__main__':
