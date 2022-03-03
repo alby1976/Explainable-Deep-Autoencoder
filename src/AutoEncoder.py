@@ -56,7 +56,7 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
                              # enable_progress_bar=True,
                              auto_scale_batch_size='binsearch')
 
-    summary(model, pd.read_csv(path_to_data, index_col=0).shape)
+    summary(model, (1024, model.input_features))
     sys.exit(-1)
     print('...Finding ideal learning rate....')
     model.learning_rate = trainer.tuner.lr_find(model).suggestion()
