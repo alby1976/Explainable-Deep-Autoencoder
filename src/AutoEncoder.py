@@ -1,6 +1,7 @@
 # ** Use Python to run Deep Autoencoder (feature selection) **
 # ** path - is a string to desired path location. **
 import sys
+from typing import Tuple
 
 import pandas as pd
 import pytorch_lightning as pl
@@ -57,6 +58,9 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
                              auto_scale_batch_size='binsearch')
 
     model.summarize()
+    tmp: Tuple[int, int] = pd.read_csv(path_to_data, index_col=0).shape
+    summary(model, tmp)
+    sys.exit(-1)
     print('...Finding ideal learning rate....')
     model.learning_rate = trainer.tuner.lr_find(model).suggestion()
     model.min_lr = model.learning_rate / 6.0
@@ -67,7 +71,7 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
     trainer.fit(model=model)
     print('f...Model Summary')
     model.summarize()
-    summary(model, (, model.input_features))
+    #summary(model, (, model.input_features))
 
 
 if __name__ == '__main__':
