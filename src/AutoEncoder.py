@@ -9,7 +9,7 @@ from pathlib import Path
 from torchinfo import summary
 import torch
 from pytorch_lightning import seed_everything, Trainer
-from pytorch_lightning.loggers import CSVLogger
+from pytorch_lightning.loggers import CSVLogger, TensorBoardLogger
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from AutoEncoderModule import AutoGenoShallow
 from CommonTools import create_dir
@@ -28,19 +28,21 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
                             model_name=model_name, compression_ratio=compression_ratio, batch_size=batch_size)
     # find ideal learning rate
     seed_everything(42)
-    stop_loss = EarlyStopping(monitor='testing_loss', mode='min', patience=3, verbose=True,
+    stop_loss = EarlyStopping(monitor='testing_loss', mode='min', patience=10, verbose=True,
                               check_on_train_epoch_end=False)
     trainer: Trainer
     log_dir = path_to_save_ae.joinpath('log')
     ckpt_dir = path_to_save_ae.joinpath('ckpt')
     create_dir(log_dir)
     create_dir(ckpt_dir)
+    csv_logger = CSVLogger(save_dir=str(log_dir), name=model_name)
+    tensor_board_logger = TensorBoardLogger(save_dir=str(log_dir), name=model_name)
     if torch.cuda.is_available():
         trainer = pl.Trainer(min_epochs=num_epochs,
                              max_epochs=-1,
                              default_root_dir=str(ckpt_dir),
                              log_every_n_steps=1,
-                             logger=CSVLogger(save_dir=str(log_dir), name=model_name),
+                             logger=[csv_logger, tensor_board_logger],
                              deterministic=True,
                              gpus=1,
                              callbacks=[stop_loss],
@@ -51,7 +53,7 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
                              max_epochs=-1,
                              default_root_dir=str(ckpt_dir),
                              log_every_n_steps=1,
-                             logger=CSVLogger(save_dir=str(log_dir), name=model_name),
+                             logger=[csv_logger, tensor_board_logger],
                              deterministic=True,
                              callbacks=[stop_loss],
                              # enable_progress_bar=True,
