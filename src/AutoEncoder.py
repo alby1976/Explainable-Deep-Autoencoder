@@ -45,6 +45,7 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
                              logger=[csv_logger, tensor_board_logger],
                              deterministic=True,
                              gpus=1,
+                             stochastic_weight_avg=True,
                              callbacks=[stop_loss],
                              # enable_progress_bar=True,
                              auto_scale_batch_size='binsearch')
@@ -55,6 +56,7 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
                              log_every_n_steps=1,
                              logger=[csv_logger, tensor_board_logger],
                              deterministic=True,
+                             stochastic_weight_avg=True,
                              callbacks=[stop_loss],
                              # enable_progress_bar=True,
                              auto_scale_batch_size='binsearch')
