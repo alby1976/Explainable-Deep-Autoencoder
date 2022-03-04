@@ -51,11 +51,12 @@ class AutoGenoShallow(LightningModule):
         # self.geno: ndarray = get_filtered_data(pd.read_csv(path_to_data, index_col=0), path_to_save_qc).to_numpy()
         self.input_features = len(self.geno[0])
         self.output_features = self.input_features
-        if compression_ratio > self.input_features:
-            self.smallest_layer = 5
+        tmp = math.ceil(self.input_features / compression_ratio)
+        if tmp < 5:
+            self.smallest_layer = 5 if tmp < 5 else tmp
         else:
-            self.smallest_layer = math.ceil(self.input_features / compression_ratio)
-        self.hidden_layer = int(2 * self.smallest_layer)
+            self.smallest_layer = tmp
+        self.hidden_layer = 2 * self.smallest_layer
         self.training_r2score_node = torchmetrics.R2Score(num_outputs=self.input_features,
                                                           multioutput='raw_values', compute_on_step=False)
         self.training_pearson = torchmetrics.regression.pearson.PearsonCorrcoef(compute_on_step=True)
