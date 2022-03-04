@@ -6,7 +6,7 @@ import numpy as np
 import torch
 from numpy import ndarray
 from pandas import DataFrame, Series
-from scipy.stats import anderson_ksamp, levene, anderson
+from scipy.stats import anderson_ksamp, levene, anderson, ks_2samp
 from torch import device, Tensor
 from torchmetrics import Metric
 
@@ -94,7 +94,7 @@ def data_parametric(*samples) -> bool:
     return result1 and result2 and result3
 
 
-def same_distribution_test(*samples: Tuple[ndarray, ...]) -> Tuple[bool, float, float]:
+def same_distribution_test(*samples) -> Tuple[bool, float, float]:
     stat: float
     crit: Union[ndarray, Iterable, int, float]
 
@@ -144,7 +144,7 @@ def get_normalized_data(data: DataFrame) -> DataFrame:
     '''
     # print(f'data: {data.shape}\n{data}')
     # print(f'result: {result.shape}\n{scaler.feature_names_in_}\n{result}')
-    scaler = MinMaxScaler()
+    scaler = MaxAbsScaler()
     return DataFrame(data=scaler.fit_transform(data), columns=data.columns)
 
 
