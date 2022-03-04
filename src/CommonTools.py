@@ -6,7 +6,7 @@ import numpy as np
 import torch
 from numpy import ndarray
 from pandas import DataFrame, Series
-from scipy.stats import anderson_ksamp, levene, anderson, ks_2samp
+from scipy.stats import anderson_ksamp, levene, anderson, ks_2samp, epps_singleton_2samp
 from torch import device, Tensor
 from torchmetrics import Metric
 
@@ -98,12 +98,12 @@ def same_distribution_test(*samples) -> Tuple[bool, float, float]:
     stat: float
     crit: Union[ndarray, Iterable, int, float]
 
-    stat, crit, _ = anderson_ksamp(samples=samples)
+    stat, p_value = epps_singleton_2samp(samples[0], samples[1])
 
-    if crit[2] < stat:
-        return False, stat, crit[2]
+    if p_value < 0.05:
+        return False, stat, p_value
     else:
-        return True, stat, crit[2]
+        return True, stat, p_value
 
 
 def normality_test(data: ndarray) -> Tuple[bool, float, float]:
