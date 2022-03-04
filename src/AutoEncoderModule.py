@@ -15,7 +15,7 @@ from sklearn.model_selection import train_test_split
 from torch import nn, Tensor
 from torch.nn import functional as f
 from torch.optim.lr_scheduler import CyclicLR
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset, DataLoader, TensorDataset
 from CommonTools import data_parametric, get_dict_values_1d, get_dict_values_2d, get_data, \
     r2_value_weighted, same_distribution_test
 
@@ -38,6 +38,8 @@ class GPDataSet(Dataset):
 
 
 class AutoGenoShallow(LightningModule):
+    train_dataset: TensorDataset
+
     def __init__(self, save_dir: Path, path_to_data: Path, path_to_save_qc: Path,
                  model_name: str, compression_ratio: int, batch_size: int = 32,
                  learning_rate: float = 0.0001):
@@ -234,7 +236,7 @@ class AutoGenoShallow(LightningModule):
     # configures the optimizers through learning rate
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
-        it_per_epoch = len(self.train_dataset) / self.batch_size
+        it_per_epoch = len(self.train_dataloader()) // self.batch_size
         print(f'it_per_epoch: {it_per_epoch}')
         scheduler: CyclicLR = torch.optim.lr_scheduler.CyclicLR(optimizer, base_lr=self.min_lr,
                                                                 mode='exp_range',
