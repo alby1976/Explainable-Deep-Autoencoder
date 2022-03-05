@@ -28,7 +28,7 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
                             model_name=model_name, compression_ratio=compression_ratio, batch_size=batch_size)
     # find ideal learning rate
     seed_everything(42)
-    stop_loss = EarlyStopping(monitor='testing_loss', mode='min', patience=10, verbose=True,
+    stop_loss = EarlyStopping(monitor='testing_loss', mode='min', patience=16, verbose=True,
                               check_on_train_epoch_end=False)
     trainer: Trainer
     log_dir = path_to_save_ae.joinpath('log')
@@ -46,6 +46,7 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
                              deterministic=True,
                              gpus=1,
                              callbacks=[stop_loss],
+                             stochastic_weight_avg=True,
                              # enable_progress_bar=True,
                              auto_scale_batch_size='binsearch')
     else:
@@ -56,6 +57,7 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
                              logger=[csv_logger, tensor_board_logger],
                              deterministic=True,
                              callbacks=[stop_loss],
+                             stochastic_weight_avg=True,
                              # enable_progress_bar=True,
                              auto_scale_batch_size='binsearch')
 
