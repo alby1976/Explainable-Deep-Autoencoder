@@ -98,7 +98,7 @@ def same_distribution_test(*samples) -> Tuple[bool, float, float]:
     stat: float
     crit: Union[ndarray, Iterable, int, float]
 
-    stat, p_value = epps_singleton_2samp(samples[0], samples[1])
+    stat, p_value = ks_2samp(samples[0], samples[1])
 
     if p_value < 0.05:
         return False, stat, p_value
