@@ -1,3 +1,4 @@
+import gc
 import math
 import sys
 from pathlib import Path
@@ -171,6 +172,25 @@ class AutoGenoShallow(LightningModule):
         self.log('r2score_per_node', r2_value_weighted(y_true=x, y_pred=output), on_step=False, on_epoch=True)
         self.log('r2score_per_node_raw', r2_node, on_step=False, on_epoch=True)
 
+        # clean up and free up memory
+        del losses
+        del result
+        del anderson
+        del coefficient
+        del r2_node
+        del x
+        del output
+        del numpy_x
+        del numpy_output
+        del output_coder_list
+        del coder_np
+        del coder_file
+
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
+        gc.collect()
+
     # define validation step
     def validation_step(self, batch, batch_idx) -> Dict[str, Tensor]:
         x = batch[0]
@@ -229,9 +249,25 @@ class AutoGenoShallow(LightningModule):
         self.log('testing_anderson_darling_test', torch.from_numpy(anderson).type(torch.FloatTensor),
                  on_step=False, on_epoch=True)
         self.log('testing_parametric', float(np.all(result)), on_step=False, on_epoch=True)
-        self.log('testing_coefficient', torch.mean(coefficient), on_step=False, on_epoch=True)
-        self.log('testing_r2score_per_node', r2_value_weighted(y_true=x, y_pred=output), on_step=False, on_epoch=True)
+        self.log('testing_coefficient', torch.mean(coefficient).item(), on_step=False, on_epoch=True)
+        self.log('testing_r2score_per_node', r2_value_weighted(y_true=x, y_pred=output).item(), on_step=False, on_epoch=True)
         self.log('testing_r2score_per_node_raw', r2_node, on_step=False, on_epoch=True)
+
+        # clean up and free up memory
+        del losses
+        del result
+        del anderson
+        del coefficient
+        del r2_node
+        del x
+        del output
+        del np_x
+        del np_output
+
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
+        gc.collect()
 
     # configures the optimizers through learning rate
     def configure_optimizers(self):
