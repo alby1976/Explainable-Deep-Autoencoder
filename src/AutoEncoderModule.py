@@ -166,7 +166,7 @@ class AutoGenoShallow(LightningModule):
         self.log('train_anderson_darling_test', torch.from_numpy(anderson).type(torch.FloatTensor),
                  on_step=False, on_epoch=True)
         self.log('loss', torch.sum(losses), on_step=False, on_epoch=True)
-        self.log('parametric', int(np.all(result)), on_step=False, on_epoch=True)
+        self.log('parametric', float(np.all(result)), on_step=False, on_epoch=True)
         self.log('coefficient', torch.mean(coefficient), on_step=False, on_epoch=True)
         self.log('r2score_per_node', r2_value_weighted(y_true=x, y_pred=output), on_step=False, on_epoch=True)
         self.log('r2score_per_node_raw', r2_node, on_step=False, on_epoch=True)
@@ -228,7 +228,7 @@ class AutoGenoShallow(LightningModule):
         self.log('testing_loss', torch.sum(losses))
         self.log('testing_anderson_darling_test', torch.from_numpy(anderson).type(torch.FloatTensor),
                  on_step=False, on_epoch=True)
-        self.log('testing_parametric', int(np.all(result)), on_step=False, on_epoch=True)
+        self.log('testing_parametric', float(np.all(result)), on_step=False, on_epoch=True)
         self.log('testing_coefficient', torch.mean(coefficient), on_step=False, on_epoch=True)
         self.log('testing_r2score_per_node', r2_value_weighted(y_true=x, y_pred=output), on_step=False, on_epoch=True)
         self.log('testing_r2score_per_node_raw', r2_node, on_step=False, on_epoch=True)
