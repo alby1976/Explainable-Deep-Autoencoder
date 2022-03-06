@@ -50,8 +50,8 @@ def r2_value_weighted(y_true: Tensor, y_pred: Tensor, dim: int = 0) -> Union[Met
     return torch.sum(sst / sst_sum * raw)
 
 
-def get_data(geno: DataFrame, path_to_save_qc: Path) -> ndarray:
-    return get_normalized_data(data=get_filtered_data(geno, path_to_save_qc)).to_numpy()
+def get_data(geno: DataFrame, path_to_save_qc: Path) -> DataFrame:
+    return get_normalized_data(get_filtered_data(geno, path_to_save_qc))
 
 
 def get_filtered_data(geno: DataFrame, path_to_save_qc: Path) -> DataFrame:
@@ -130,22 +130,17 @@ def equality_of_variance_test(*samples: Tuple[ndarray, ...]) -> Tuple[bool, floa
 
 
 def get_normalized_data(data: DataFrame) -> DataFrame:
-    from sklearn.preprocessing import MaxAbsScaler, MinMaxScaler
+    from sklearn.preprocessing import MinMaxScaler
 
-    '''
-    abs_scaler = MaxAbsScaler()
-    if np.any(data < -0.0):
-        print('hello')
-        scaler = MinMaxScaler()
-        tmp = abs_scaler.fit_transform(data)
-        return DataFrame(data=scaler.fit_transform(tmp), columns=data.columns)
-    else:
-        return DataFrame(data=abs_scaler.fit_transform(data), columns=data.columns)
-    '''
-    # print(f'data: {data.shape}\n{data}')
-    # print(f'result: {result.shape}\n{scaler.feature_names_in_}\n{result}')
-    scaler = MaxAbsScaler()
-    return DataFrame(data=scaler.fit_transform(data), columns=data.columns)
+    # log2(TPM+0.25) transformation (0.25 to prevent negative inf)
+    modified = DataFrame(data=np.log2(data + 0.25), columns=data.columns)
+
+    med_exp = np.median(modified.values[:, 1:], axis=1)
+    for i in range(modified.shape[0]):
+        modified.iloc[i, 1:] = modified.values[i, 1:] - med_exp[i]  # fold change respect to median
+
+    scaler = MinMaxScaler()
+    return DataFrame(data=scaler.fit_transform(modified), columns=modified.columns)
 
 
 def create_dir(directory: Path):
