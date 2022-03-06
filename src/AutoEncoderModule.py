@@ -5,7 +5,6 @@ from typing import Any, Union, Dict, Optional
 
 import numpy as np
 import pandas as pd
-from pytorch_lightning import LightningModule
 import torch
 import torchmetrics
 from numpy import ndarray
@@ -38,7 +37,8 @@ class GPDataSet(Dataset):
 
 
 class AutoGenoShallow(LightningModule):
-    train_dataset: TensorDataset
+    testing_dataset: Union[TensorDataset,None]
+    train_dataset: Union[TensorDataset,None]
 
     def __init__(self, save_dir: Path, path_to_data: Path, path_to_save_qc: Path,
                  model_name: str, compression_ratio: int, batch_size: int = 32,
@@ -49,7 +49,7 @@ class AutoGenoShallow(LightningModule):
         self.test_input_list = None
         self.input_list = None
         # get normalized data quality control
-        self.geno: ndarray = get_data(pd.read_csv(path_to_data, index_col=0), path_to_save_qc)
+        self.geno: ndarray = get_data(pd.read_csv(path_to_data, index_col=0), path_to_save_qc).to_numpy()
         # self.geno: ndarray = get_filtered_data(pd.read_csv(path_to_data, index_col=0), path_to_save_qc).to_numpy()
         self.input_features = len(self.geno[0])
         self.output_features = self.input_features
