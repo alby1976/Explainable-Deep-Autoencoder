@@ -6,6 +6,8 @@ from typing import Tuple
 import pandas as pd
 import pytorch_lightning as pl
 from pathlib import Path
+
+from pytorch_lightning.callbacks import ModelSummary
 from torchinfo import summary
 import torch
 from pytorch_lightning import seed_everything, Trainer
@@ -45,8 +47,11 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
                              logger=[csv_logger, tensor_board_logger],
                              deterministic=True,
                              gpus=1,
+                             auto_select_gpus=True,
                              stochastic_weight_avg=True,
-                             callbacks=[stop_loss],
+                             callbacks=[stop_loss, ModelSummary(max_depth=3)],
+                             amp_backend="apex",
+                             amp_level="O2",
                              # enable_progress_bar=True,
                              auto_scale_batch_size='binsearch')
     else:
@@ -76,8 +81,8 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
 
 if __name__ == '__main__':
     if torch.cuda.is_available():
-        device_index = "0"
-        os.environ["CUDA_VISIBLE_DEVICES"] = device_index
+        # device_index = "0"
+        # os.environ["CUDA_VISIBLE_DEVICES"] = device_index
         os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = 'true'
 
     if len(sys.argv) < 7:
