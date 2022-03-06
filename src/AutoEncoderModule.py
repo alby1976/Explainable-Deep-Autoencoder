@@ -7,7 +7,7 @@ from typing import Any, Union, Dict, Optional
 import numpy as np
 import pandas as pd
 import torch
-import torchmetrics
+import torchmetrics as tm
 from numpy import ndarray
 from pytorch_lightning import LightningModule
 from pytorch_lightning.utilities.types import EVAL_DATALOADERS
@@ -16,6 +16,7 @@ from torch import nn, Tensor
 from torch.nn import functional as f
 from torch.optim.lr_scheduler import CyclicLR
 from torch.utils.data import Dataset, DataLoader, TensorDataset
+
 from CommonTools import data_parametric, get_dict_values_1d, get_dict_values_2d, \
     r2_value_weighted, same_distribution_test, get_data
 
@@ -38,8 +39,8 @@ class GPDataSet(Dataset):
 
 
 class AutoGenoShallow(LightningModule):
-    testing_dataset: Union[TensorDataset,None]
-    train_dataset: Union[TensorDataset,None]
+    testing_dataset: Union[TensorDataset, None]
+    train_dataset: Union[TensorDataset, None]
 
     def __init__(self, save_dir: Path, path_to_data: Path, path_to_save_qc: Path,
                  model_name: str, compression_ratio: int, batch_size: int = 32,
@@ -60,14 +61,10 @@ class AutoGenoShallow(LightningModule):
         else:
             self.smallest_layer = tmp
         self.hidden_layer = 2 * self.smallest_layer
-        self.training_r2score_node = torchmetrics.R2Score(num_outputs=self.input_features,
-                                                          multioutput='raw_values', compute_on_step=False)
-        self.training_pearson = torchmetrics.regression.pearson.PearsonCorrcoef(compute_on_step=True)
-        self.training_spearman = torchmetrics.regression.spearman.SpearmanCorrcoef(compute_on_step=True)
-        self.testing_r2score_node = torchmetrics.R2Score(num_outputs=self.input_features,
-                                                         multioutput='raw_values', compute_on_step=False)
-        self.testing_pearson = torchmetrics.regression.pearson.PearsonCorrcoef(compute_on_step=True)
-        self.testing_spearman = torchmetrics.regression.spearman.SpearmanCorrcoef(compute_on_step=True)
+        self.training_r2score_node = tm.R2Score(num_outputs=self.input_features,
+                                                multioutput='raw_values', compute_on_step=False)
+        self.testing_r2score_node = tm.R2Score(num_outputs=self.input_features,
+                                               multioutput='raw_values', compute_on_step=False)
         self.save_dir = save_dir
         self.model_name = model_name
 
@@ -141,17 +138,17 @@ class AutoGenoShallow(LightningModule):
         coefficient: Tensor
         if np.all(result):
             coefficient = torch.stack(
-                [self.training_pearson.forward(preds=torch.index_select(output, 1, torch.tensor([i],
-                                                                                                device=output.device)),
-                                               target=torch.index_select(x, 1, torch.tensor([i],
-                                                                                            device=x.device)))
-                 for i in range(x.size(dim=1))])
-        else:
-            coefficient = torch.stack(
-                [self.training_spearman.forward(preds=torch.index_select(output, 1, torch.tensor([i],
+                [tm.functional.pearson_corrcoef(preds=torch.index_select(output, 1, torch.tensor([i],
                                                                                                  device=output.device)),
                                                 target=torch.index_select(x, 1, torch.tensor([i],
                                                                                              device=x.device)))
+                 for i in range(x.size(dim=1))])
+        else:
+            coefficient = torch.stack(
+                [tm.functional.spearman_corrcoef(preds=torch.index_select(output, 1, torch.tensor([i],
+                                                                                                  device=output.device)),
+                                                 target=torch.index_select(x, 1, torch.tensor([i],
+                                                                                              device=x.device)))
                  for i in range(x.size(dim=1))])
 
         # print(f'train coefficient: {coefficient.size()}\n{coefficient}')
@@ -227,17 +224,17 @@ class AutoGenoShallow(LightningModule):
         coefficient: Tensor
         if np.all(result):
             coefficient = torch.stack(
-                [self.testing_pearson.forward(preds=torch.index_select(output, 1, torch.tensor([i],
-                                                                                               device=output.device)),
-                                              target=torch.index_select(x, 1, torch.tensor([i],
-                                                                                           device=x.device)))
+                [tm.functional.pearson_corrcoef(preds=torch.index_select(output, 1, torch.tensor([i],
+                                                                                                 device=output.device)),
+                                                target=torch.index_select(x, 1, torch.tensor([i],
+                                                                                             device=x.device)))
                  for i in range(x.size(dim=1))])
         else:
             coefficient = torch.stack(
-                [self.testing_spearman.forward(preds=torch.index_select(output, 1, torch.tensor([i],
-                                                                                                device=output.device)),
-                                               target=torch.index_select(x, 1, torch.tensor([i],
-                                                                                            device=x.device)))
+                [tm.functional.spearman_corrcoef(preds=torch.index_select(output, 1, torch.tensor([i],
+                                                                                                  device=output.device)),
+                                                 target=torch.index_select(x, 1, torch.tensor([i],
+                                                                                              device=x.device)))
                  for i in range(x.size(dim=1))])
 
         print(f"test_loss: {torch.sum(losses).item():.4f} test_parm: {np.all(result)} test_coefficient: "
@@ -250,7 +247,8 @@ class AutoGenoShallow(LightningModule):
                  on_step=False, on_epoch=True)
         self.log('testing_parametric', float(np.all(result)), on_step=False, on_epoch=True)
         self.log('testing_coefficient', torch.mean(coefficient).item(), on_step=False, on_epoch=True)
-        self.log('testing_r2score_per_node', r2_value_weighted(y_true=x, y_pred=output).item(), on_step=False, on_epoch=True)
+        self.log('testing_r2score_per_node', r2_value_weighted(y_true=x, y_pred=output).item(), on_step=False,
+                 on_epoch=True)
         self.log('testing_r2score_per_node_raw', r2_node, on_step=False, on_epoch=True)
 
         # clean up and free up memory
