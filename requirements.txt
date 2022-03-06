@@ -9,8 +9,6 @@ pyensembl>=1.9.4
 torchvision>=0.7.0
 scipy~=1.8.0
 torchmetrics~=0.7.2
-multipledispatch~=0.6.0
-torch
 # R package required:
 # WebGestaltR==0.4.4
 # data.table==1.14.2
@@ -19,3 +17,5 @@ torch
 
 
 
+
+torchinfo~=1.6.3

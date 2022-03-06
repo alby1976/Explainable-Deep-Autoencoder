@@ -17,7 +17,7 @@ from torch.nn import functional as f
 from torch.optim.lr_scheduler import CyclicLR
 from torch.utils.data import Dataset, DataLoader, TensorDataset
 from CommonTools import data_parametric, get_dict_values_1d, get_dict_values_2d, \
-    r2_value_weighted, same_distribution_test
+    r2_value_weighted, same_distribution_test, get_data
 
 
 class GPDataSet(Dataset):
