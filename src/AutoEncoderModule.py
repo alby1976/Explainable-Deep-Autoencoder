@@ -145,10 +145,10 @@ class AutoGenoShallow(LightningModule):
                  for i in range(x.size(dim=1))])
         else:
             coefficient = torch.stack(
-                [tm.functional.spearman_corrcoef(preds=torch.index_select(output, 1, torch.tensor([i],
-                                                                                                  device=output.device)),
-                                                 target=torch.index_select(x, 1, torch.tensor([i],
-                                                                                              device=x.device)))
+                [tm.functional.spearman_corrcoef(torch.index_select(output, 1, torch.tensor([i],
+                                                                                            device=output.device)),
+                                                 torch.index_select(x, 1, torch.tensor([i],
+                                                                                       device=x.device)))
                  for i in range(x.size(dim=1))])
 
         # print(f'train coefficient: {coefficient.size()}\n{coefficient}')
@@ -224,10 +224,10 @@ class AutoGenoShallow(LightningModule):
         coefficient: Tensor
         if np.all(result):
             coefficient = torch.stack(
-                [tm.functional.pearson_corrcoef(preds=torch.index_select(output, 1, torch.tensor([i],
-                                                                                                 device=output.device)),
-                                                target=torch.index_select(x, 1, torch.tensor([i],
-                                                                                             device=x.device)))
+                [tm.functional.pearson_corrcoef(torch.index_select(output, 1, torch.tensor([i],
+                                                                                           device=output.device)),
+                                                torch.index_select(x, 1, torch.tensor([i],
+                                                                                      device=x.device)))
                  for i in range(x.size(dim=1))])
         else:
             coefficient = torch.stack(
