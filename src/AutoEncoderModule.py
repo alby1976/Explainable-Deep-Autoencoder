@@ -105,7 +105,7 @@ class AutoGenoShallow(LightningModule):
         # r2_node = self.training_r2score_node.forward(preds=output, target=x)
         loss = f.mse_loss(input=output, target=x)
         # return {'model': coder, 'loss': loss, 'r2_node': r2_node, 'input': x, 'output': output}
-        return {'model': coder.cpu().detach().numpy(), 'loss': loss, 'input': x, 'output': output}
+        return {'model': coder.detach(), 'loss': loss, 'input': x, 'output': output}
 
     # end of training epoch
     def training_epoch_end(self, training_step_outputs):
@@ -153,9 +153,9 @@ class AutoGenoShallow(LightningModule):
         # print(f'train coefficient: {coefficient.size()}\n{coefficient}')
 
         print(f"epoch[{epoch + 1:4d}]  learning_rate: {scheduler.get_last_lr()[0]:.6f} "
-              f"loss: {losses.sum().item():.4f}  parametric: {np.all(result)} "
-              f"coefficient: {torch.mean(coefficient).item():.4f} "
-              f"r2_mode: {tm.functional.r2_score(preds=output, target=x, multioutput='variance_weighted').item():.4f}",
+              f"loss: {losses.sum().item():.6f}  parametric: {np.all(result)} "
+              f"coefficient: {torch.mean(coefficient).item():.3f} "
+              f"r2_mode: {tm.functional.r2_score(preds=output, target=x, multioutput='variance_weighted').item():.3f}",
               end=' ', file=sys.stderr)
 
         # logging metrics into log file
@@ -237,10 +237,10 @@ class AutoGenoShallow(LightningModule):
                                                                                        device=x.device)))
                  for i in range(x.size(dim=1))])
 
-        print(f"test_loss: {torch.sum(losses).item():.4f} test_parm: {np.all(result)} test_coefficient: "
-              f"{torch.mean(coefficient).item():.4f} "
+        print(f"test_loss: {torch.sum(losses).item():.6f} test_parm: {np.all(result)} test_coefficient: "
+              f"{torch.mean(coefficient).item():.3f} "
               f"test_r2_node: "
-              f"{tm.functional.r2_score(preds=output, target=x, multioutput='variance_weighted').item():.4f}",
+              f"{tm.functional.r2_score(preds=output, target=x, multioutput='variance_weighted').item():.3f}",
               file=sys.stderr)
 
         # logging validation metrics into log file
