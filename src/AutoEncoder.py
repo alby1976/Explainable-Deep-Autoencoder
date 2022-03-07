@@ -49,7 +49,7 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
                              gpus=1,
                              auto_select_gpus=True,
                              stochastic_weight_avg=True,
-                             callbacks=[stop_loss, ModelSummary(max_depth=3)],
+                             callbacks=[stop_loss],
                              amp_backend="apex",
                              amp_level="O2",
                              # enable_progress_bar=True,
