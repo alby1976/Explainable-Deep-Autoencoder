@@ -6,6 +6,7 @@ from typing import Tuple
 import pandas as pd
 import pytorch_lightning as pl
 from pathlib import Path
+
 from torchinfo import summary
 import torch
 from pytorch_lightning import seed_everything, Trainer
@@ -28,7 +29,7 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
                             model_name=model_name, compression_ratio=compression_ratio, batch_size=batch_size)
     # find ideal learning rate
     seed_everything(42)
-    stop_loss = EarlyStopping(monitor='testing_loss', mode='min', patience=16, verbose=True,
+    stop_loss = EarlyStopping(monitor='testing_loss', mode='min', patience=10, verbose=True,
                               check_on_train_epoch_end=False)
     trainer: Trainer
     log_dir = path_to_save_ae.joinpath('log')
@@ -45,8 +46,11 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
                              logger=[csv_logger, tensor_board_logger],
                              deterministic=True,
                              gpus=1,
-                             callbacks=[stop_loss],
+                             auto_select_gpus=True,
                              stochastic_weight_avg=True,
+                             callbacks=[stop_loss],
+                             amp_backend="apex",
+                             amp_level="O2",
                              # enable_progress_bar=True,
                              auto_scale_batch_size='binsearch')
     else:
@@ -56,8 +60,8 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
                              log_every_n_steps=1,
                              logger=[csv_logger, tensor_board_logger],
                              deterministic=True,
-                             callbacks=[stop_loss],
                              stochastic_weight_avg=True,
+                             callbacks=[stop_loss],
                              # enable_progress_bar=True,
                              auto_scale_batch_size='binsearch')
 
@@ -76,8 +80,8 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
 
 if __name__ == '__main__':
     if torch.cuda.is_available():
-        device_index = "0"
-        os.environ["CUDA_VISIBLE_DEVICES"] = device_index
+        # device_index = "0"
+        # os.environ["CUDA_VISIBLE_DEVICES"] = device_index
         os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = 'true'
 
     if len(sys.argv) < 7:
