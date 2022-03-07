@@ -7,7 +7,6 @@ import pandas as pd
 import pytorch_lightning as pl
 from pathlib import Path
 
-from pytorch_lightning.callbacks import ModelSummary
 from torchinfo import summary
 import torch
 from pytorch_lightning import seed_everything, Trainer
