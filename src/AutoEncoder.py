@@ -47,7 +47,7 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
                              deterministic=True,
                              gpus=1,
                              auto_select_gpus=True,
-                             stochastic_weight_avg=True,
+                             stochastic_weight_avg=False,
                              callbacks=[stop_loss],
                              amp_backend="apex",
                              amp_level="O2",
@@ -60,7 +60,7 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
                              log_every_n_steps=1,
                              logger=[csv_logger, tensor_board_logger],
                              deterministic=True,
-                             stochastic_weight_avg=True,
+                             stochastic_weight_avg=False,
                              callbacks=[stop_loss],
                              # enable_progress_bar=True,
                              auto_scale_batch_size='binsearch')
