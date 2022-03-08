@@ -160,7 +160,7 @@ class AutoGenoShallow(LightningModule):
 
         # logging metrics into log file
         self.log('learning_rate', scheduler.get_last_lr()[0], on_step=False, on_epoch=True)
-        self.log('train_anderson_darling_test', torch.from_numpy(anderson).type(torch.FloatTensor),
+        self.log('train_anderson_darling_test', torch.from_numpy(anderson).type(torch.HalfTensor),
                  on_step=False, on_epoch=True)
         self.log('loss', torch.sum(losses).item(), on_step=False, on_epoch=True)
         self.log('parametric', float(np.all(result)), on_step=False, on_epoch=True)
@@ -245,7 +245,7 @@ class AutoGenoShallow(LightningModule):
 
         # logging validation metrics into log file
         self.log('testing_loss', torch.sum(losses).item())
-        self.log('testing_anderson_darling_test', torch.from_numpy(anderson).type(torch.FloatTensor),
+        self.log('testing_anderson_darling_test', torch.from_numpy(anderson).type(torch.HalfTensor),
                  on_step=False, on_epoch=True)
         self.log('testing_parametric', float(np.all(result)), on_step=False, on_epoch=True)
         self.log('testing_coefficient', torch.mean(coefficient).item(), on_step=False, on_epoch=True)
@@ -292,8 +292,8 @@ class AutoGenoShallow(LightningModule):
         # print(f'geno_train dim:{geno_train.shape} geno_test dim: {geno_test.shape}')
         # Assign train/val datasets for using in data-loaders
         if stage == 'fit' or stage is None:
-            self.input_list = torch.from_numpy(geno_train).type(torch.FloatTensor)
-            self.test_input_list = torch.from_numpy(geno_test).type(torch.FloatTensor)
+            self.input_list = torch.from_numpy(geno_train).type(torch.HalfTensor)
+            self.test_input_list = torch.from_numpy(geno_test).type(torch.HalfTensor)
 
     def train_dataloader(self) -> EVAL_DATALOADERS:
         # Called when training the model

@@ -81,7 +81,7 @@ def convert_to_tensor(x: Union[Tensor, ndarray]) -> Tensor:
     if type(x) == Tensor:
         return x
     else:
-        return torch.from_numpy(x).type(torch.FloatTensor)
+        return torch.from_numpy(x).type(torch.HalfTensor)
 
 
 # get dictionary values in a Tensor for a particular key in a list of dictionary
