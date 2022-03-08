@@ -118,9 +118,9 @@ class AutoGenoShallow(LightningModule):
         output: Tensor = get_dict_values_2d('output', training_step_outputs)
         output_coder_list: Tensor = get_dict_values_2d('model', training_step_outputs)
 
-        numpy_x: ndarray = x.cpu().detach().numpy()
-        numpy_output: ndarray = output.cpu().detach().numpy()
-        coder_np: Union[ndarray, int] = output_coder_list.cpu().detach().numpy()
+        numpy_x: ndarray = x.detach().numpy()
+        numpy_output: ndarray = output.detach().numpy()
+        coder_np: Union[ndarray, int] = output_coder_list.detach().numpy()
 
         # ===========save model============
         coder_file = self.save_dir.joinpath(f"{self.model_name}-{epoch}.csv")
@@ -209,8 +209,8 @@ class AutoGenoShallow(LightningModule):
         losses = get_dict_values_1d('loss', testing_step_outputs)
         x = get_dict_values_2d('input', testing_step_outputs)
         output = get_dict_values_2d('output', testing_step_outputs)
-        np_x: ndarray = x.cpu().detach().numpy()
-        np_output: ndarray = output.cpu().detach().numpy()
+        np_x: ndarray = x.detach().numpy()
+        np_output: ndarray = output.detach().numpy()
 
         # print(f'regular losses: {losses.size()} pred: {pred.size()} target: {target.size()}')
 
