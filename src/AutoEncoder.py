@@ -7,6 +7,7 @@ import pandas as pd
 import pytorch_lightning as pl
 from pathlib import Path
 
+from pytorch_lightning.callbacks import ModelSummary
 from torchinfo import summary
 import torch
 from pytorch_lightning import seed_everything, Trainer
@@ -48,8 +49,8 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
                              gpus=1,
                              auto_select_gpus=True,
                              stochastic_weight_avg=False,
-                             callbacks=[stop_loss],
-                             amp_backend="apex",
+                             callbacks=[stop_loss, ModelSummary(max_depth=)],
+                             amp_backend="native",
                              amp_level="O2",
                              precision=16,
                              # enable_progress_bar=True,
