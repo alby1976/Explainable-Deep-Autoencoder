@@ -50,8 +50,8 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
                              auto_select_gpus=True,
                              stochastic_weight_avg=False,
                              callbacks=[stop_loss, ModelSummary(max_depth=2)],
-                             amp_backend="apex",
-                             amp_level="O2",
+                             # amp_backend="apex",
+                             # amp_level="O2",
                              precision=16,
                              # enable_progress_bar=True,
                              auto_scale_batch_size='binsearch')
