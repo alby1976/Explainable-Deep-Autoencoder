@@ -86,11 +86,11 @@ def convert_to_tensor(x: Union[Tensor, ndarray]) -> Tensor:
 
 # get dictionary values in a Tensor for a particular key in a list of dictionary
 def get_dict_values_1d(key: str, lists: List[Dict[str, Any]], dim: int = 0) -> Tensor:
-    return torch.stack([convert_to_tensor(item[key]) for item in lists], dim=dim)
+    return torch.stack([item[key] for item in lists], dim=dim)
 
 
 def get_dict_values_2d(key: str, lists: List[Dict[str, Any]], dim: int = 0) -> Tensor:
-    return torch.cat([convert_to_tensor(item[key]) for item in lists], dim=dim)
+    return torch.cat([item[key] for item in lists], dim=dim)
 
 
 def data_parametric(*samples) -> bool:

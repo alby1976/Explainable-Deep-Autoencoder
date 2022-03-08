@@ -105,7 +105,7 @@ class AutoGenoShallow(LightningModule):
         # r2_node = self.training_r2score_node.forward(preds=output, target=x)
         loss = f.mse_loss(input=output, target=x)
         # return {'model': coder, 'loss': loss, 'r2_node': r2_node, 'input': x, 'output': output}
-        return {'model': coder.detach(), 'loss': loss, 'input': x, 'output': output}
+        return {'model': coder.detach(), 'loss': loss, 'input': x, 'output': output.detach}
 
     # end of training epoch
     def training_epoch_end(self, training_step_outputs):
