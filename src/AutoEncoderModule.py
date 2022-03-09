@@ -152,14 +152,14 @@ class AutoGenoShallow(LightningModule):
 
         # print(f'train coefficient: {coefficient.size()}\n{coefficient}')
 
-        print(f"epoch[{epoch + 1:4d}]  learning_rate: {scheduler.get_last_lr()[0]:.6f} "
+        print(f"epoch[{epoch + 1:4d}]  learning_rate: {self.learning_rate:.6f} "
               f"loss: {losses.sum().item():.6f}  parametric: {np.all(result)} "
               f"coefficient: {torch.mean(coefficient).item():.3f} "
               f"r2_mode: {tm.functional.r2_score(preds=output, target=x, multioutput='variance_weighted').item():.3f}",
               end=' ', file=sys.stderr)
 
         # logging metrics into log file
-        self.log('learning_rate', scheduler.get_last_lr()[0], on_step=False, on_epoch=True)
+        self.log('learning_rate', self.learning_rate, on_step=False, on_epoch=True)
         self.log('train_anderson_darling_test', torch.from_numpy(anderson).type(torch.HalfTensor),
                  on_step=False, on_epoch=True)
         self.log('loss', torch.sum(losses).item(), on_step=False, on_epoch=True)
