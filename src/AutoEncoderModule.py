@@ -243,8 +243,7 @@ class AutoGenoShallow(LightningModule):
                                         for i in range(self.input_features)])
         result: ndarray = np.asarray([data_parametric(np_x[:, i], np_output[:, i])
                                       for i in range(self.input_features)])
-        r2_node: Tensor = tm.functional.r2_score(preds=output, target=x, multioutput="raw_values")
-
+        
         coefficient: Tensor
         if np.all(result):
             coefficient = torch.stack(
@@ -273,6 +272,7 @@ class AutoGenoShallow(LightningModule):
                                              torch.index_select(x, 1, torch.tensor([i],
                                                                                    device=x.device)))
              for i in range(x.size(dim=1))])
+        r2_node: Tensor = tm.functional.r2_score(preds=output, target=x, multioutput="raw_values")
 
         print(f"test_loss: {torch.sum(losses).item():.6f} "
               # f"test_parm: {np.all(result)} "
