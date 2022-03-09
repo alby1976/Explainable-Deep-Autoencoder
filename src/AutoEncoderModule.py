@@ -272,7 +272,9 @@ class AutoGenoShallow(LightningModule):
 
     # configures the optimizers through learning rate
     def configure_optimizers(self):
+        
         optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
+        '''
         it_per_epoch = math.ceil(len(self.train_dataloader()) / self.hparams.batch_size)
         print(f'it_per_epoch: {it_per_epoch}')
         scheduler: CyclicLR = torch.optim.lr_scheduler.CyclicLR(optimizer, base_lr=self.min_lr,
@@ -285,6 +287,8 @@ class AutoGenoShallow(LightningModule):
         # scheduler: LambdaLR = torch.optim.lr_scheduler.LambdaLR(optimizer, [clr])
 
         return {"optimizer": optimizer, "lr_scheduler": scheduler}
+        '''
+        return {"optimizer": optimizer}
 
     def setup(self, stage: Optional[str] = None):
         # setup of training and testing
