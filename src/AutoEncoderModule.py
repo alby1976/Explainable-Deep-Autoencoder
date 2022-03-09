@@ -191,6 +191,7 @@ class AutoGenoShallow(LightningModule):
                  on_step=False, on_epoch=True)
         self.log('r2score_per_node_raw', r2_node, on_step=False, on_epoch=True)
 
+        '''
         # clean up and free up memory
         del losses
         # del result
@@ -210,6 +211,7 @@ class AutoGenoShallow(LightningModule):
             torch.cuda.empty_cache()
 
         gc.collect()
+        '''
 
     # define validation step
     def validation_step(self, batch, batch_idx) -> Dict[str, Tensor]:

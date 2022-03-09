@@ -1,3 +1,4 @@
+import os
 from itertools import islice
 from pathlib import Path
 from typing import Tuple, Union, Iterable, Dict, Any, List, Mapping
@@ -79,11 +80,11 @@ def merge_list_dict(lists) -> Dict[Any, Any]:
 
 def save_tensor(x: Tensor, file: Path):
     with open(file, "w") as fh:
-        for i in ranage(x.size(0)):
+        for i in range(x.size(0)):
             row: list = []
             for j in range(x.size(1)):
                 # do something
-                row.append(x[i][j].item())
+                row.append(x[i][j])
                 row.append(',')
             list[-1] = "\n"
             fh.writelines(list)
