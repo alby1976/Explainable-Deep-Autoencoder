@@ -170,8 +170,10 @@ class AutoGenoShallow(LightningModule):
                                                                                    device=x.device)))
              for i in range(x.size(dim=1))])
 
-        print(f"epoch[{epoch + 1:4d}]  learning_rate: {self.learning_rate:.6f} "
-              f"loss: {losses.sum().item():.6f}  parametric: {np.all(result)} "
+        print(f"epoch[{epoch + 1:4d}]  "
+              f"learning_rate: {self.learning_rate:.6f} "
+              f"loss: {losses.sum().item():.6f}  "
+              # f"parametric: {np.all(result)} "
               f"coefficient: {torch.mean(spearman).item():.3f} "
               f"r2_mode: {tm.functional.r2_score(preds=output, target=x, multioutput='variance_weighted').item():.3f}",
               end=' ', file=sys.stderr)
@@ -272,8 +274,9 @@ class AutoGenoShallow(LightningModule):
                                                                                    device=x.device)))
              for i in range(x.size(dim=1))])
 
-        print(f"test_loss: {torch.sum(losses).item():.6f} test_parm: {np.all(result)} test_coefficient: "
-              f"{torch.mean(spearman).item():.3f} "
+        print(f"test_loss: {torch.sum(losses).item():.6f} "
+              # f"test_parm: {np.all(result)} "
+              f"test_coefficient: {torch.mean(spearman).item():.3f} "
               f"test_r2_node: "
               f"{tm.functional.r2_score(preds=output, target=x, multioutput='variance_weighted').item():.3f}",
               file=sys.stderr)
