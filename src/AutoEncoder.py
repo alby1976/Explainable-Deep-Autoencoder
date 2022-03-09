@@ -69,13 +69,14 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
                              # auto_scale_batch_size='binsearch',
                              enable_progress_bar=True)
 
-    print(f'...Finding ideal batch size....')
-    trainer.tuner.scale_batch_size(model=model, init_val=model.hparams.batch_size, mode='binsearch')
+    if 1 == 0:  # TODO create command-line parameter
+        print(f'...Finding ideal batch size....')
+        trainer.tuner.scale_batch_size(model=model, init_val=model.hparams.batch_size, mode='binsearch')
 
-    print('...Finding ideal learning rate....')
-    model.learning_rate = trainer.tuner.lr_find(model).suggestion()
-    model.min_lr = model.learning_rate / 6.0
-    print(f'min lr: {model.min_lr} max lr: {model.learning_rate}')
+        print('...Finding ideal learning rate....')
+        model.learning_rate = trainer.tuner.lr_find(model).suggestion()
+        model.min_lr = model.learning_rate / 6.0
+        print(f'min lr: {model.min_lr} max lr: {model.learning_rate}')
 
     # train & validate model
     print(f'...Training and Validating model...')
