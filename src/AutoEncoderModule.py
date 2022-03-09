@@ -128,7 +128,7 @@ class AutoGenoShallow(LightningModule):
         # ===========save model============
         coder_file = self.save_dir.joinpath(f"{self.model_name}-{epoch}.csv")
         # print(f'\n*** save_dir: {self.save_dir} coder_file: {coder_file} ***\n')
-        save_tenor(x=coder, file=coder_file)
+        save_tensor(x=coder, file=coder_file)
         # np.savetxt(fname=coder_file, X=coder_np, fmt='%f', delimiter=',')
 
         # ======goodness of fit======
