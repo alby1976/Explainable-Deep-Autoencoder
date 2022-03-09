@@ -77,11 +77,19 @@ def merge_list_dict(lists) -> Dict[Any, Any]:
     return result
 
 
-def convert_to_tensor(x: Union[Tensor, ndarray]) -> Tensor:
-    if type(x) == Tensor:
-        return x
-    else:
-        return torch.from_numpy(x).type(torch.HalfTensor)
+def save_tensor(x: Tensor, file: Path):
+    with open(file, "w") as fh:
+        for i in ranage(x.size(0)):
+            row: list = []
+            for j in range(x.size(1)):
+                # do something
+                row.append(x[i][j].item())
+                row.append(',')
+            list[-1] = "\n"
+            fh.writelines(list)
+        fh.flush()
+        os.fsync()
+        fh.close()
 
 
 # get dictionary values in a Tensor for a particular key in a list of dictionary
