@@ -85,7 +85,7 @@ def save_tensor(x: Tensor, file: Path):
             row: list = []
             for j in range(x.size(1)):
                 # do something
-                row.append(x[i][j])
+                row.append(x[i][j].item())
                 row.append(',')
             row.pop()
             fh.writelines(f"{row}\n")

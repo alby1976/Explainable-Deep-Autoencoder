@@ -104,7 +104,7 @@ class AutoGenoShallow(LightningModule):
         # print(f'{batch_idx} training batch size: {self.hparams.batch_size} x: {x.size()}')
         output, coder = self.forward(x)
         # r2_node = self.training_r2score_node.forward(preds=output, target=x)
-        loss = f.mse_loss(input=output, target=x)
+        loss: Tensor = f.mse_loss(input=output, target=x)
         # return {'model': coder, 'loss': loss, 'r2_node': r2_node, 'input': x, 'output': output}
         return {'model': coder.detach(), 'loss': loss, 'input': x, 'output': output.detach()}
 
