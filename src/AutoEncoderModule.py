@@ -172,22 +172,22 @@ class AutoGenoShallow(LightningModule):
 
         print(f"epoch[{epoch + 1:4d}]  "
               f"learning_rate: {self.learning_rate:.6f} "
-              f"loss: {losses.sum().item():.6f}  "
+              f"loss: {losses.sum():.6f}  "
               # f"parametric: {np.all(result)} "
-              f"coefficient: {torch.mean(spearman).item():.3f} "
-              f"r2_mode: {tm.functional.r2_score(preds=output, target=x, multioutput='variance_weighted').item():.3f}",
+              f"coefficient: {torch.mean(spearman):.3f} "
+              f"r2_mode: {tm.functional.r2_score(preds=output, target=x, multioutput='variance_weighted'):.3f}",
               end=' ', file=sys.stderr)
 
         # logging metrics into log file
         self.log('learning_rate', self.learning_rate, on_step=False, on_epoch=True)
-        self.log('loss', torch.sum(losses).item(), on_step=False, on_epoch=True)
+        self.log('loss', torch.sum(losses), on_step=False, on_epoch=True)
         # self.log('train_anderson_darling_test', torch.from_numpy(anderson).type(torch.HalfTensor),
         #         on_step=False, on_epoch=True)
         # self.log('parametric', float(np.all(result)), on_step=False, on_epoch=True)
-        self.log('pearson coefficient', torch.mean(pearson).item(), on_step=False, on_epoch=True)
-        self.log('spearman coefficient', torch.mean(spearman).item(), on_step=False, on_epoch=True)
+        self.log('pearson coefficient', torch.mean(pearson), on_step=False, on_epoch=True)
+        self.log('spearman coefficient', torch.mean(spearman), on_step=False, on_epoch=True)
         self.log('r2score_per_node',
-                 tm.functional.r2_score(preds=output, target=x, multioutput='variance_weighted').item(),
+                 tm.functional.r2_score(preds=output, target=x, multioutput='variance_weighted'),
                  on_step=False, on_epoch=True)
         self.log('r2score_per_node_raw', r2_node, on_step=False, on_epoch=True)
 
@@ -276,23 +276,23 @@ class AutoGenoShallow(LightningModule):
              for i in range(x.size(dim=1))])
         r2_node: Tensor = tm.functional.r2_score(preds=output, target=x, multioutput="raw_values")
 
-        print(f"test_loss: {torch.sum(losses).item():.6f} "
+        print(f"test_loss: {torch.sum(losses):.6f} "
               # f"test_parm: {np.all(result)} "
-              f"test_coefficient: {torch.mean(spearman).item():.3f} "
+              f"test_coefficient: {torch.mean(spearman):.3f} "
               f"test_r2_node: "
-              f"{tm.functional.r2_score(preds=output, target=x, multioutput='variance_weighted').item():.3f}",
+              f"{tm.functional.r2_score(preds=output, target=x, multioutput='variance_weighted'):.3f}",
               file=sys.stderr)
 
         # logging validation metrics into log file
-        self.log('testing_loss', torch.sum(losses).item())
+        self.log('testing_loss', torch.sum(losses))
         # self.log('testing_anderson_darling_test', torch.from_numpy(anderson).type(torch.HalfTensor),
         #         on_step=False, on_epoch=True)
         # self.log('testing_parametric', float(np.all(result)), on_step=False, on_epoch=True)
-        self.log('testing pearson coefficient', torch.mean(pearson).item(), on_step=False, on_epoch=True)
-        self.log('testing spearman coefficient', torch.mean(spearman).item(), on_step=False, on_epoch=True)
-        # self.log('testing_coefficient', torch.mean(coefficient).item(), on_step=False, on_epoch=True)
+        self.log('testing pearson coefficient', torch.mean(pearson), on_step=False, on_epoch=True)
+        self.log('testing spearman coefficient', torch.mean(spearman), on_step=False, on_epoch=True)
+        # self.log('testing_coefficient', torch.mean(coefficient), on_step=False, on_epoch=True)
         self.log('testing_r2score_per_node',
-                 tm.functional.r2_score(preds=output, target=x, multioutput='variance_weighted').item(), on_step=False,
+                 tm.functional.r2_score(preds=output, target=x, multioutput='variance_weighted'), on_step=False,
                  on_epoch=True)
         self.log('testing_r2score_per_node_raw', r2_node, on_step=False, on_epoch=True)
 

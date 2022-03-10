@@ -89,7 +89,7 @@ def save_tensor(x: Tensor, file: Path):
             row.pop()
             fh.writelines(f"{row}\n")
         fh.flush()
-        os.fsync()
+        os.fsync(fd=fh)
         fh.close()
 
 
