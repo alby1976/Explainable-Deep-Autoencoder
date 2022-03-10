@@ -40,13 +40,14 @@ def r2_value(y_true: Tensor, y_pred: Tensor, dim: int = 0) -> object:
     return 1 - (ssr / sst)
 
 
-def r2_value_weighted(y_true: Tensor, y_pred: Tensor, dim: int = 0) -> Union[Metric, Tensor, int, float,
-                                                                             Mapping[str, Union[Metric, Tensor, int,
-                                                                                                float]]]:
+def r2_value_weighted(y_true: Tensor, y_pred: Tensor, raw: Tensor, dim: int = 0) -> Union[Metric, Tensor, int, float,
+                                                                                          Mapping[str, Union[
+                                                                                              Metric, Tensor, int,
+                                                                                              float]]]:
     y_ave = torch.mean(y_true, dim=dim)
     sst = torch.sum(torch.pow(y_true - y_ave, 2), dim=dim)
     sst_sum = torch.sum(sst)
-    raw = r2_value(y_true=y_true, y_pred=y_pred, dim=dim)
+    # raw = r2_value(y_true=y_true, y_pred=y_pred, dim=dim)
     # print(f'r2_value_weighted: {torch.nansum(sst / sst_sum * raw)}')
     return torch.sum(sst / sst_sum * raw)
 
