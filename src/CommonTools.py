@@ -86,8 +86,8 @@ def save_tensor(x: Tensor, file: Path):
                 # do something
                 row.append(x[i][j])
                 row.append(',')
-            list.pop()
-            fh.writelines(f"{list}\n")
+            row.pop()
+            fh.writelines(f"{row}\n")
         fh.flush()
         os.fsync()
         fh.close()
