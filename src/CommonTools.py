@@ -8,6 +8,7 @@ import torch
 from numpy import ndarray
 from pandas import DataFrame, Series
 from scipy.stats import anderson_ksamp, levene, anderson, ks_2samp, epps_singleton_2samp
+from sklearn.preprocessing import MinMaxScaler
 from torch import device, Tensor
 from torchmetrics import Metric
 
@@ -27,56 +28,30 @@ def r2_value(y_true: ndarray, y_pred: ndarray, axis: object = None) -> object:
 """
 
 
-def r2_value(y_true: Tensor, y_pred: Tensor, dim: int = 0) -> object:
-    y_ave = torch.mean(y_true, dim=dim)
-    # sse = torch.sum(torch.pow(y_pred - y_ave, 2), dim=dim)
-    ssr = torch.sum(torch.pow(y_true - y_pred, 2), dim=dim)
-    sst = torch.sum(torch.pow(y_true - y_ave, 2), dim=dim)
-    '''
-    print(f'y_true: {y_true.size()}')
-    print(f'y_ave: {y_ave.size()}\n{y_ave}\nssr: {ssr.size()}\n{ssr}\nsst: {sst.size()}\n{sst}\nssr/sst:{ssr/sst}\n'
-          f'1 - (ssr/sst):\n{1 - (ssr / sst)}\n')
-    '''
-    return 1 - (ssr / sst)
+class DataNormalization():
+    from sklearn.preprocessing import MinMaxScaler
+
+    def __init__(self, column_names=None):
+        super().__init__()
+        self.scaler = MinMaxScaler()
+        self.column_names = column_names
+
+    def fit_transform(self, x_train:Any):
+        if self.column_names is None:
+            return self.scaler.fit_transform(X=x_train)
+        else:
+            return DataFrame(self.scaler.fit_transform(X=x_train), columns=self.column_names)
 
 
-def r2_value_weighted(y_true: Tensor, y_pred: Tensor, raw: Tensor, dim: int = 0) -> Union[Metric, Tensor, int, float,
-                                                                                          Mapping[str, Union[
-                                                                                              Metric, Tensor, int,
-                                                                                              float]]]:
-    y_ave = torch.mean(y_true, dim=dim)
-    sst = torch.sum(torch.pow(y_true - y_ave, 2), dim=dim)
-    sst_sum = torch.sum(sst)
-    # raw = r2_value(y_true=y_true, y_pred=y_pred, dim=dim)
-    # print(f'r2_value_weighted: {torch.nansum(sst / sst_sum * raw)}')
-    return torch.sum(sst / sst_sum * raw)
-
-
-def get_data(geno: DataFrame, path_to_save_qc: Path) -> DataFrame:
-    return get_normalized_data(get_filtered_data(geno, path_to_save_qc))
-
-
-def get_filtered_data(geno: DataFrame, path_to_save_qc: Path) -> DataFrame:
+def get_transformed_data(geno: DataFrame, path_to_save_qc: Path) -> DataFrame:
     try:
         geno.drop(columns='phen', inplace=True)
     except KeyError:
         pass
-    geno_var: Union[Series, int] = geno.var()
-    geno_var = geno_var[geno_var < 1]
-    tmp = geno_var.index.values
-    geno.drop(tmp, axis=1, inplace=True)
+
     create_dir(path_to_save_qc.parent)
     geno.to_csv(path_to_save_qc)
     return geno
-
-
-# merge list to single dict
-def merge_list_dict(lists) -> Dict[Any, Any]:
-    result = {}
-    for tmp in lists:
-        result = {**result, **tmp}
-
-    return result
 
 
 def save_tensor(x: Tensor, file: Path):
@@ -85,6 +60,7 @@ def save_tensor(x: Tensor, file: Path):
             row: list = []
             for j in range(x.size(1)):
                 # do something
+
                 row.append(x[i][j].item())
             print(*row, file=fh)
         fh.flush()
@@ -144,15 +120,21 @@ def equality_of_variance_test(*samples: Tuple[ndarray, ...]) -> Tuple[bool, floa
         return True, stat, p_value
 
 
-def get_normalized_data(data: DataFrame) -> DataFrame:
-    from sklearn.preprocessing import MinMaxScaler
-
+def get_transformed_data(data: DataFrame):
     # log2(TPM+0.25) transformation (0.25 to prevent negative inf)
     modified = DataFrame(data=np.log2(data + 0.25), columns=data.columns)
 
+    '''
     med_exp = np.median(modified.values[:, 1:], axis=1)
     for i in range(modified.shape[0]):
         modified.iloc[i, 1:] = modified.values[i, 1:] - med_exp[i]  # fold change respect to median
+    '''
+
+    return modified
+
+
+def get_normalized_data(data: DataFrame) -> DataFrame:
+    from sklearn.preprocessing import MinMaxScaler
 
     scaler = MinMaxScaler()
     return DataFrame(data=scaler.fit_transform(modified), columns=modified.columns)

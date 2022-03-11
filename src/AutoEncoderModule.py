@@ -1,15 +1,16 @@
-import gc
+# python system library
+import argparse
 import math
 import sys
 from pathlib import Path
-from typing import Any, Union, Dict, Optional
+from typing import Any, Union, Dict, Optional, Tuple
 
-import numpy as np
+# 3rd party modules
 import pandas as pd
+import pytorch_lightning as pl
 import torch
 import torchmetrics as tm
 from numpy import ndarray
-from pytorch_lightning import LightningModule
 from pytorch_lightning.utilities.types import EVAL_DATALOADERS
 from sklearn.model_selection import train_test_split
 from torch import nn, Tensor
@@ -17,28 +18,12 @@ from torch.nn import functional as f
 from torch.optim.lr_scheduler import CyclicLR
 from torch.utils.data import Dataset, DataLoader, TensorDataset
 
-from CommonTools import data_parametric, get_dict_values_1d, get_dict_values_2d, same_distribution_test, get_data, \
-    save_tensor
+# custom modules
+from CommonTools import get_dict_values_1d, get_dict_values_2d, get_transformed_data
 
 
-class GPDataSet(Dataset):
-    def __init__(self, gp_list):
-        # 'Initialization'
-        self.gp_list = gp_list
-
-    def __len__(self):
-        # 'Denotes the total number of samples'
-        return len(self.gp_list)
-
-    def __getitem__(self, index):
-        # 'Generates one sample of data'
-        # Load data and get label
-        x = self.gp_list[index]
-        x = np.array(x)
-        return x
-
-
-class AutoGenoShallow(LightningModule):
+class AutoGenoShallow(pl.LightningModule):
+    parametric: bool
     testing_dataset: Union[TensorDataset, None]
     train_dataset: Union[TensorDataset, None]
 
@@ -50,23 +35,24 @@ class AutoGenoShallow(LightningModule):
         self.train_dataset = None
         self.test_input_list = None
         self.input_list = None
+        self.parametric = True
         # get normalized data quality control
-        self.geno: ndarray = get_data(pd.read_csv(path_to_data, index_col=0), path_to_save_qc).to_numpy()
+        self.geno: ndarray = get_transformed_data(pd.read_csv(path_to_data, index_col=0), path_to_save_qc).to_numpy()
         # self.geno: ndarray = get_filtered_data(pd.read_csv(path_to_data, index_col=0), path_to_save_qc).to_numpy()
         self.input_features = len(self.geno[0])
         self.output_features = self.input_features
-        tmp = math.ceil(self.input_features / compression_ratio)
+        self.smallest_layer = math.ceil(self.input_features / compression_ratio)
+        '''
         if tmp < 5:
             self.smallest_layer = 5 if tmp < 5 else tmp
         else:
             self.smallest_layer = tmp
-        self.hidden_layer = 2 * self.smallest_layer
         '''
+        self.hidden_layer = 2 * self.smallest_layer
         self.training_r2score_node = tm.R2Score(num_outputs=self.input_features,
                                                 multioutput='raw_values', compute_on_step=False)
         self.testing_r2score_node = tm.R2Score(num_outputs=self.input_features,
                                                multioutput='raw_values', compute_on_step=False)
-        '''
         self.save_dir = save_dir
         self.model_name = model_name
 
@@ -93,17 +79,19 @@ class AutoGenoShallow(LightningModule):
         )
 
     # define forward function
-    def forward(self, x):
-        y = self.encoder(x)
+    def forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
+        y: Tensor = self.encoder(x)
         x = self.decoder(y)
         return x, y
 
     # define training step
     def training_step(self, batch, batch_idx) -> Dict[str, Tensor]:
-        x = batch[0]
-        # print(f'{batch_idx} training batch size: {self.hparams.batch_size} x: {x.size()}')
+
+        output: Tensor
+        coder: Tensor
+        x: Tensor = batch[0]
         output, coder = self.forward(x)
-        # r2_node = self.training_r2score_node.forward(preds=output, target=x)
+        self.training_r2score_node.update(preds=output, target=x)
         loss: Tensor = f.mse_loss(input=output, target=x)
         # return {'model': coder, 'loss': loss, 'r2_node': r2_node, 'input': x, 'output': output}
         return {'model': coder.detach(), 'loss': loss, 'input': x, 'output': output.detach()}
@@ -126,21 +114,22 @@ class AutoGenoShallow(LightningModule):
         '''
 
         # ===========save model============
-        coder_file = self.save_dir.joinpath(f"{self.model_name}-{epoch}.csv")
+        coder_file = self.save_dir.joinpath(f"{self.model_name}-{epoch}.pt")
+        torch.save(coder, coder_file)
         # print(f'\n*** save_dir: {self.save_dir} coder_file: {coder_file} ***\n')
-        save_tensor(x=coder, file=coder_file)
+        # save_tensor(x=coder, file=coder_file)
         # np.savetxt(fname=coder_file, X=coder_np, fmt='%f', delimiter=',')
 
         # ======goodness of fit======
-        r2_node: Tensor = tm.functional.r2_score(preds=output, target=x, multioutput="raw_values")
+        r2_node = torch.mean(self.training_r2score_node.compute())
         '''
         result: ndarray = np.asarray([data_parametric(numpy_x[:, i], numpy_output[:, i])
                                       for i in range(self.input_features)])
         anderson: ndarray = np.asarray([same_distribution_test(numpy_x[:, i], numpy_output[:, i])
                                         for i in range(self.input_features)])
-
+        '''
         coefficient: Tensor
-        if np.all(result):
+        if self.parametric:
             coefficient = torch.stack(
                 [tm.functional.pearson_corrcoef(preds=torch.index_select(output, 1, torch.tensor([i],
                                                                                                  device=output.device)),
@@ -169,12 +158,12 @@ class AutoGenoShallow(LightningModule):
                                              torch.index_select(x, 1, torch.tensor([i],
                                                                                    device=x.device)))
              for i in range(x.size(dim=1))])
-
+        '''
         print(f"epoch[{epoch + 1:4d}]  "
               f"learning_rate: {self.learning_rate:.6f} "
               f"loss: {losses.sum():.6f}  "
               # f"parametric: {np.all(result)} "
-              f"coefficient: {torch.mean(spearman):.3f} "
+              f"coefficient: {torch.mean(coefficient):.3f} "
               f"r2_mode: {tm.functional.r2_score(preds=output, target=x, multioutput='variance_weighted'):.3f}",
               end=' ', file=sys.stderr)
 
@@ -184,12 +173,14 @@ class AutoGenoShallow(LightningModule):
         # self.log('train_anderson_darling_test', torch.from_numpy(anderson).type(torch.HalfTensor),
         #         on_step=False, on_epoch=True)
         # self.log('parametric', float(np.all(result)), on_step=False, on_epoch=True)
-        self.log('pearson coefficient', torch.mean(pearson), on_step=False, on_epoch=True)
-        self.log('spearman coefficient', torch.mean(spearman), on_step=False, on_epoch=True)
+        self.log('coefficient', torch.mean(coefficient), on_step=False, on_epoch=True)
         self.log('r2score_per_node',
                  tm.functional.r2_score(preds=output, target=x, multioutput='variance_weighted'),
                  on_step=False, on_epoch=True)
         self.log('r2score_per_node_raw', r2_node, on_step=False, on_epoch=True)
+
+        # clean up
+        self.training_r2score_node.reset()
 
         '''
         # clean up and free up memory
@@ -296,27 +287,9 @@ class AutoGenoShallow(LightningModule):
                  on_epoch=True)
         self.log('testing_r2score_per_node_raw', r2_node, on_step=False, on_epoch=True)
 
-        # clean up and free up memory
-        del losses
-        # del result
-        # del anderson
-        # del coefficient
-        del r2_node
-        del x
-        del output
-        # del np_x
-        # del np_output
-
-        if torch.cuda.is_available():
-            torch.cuda.empty_cache()
-
-        gc.collect()
-
     # configures the optimizers through learning rate
     def configure_optimizers(self):
-        
         optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
-        '''
         it_per_epoch = math.ceil(len(self.train_dataloader()) / self.hparams.batch_size)
         print(f'it_per_epoch: {it_per_epoch}')
         scheduler: CyclicLR = torch.optim.lr_scheduler.CyclicLR(optimizer, base_lr=self.min_lr,
@@ -324,13 +297,8 @@ class AutoGenoShallow(LightningModule):
                                                                 cycle_momentum=False,
                                                                 step_size_up=4 * it_per_epoch,
                                                                 max_lr=self.learning_rate)
-        # step_size = 4 * len(self.train_dataloader())
-        # clr = self.cyclical_lr(step_size, min_lr=self.min_lr, max_lr=self.learning_rate)
-        # scheduler: LambdaLR = torch.optim.lr_scheduler.LambdaLR(optimizer, [clr])
 
         return {"optimizer": optimizer, "lr_scheduler": scheduler}
-        '''
-        return {"optimizer": optimizer}
 
     def setup(self, stage: Optional[str] = None):
         # setup of training and testing
@@ -364,15 +332,8 @@ class AutoGenoShallow(LightningModule):
         pass
 
     @staticmethod
-    def cyclical_lr(step_size: int, min_lr: float = 3e-2, max_lr: float = 3e-3):
-        # Scaler: we can adapt this if we do not want the triangular CLR
-        def scaler(x: Any) -> int:
-            return x * 0 + 1
-
-        # Additional function to see where on the cycle we are
-        def relative(it, size: int):
-            cycle = math.floor(1 + it / (2 * size))
-            x = abs(it / size - 2 * cycle + 1)
-            return max(0, (1 - x)) * scaler(cycle)
-
-        return lambda it: min_lr + (max_lr - min_lr) * relative(it, step_size)  # Lambda function to calculate the LR
+    def add_model_specific_args(parent_parser: argparse.ArgumentParser):
+        parser = parent_parser.add_argument_group("LitModel")
+        parser.add_argument("--encoder_layers", type=int, default=12)
+        parser.add_argument("--data_path", type=str, default="/some/path")
+        return parent_parser

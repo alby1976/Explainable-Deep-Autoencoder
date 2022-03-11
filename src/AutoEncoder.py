@@ -1,21 +1,23 @@
 # ** Use Python to run Deep Autoencoder (feature selection) **
 # ** path - is a string to desired path location. **
+import argparse
+import os
 import sys
+from argparse import ArgumentParser
+from pathlib import Path
 from typing import Tuple
 
 import pandas as pd
 import pytorch_lightning as pl
-from pathlib import Path
-
-from pytorch_lightning.callbacks import ModelSummary, StochasticWeightAveraging
-from torchinfo import summary
 import torch
 from pytorch_lightning import seed_everything, Trainer
-from pytorch_lightning.loggers import CSVLogger, TensorBoardLogger
+from pytorch_lightning.callbacks import ModelSummary, StochasticWeightAveraging
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
+from pytorch_lightning.loggers import CSVLogger, TensorBoardLogger
+from torchinfo import summary
+
 from AutoEncoderModule import AutoGenoShallow
 from CommonTools import create_dir
-import os
 
 
 def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_save_ae: Path,
@@ -91,6 +93,8 @@ if __name__ == '__main__':
         # device_index = "0"
         # os.environ["CUDA_VISIBLE_DEVICES"] = device_index
         os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = 'true'
+
+    parser: ArgumentParser = argparse.ArgumentParser()
 
     if len(sys.argv) < 7:
         print('Default setting are used. Either change AutoEncoder.py to change settings or type:\n')
