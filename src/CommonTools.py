@@ -42,6 +42,12 @@ class DataNormalization():
         else:
             return DataFrame(self.scaler.fit_transform(X=x_train), columns=self.column_names)
 
+    def transform(self, x:Any):
+        if self.column_names is None:
+            return self.scaler.transform(X=x)
+        else:
+            return DataFrame(self.scaler.transform(X=x), columns=self.column_names)
+
 
 def get_transformed_data(geno: DataFrame, path_to_save_qc: Path) -> DataFrame:
     try:
@@ -79,9 +85,13 @@ def get_dict_values_2d(key: str, lists: List[Dict[str, Tensor]], dim: int = 0) -
 
 def data_parametric(*samples) -> bool:
     # print(f'samples: {type(samples)}\n\n{samples}\n\n')
-    result1, _, _ = same_distribution_test(*samples)
-    result2, _, _ = normality_test(samples[0])
-    result3, _, _ = equality_of_variance_test(*samples)
+    if len(samples) > 1:
+        result1, _, _ = same_distribution_test(*samples)
+        result2, _, _ = normality_test(samples[0])
+        result3, _, _ = equality_of_variance_test(*samples)
+    else:
+        pass # TODO need to define
+
     return result1 and result2 and result3
 
 
@@ -131,13 +141,6 @@ def get_transformed_data(data: DataFrame):
     '''
 
     return modified
-
-
-def get_normalized_data(data: DataFrame) -> DataFrame:
-    from sklearn.preprocessing import MinMaxScaler
-
-    scaler = MinMaxScaler()
-    return DataFrame(data=scaler.fit_transform(modified), columns=modified.columns)
 
 
 def create_dir(directory: Path):

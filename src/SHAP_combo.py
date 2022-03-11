@@ -10,7 +10,7 @@ import shap
 from pandas import DataFrame
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
-from CommonTools import create_dir, get_normalized_data
+from CommonTools import create_dir, DataNormalization
 
 
 def get_last_model(directory: Path):
@@ -22,6 +22,7 @@ def get_last_model(directory: Path):
 
 def main(path_to_data_gene_name: Path, path_to_data_gene_id: Path, path_to_ae_result: Path,
          path_to_save_bar: str, path_to_save_scatter: str, path_to_save_gene_model: str):
+    # TODO need to refactor this method to incorporate the changes in data normalization
     create_dir(Path(path_to_save_bar).parent)
     create_dir(Path(path_to_save_scatter).parent)
     create_dir(Path(path_to_save_gene_model).parent)
