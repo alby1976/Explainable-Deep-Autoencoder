@@ -185,6 +185,7 @@ def main(slurm: bool, ensembl_version: int, path_to_original_data: Path, pathway
 
 if __name__ == '__main__':
     parser: ArgumentParser = argparse.ArgumentParser()
+    parser.add_argument()
 
     if len(sys.argv) < 6:
         print('less than 7 command line arguments')

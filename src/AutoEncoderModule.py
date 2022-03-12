@@ -192,6 +192,7 @@ class AutoGenoShallow(pl.LightningModule):
         # logging validation metrics into log file
         self.log('testing_loss', torch.sum(losses), on_step=False, on_epoch=True)
         self.log('testing_r2score', r2_node, on_step=False, on_epoch=True)
+        self.testing_r2score_node.reset()
 
     # configures the optimizers through learning rate
     def configure_optimizers(self):
