@@ -28,7 +28,7 @@ def r2_value(y_true: ndarray, y_pred: ndarray, axis: object = None) -> object:
 """
 
 
-class DataNormalization():
+class DataNormalization:
     from sklearn.preprocessing import MinMaxScaler
 
     def __init__(self, column_names=None):
@@ -58,20 +58,6 @@ def get_transformed_data(geno: DataFrame, path_to_save_qc: Path) -> DataFrame:
     create_dir(path_to_save_qc.parent)
     geno.to_csv(path_to_save_qc)
     return geno
-
-
-def save_tensor(x: Tensor, file: Path):
-    with open(file, "w") as fh:
-        for i in range(x.size(0)):
-            row: list = []
-            for j in range(x.size(1)):
-                # do something
-
-                row.append(x[i][j].item())
-            print(*row, file=fh)
-        fh.flush()
-        os.fsync(fd=fh)
-        fh.close()
 
 
 # get dictionary values in a Tensor for a particular key in a list of dictionary
@@ -150,3 +136,10 @@ def create_dir(directory: Path):
 
 def get_device() -> device:
     return torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+
+def filter_data(data:DataFrame, filter_str: str):
+    try:
+        return data[data.phen != filter_str]
+    except KeyError:
+        return data

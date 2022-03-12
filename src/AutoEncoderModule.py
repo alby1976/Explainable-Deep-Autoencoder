@@ -56,14 +56,15 @@ class GPDataSet(pl.LightningDataModule):
         parser.add_argument("--batch_size", type=int, default=64, help='the size of each batch e.g. 64')
         return parent_parser
 
+
 class AutoGenoShallow(pl.LightningModule):
     parametric: bool
     testing_dataset: Union[TensorDataset, None]
     train_dataset: Union[TensorDataset, None]
 
     def __init__(self, save_dir: str, data: str, transformed_data: str,
-                 name: str, ratio: int, batch_size: int = 32,
-                 learning_rate: float = 0.0001):
+                 name: str, ratio: int, batch_size: int,
+                 learning_rate: float):
         super().__init__()  # I guess this inherits __init__ from super class
         self.testing_dataset = None
         self.train_dataset = None
@@ -84,9 +85,9 @@ class AutoGenoShallow(pl.LightningModule):
         '''
         self.hidden_layer = 2 * self.smallest_layer
         self.training_r2score_node = tm.R2Score(num_outputs=self.input_features,
-                                                multioutput='raw_values', compute_on_step=False)
+                                                multioutput='variance_weighted', compute_on_step=False)
         self.testing_r2score_node = tm.R2Score(num_outputs=self.input_features,
-                                               multioutput='raw_values', compute_on_step=False)
+                                               multioutput='variance_weighted', compute_on_step=False)
         self.save_dir = save_dir
         self.model_name = name
 
@@ -128,7 +129,7 @@ class AutoGenoShallow(pl.LightningModule):
         self.training_r2score_node.update(preds=output, target=x)
         loss: Tensor = f.mse_loss(input=output, target=x)
         # return {'model': coder, 'loss': loss, 'r2_node': r2_node, 'input': x, 'output': output}
-        return {'model': coder.detach(), 'loss': loss, 'input': x, 'output': output.detach()}
+        return {'model': coder.detach(), 'loss': loss}
 
     # end of training epoch
     def training_epoch_end(self, training_step_outputs):
@@ -137,15 +138,7 @@ class AutoGenoShallow(pl.LightningModule):
 
         # extracting training batch data
         losses: Tensor = get_dict_values_1d('loss', training_step_outputs)
-        x: Tensor = get_dict_values_2d('input', training_step_outputs)
-        output: Tensor = get_dict_values_2d('output', training_step_outputs)
         coder: Tensor = get_dict_values_2d('model', training_step_outputs)
-
-        '''
-        numpy_x: ndarray = x.detach().cpu().numpy()
-        numpy_output: ndarray = output.detach().cpu().numpy()
-        coder_np: Union[ndarray, int] = output_coder_list.detach().cpu().numpy()
-        '''
 
         # ===========save model============
         coder_file = self.save_dir.joinpath(f"{self.model_name}-{epoch}.pt")
@@ -155,88 +148,20 @@ class AutoGenoShallow(pl.LightningModule):
         # np.savetxt(fname=coder_file, X=coder_np, fmt='%f', delimiter=',')
 
         # ======goodness of fit======
-        r2_node = torch.mean(self.training_r2score_node.compute())
-        '''
-        result: ndarray = np.asarray([data_parametric(numpy_x[:, i], numpy_output[:, i])
-                                      for i in range(self.input_features)])
-        anderson: ndarray = np.asarray([same_distribution_test(numpy_x[:, i], numpy_output[:, i])
-                                        for i in range(self.input_features)])
-        '''
-        coefficient: Tensor
-        if self.parametric:
-            coefficient = torch.stack(
-                [tm.functional.pearson_corrcoef(preds=torch.index_select(output, 1, torch.tensor([i],
-                                                                                                 device=output.device)),
-                                                target=torch.index_select(x, 1, torch.tensor([i],
-                                                                                             device=x.device)))
-                 for i in range(x.size(dim=1))])
-        else:
-            coefficient = torch.stack(
-                [tm.functional.spearman_corrcoef(torch.index_select(output, 1, torch.tensor([i],
-                                                                                            device=output.device)),
-                                                 torch.index_select(x, 1, torch.tensor([i],
-                                                                                       device=x.device)))
-                 for i in range(x.size(dim=1))])
-
-        # print(f'train coefficient: {coefficient.size()}\n{coefficient}')
-        '''
-        pearson = torch.stack(
-            [tm.functional.pearson_corrcoef(preds=torch.index_select(output, 1, torch.tensor([i],
-                                                                                             device=output.device)),
-                                            target=torch.index_select(x, 1, torch.tensor([i],
-                                                                                         device=x.device)))
-             for i in range(x.size(dim=1))])
-        spearman = torch.stack(
-            [tm.functional.spearman_corrcoef(torch.index_select(output, 1, torch.tensor([i],
-                                                                                        device=output.device)),
-                                             torch.index_select(x, 1, torch.tensor([i],
-                                                                                   device=x.device)))
-             for i in range(x.size(dim=1))])
-        '''
+        r2_node = self.training_r2score_node.compute()
         print(f"epoch[{epoch + 1:4d}]  "
               f"learning_rate: {self.learning_rate:.6f} "
               f"loss: {losses.sum():.6f}  "
-              # f"parametric: {np.all(result)} "
-              f"coefficient: {torch.mean(coefficient):.3f} "
-              f"r2_mode: {tm.functional.r2_score(preds=output, target=x, multioutput='variance_weighted'):.3f}",
+              f"r2_mode: {r2_node}",
               end=' ', file=sys.stderr)
 
         # logging metrics into log file
         self.log('learning_rate', self.learning_rate, on_step=False, on_epoch=True)
         self.log('loss', torch.sum(losses), on_step=False, on_epoch=True)
-        # self.log('train_anderson_darling_test', torch.from_numpy(anderson).type(torch.HalfTensor),
-        #         on_step=False, on_epoch=True)
-        # self.log('parametric', float(np.all(result)), on_step=False, on_epoch=True)
-        self.log('coefficient', torch.mean(coefficient), on_step=False, on_epoch=True)
-        self.log('r2score_per_node',
-                 tm.functional.r2_score(preds=output, target=x, multioutput='variance_weighted'),
-                 on_step=False, on_epoch=True)
-        self.log('r2score_per_node_raw', r2_node, on_step=False, on_epoch=True)
+        self.log('r2score', r2_node, on_step=False, on_epoch=True)
 
         # clean up
         self.training_r2score_node.reset()
-
-        '''
-        # clean up and free up memory
-        del losses
-        # del result
-        # del anderson
-        del pearson
-        del spearman
-        del r2_node
-        del x
-        del output
-        # del numpy_x
-        # del numpy_output
-        # del output_coder_list
-        # del coder_np
-        del coder_file
-
-        if torch.cuda.is_available():
-            torch.cuda.empty_cache()
-
-        gc.collect()
-        '''
 
     # define validation step
     def validation_step(self, batch, batch_idx) -> Dict[str, Tensor]:
@@ -250,76 +175,23 @@ class AutoGenoShallow(pl.LightningModule):
               f'batch dim: {x.size()} loss dim: {loss.size()}')
         '''
         # return {'loss': loss, 'r2_node': r2_node, 'input': x, 'output': output}
-        return {'loss': loss, 'input': x, 'output': output}
+        return {'loss': loss}
 
     # end of validation epoch
     def validation_epoch_end(self, testing_step_outputs):
         # extracting training batch data
         losses = get_dict_values_1d('loss', testing_step_outputs)
-        x = get_dict_values_2d('input', testing_step_outputs)
-        output = get_dict_values_2d('output', testing_step_outputs)
-        '''
-        np_x: ndarray = x.detach().cpu().numpy()
-        np_output: ndarray = output.detach().cpu().numpy()
-        '''
         # print(f'regular losses: {losses.size()} pred: {pred.size()} target: {target.size()}')
 
         # ======goodness of fit ======
-        '''
-        anderson: ndarray = np.asarray([same_distribution_test(np_x[:, i], np_output[:, i])
-                                        for i in range(self.input_features)])
-        result: ndarray = np.asarray([data_parametric(np_x[:, i], np_output[:, i])
-                                      for i in range(self.input_features)])
-        
-        coefficient: Tensor
-        if np.all(result):
-            coefficient = torch.stack(
-                [tm.functional.pearson_corrcoef(torch.index_select(output, 1, torch.tensor([i],
-                                                                                           device=output.device)),
-                                                torch.index_select(x, 1, torch.tensor([i],
-                                                                                      device=x.device)))
-                 for i in range(x.size(dim=1))])
-        else:
-            coefficient = torch.stack(
-                [tm.functional.spearman_corrcoef(torch.index_select(output, 1, torch.tensor([i],
-                                                                                            device=output.device)),
-                                                 torch.index_select(x, 1, torch.tensor([i],
-                                                                                       device=x.device)))
-                 for i in range(x.size(dim=1))])
-        '''
-        pearson = torch.stack(
-            [tm.functional.pearson_corrcoef(preds=torch.index_select(output, 1, torch.tensor([i],
-                                                                                             device=output.device)),
-                                            target=torch.index_select(x, 1, torch.tensor([i],
-                                                                                         device=x.device)))
-             for i in range(x.size(dim=1))])
-        spearman = torch.stack(
-            [tm.functional.spearman_corrcoef(torch.index_select(output, 1, torch.tensor([i],
-                                                                                        device=output.device)),
-                                             torch.index_select(x, 1, torch.tensor([i],
-                                                                                   device=x.device)))
-             for i in range(x.size(dim=1))])
-        r2_node: Tensor = tm.functional.r2_score(preds=output, target=x, multioutput="raw_values")
-
+        r2_node: Tensor = self.testing_r2score_node.compute()
         print(f"test_loss: {torch.sum(losses):.6f} "
-              # f"test_parm: {np.all(result)} "
-              f"test_coefficient: {torch.mean(spearman):.3f} "
-              f"test_r2_node: "
-              f"{tm.functional.r2_score(preds=output, target=x, multioutput='variance_weighted'):.3f}",
+              f"test_r2_node: {r2_node}",
               file=sys.stderr)
 
         # logging validation metrics into log file
-        self.log('testing_loss', torch.sum(losses))
-        # self.log('testing_anderson_darling_test', torch.from_numpy(anderson).type(torch.HalfTensor),
-        #         on_step=False, on_epoch=True)
-        # self.log('testing_parametric', float(np.all(result)), on_step=False, on_epoch=True)
-        self.log('testing pearson coefficient', torch.mean(pearson), on_step=False, on_epoch=True)
-        self.log('testing spearman coefficient', torch.mean(spearman), on_step=False, on_epoch=True)
-        # self.log('testing_coefficient', torch.mean(coefficient), on_step=False, on_epoch=True)
-        self.log('testing_r2score_per_node',
-                 tm.functional.r2_score(preds=output, target=x, multioutput='variance_weighted'), on_step=False,
-                 on_epoch=True)
-        self.log('testing_r2score_per_node_raw', r2_node, on_step=False, on_epoch=True)
+        self.log('testing_loss', torch.sum(losses), on_step=False, on_epoch=True)
+        self.log('testing_r2score', r2_node, on_step=False, on_epoch=True)
 
     # configures the optimizers through learning rate
     def configure_optimizers(self):
@@ -331,7 +203,6 @@ class AutoGenoShallow(pl.LightningModule):
                                                                 cycle_momentum=False,
                                                                 step_size_up=4 * it_per_epoch,
                                                                 max_lr=self.learning_rate)
-
         return {"optimizer": optimizer, "lr_scheduler": scheduler}
 
     def setup(self, stage: Optional[str] = None):
@@ -381,4 +252,6 @@ class AutoGenoShallow(pl.LightningModule):
                             help='min number of epochs e.g. 200')
         parser.add_argument("--ratio", type=int, default=64,
                             help='compression ratio for smallest layer NB: ideally a number that is power of 2')
+        parser.add_argument("--learning_rate", type=float, default=0.0001,
+                            help='the base learning rate for training e.g 0.0001')
         return parent_parser
