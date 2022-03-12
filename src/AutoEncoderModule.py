@@ -22,13 +22,47 @@ from torch.utils.data import Dataset, DataLoader, TensorDataset
 from CommonTools import get_dict_values_1d, get_dict_values_2d, get_transformed_data
 
 
+class GPDataSet(pl.LightningDataModule):
+    def __init__(self, data: str, transformed_data: str, batch_size: int):
+        self.data: Path = Path(data)
+        self.transformed_data: Path = Path(transformed_data)
+        self.batch_size: int = batch_size
+
+    def setup(self, stage: Optional[str] = None):
+        self.mnist_test = MNIST(self.data_dir, train=False)
+        mnist_full = MNIST(self.data_dir, train=True)
+        self.mnist_train, self.mnist_val = random_split(mnist_full, [55000, 5000])
+
+    def train_dataloader(self):
+        return DataLoader(self.mnist_train, batch_size=self.batch_size)
+
+    def val_dataloader(self):
+        return DataLoader(self.mnist_val, batch_size=self.batch_size)
+
+    def test_dataloader(self):
+        return DataLoader(self.mnist_test, batch_size=self.batch_size)
+
+    def teardown(self, stage: Optional[str] = None):
+        # Used to clean-up when the run is finished
+        ...
+
+    @staticmethod
+    def add_model_specific_args(parent_parser: argparse.ArgumentParser):
+        parser = parent_parser.add_argument_group("GPDataSet")
+        parser.add_argument("--data", type=str, default='../data_example.csv',
+                            help='original datafile e.g. ../data_example.csv')
+        parser.add_argument("--transformed_data", type=str, default="./data_QC.csv",
+                            help='filename of original data after quality control e.g. ./data_QC.csv')
+        parser.add_argument("--batch_size", type=int, default=64, help='the size of each batch e.g. 64')
+        return parent_parser
+
 class AutoGenoShallow(pl.LightningModule):
     parametric: bool
     testing_dataset: Union[TensorDataset, None]
     train_dataset: Union[TensorDataset, None]
 
-    def __init__(self, save_dir: Path, path_to_data: Path, path_to_save_qc: Path,
-                 model_name: str, compression_ratio: int, batch_size: int = 32,
+    def __init__(self, save_dir: str, data: str, transformed_data: str,
+                 name: str, ratio: int, batch_size: int = 32,
                  learning_rate: float = 0.0001):
         super().__init__()  # I guess this inherits __init__ from super class
         self.testing_dataset = None
@@ -37,11 +71,11 @@ class AutoGenoShallow(pl.LightningModule):
         self.input_list = None
         self.parametric = True
         # get normalized data quality control
-        self.geno: ndarray = get_transformed_data(pd.read_csv(path_to_data, index_col=0), path_to_save_qc).to_numpy()
+        self.geno: ndarray = get_transformed_data(pd.read_csv(Path(data), index_col=0), Path(transformed_data)).to_numpy()
         # self.geno: ndarray = get_filtered_data(pd.read_csv(path_to_data, index_col=0), path_to_save_qc).to_numpy()
         self.input_features = len(self.geno[0])
         self.output_features = self.input_features
-        self.smallest_layer = math.ceil(self.input_features / compression_ratio)
+        self.smallest_layer = math.ceil(self.input_features / ratio)
         '''
         if tmp < 5:
             self.smallest_layer = 5 if tmp < 5 else tmp
@@ -54,7 +88,7 @@ class AutoGenoShallow(pl.LightningModule):
         self.testing_r2score_node = tm.R2Score(num_outputs=self.input_features,
                                                multioutput='raw_values', compute_on_step=False)
         self.save_dir = save_dir
-        self.model_name = model_name
+        self.model_name = name
 
         # Hyper-parameters
         self.learning_rate = learning_rate
@@ -333,7 +367,18 @@ class AutoGenoShallow(pl.LightningModule):
 
     @staticmethod
     def add_model_specific_args(parent_parser: argparse.ArgumentParser):
-        parser = parent_parser.add_argument_group("LitModel")
-        parser.add_argument("--encoder_layers", type=int, default=12)
-        parser.add_argument("--data_path", type=str, default="/some/path")
+        parser = parent_parser.add_argument_group("AutoGenoShallow")
+        parser.add_argument("--name", type=str, default='AE_Geno',
+                            help='model name e.g. AE_Geno')
+        parser.add_argument("--data", type=str, default='../data_example.csv',
+                            help='original datafile e.g. ../data_example.csv')
+        parser.add_argument("--transformed_data", type=str, default="./data_QC.csv",
+                            help='filename of original data after quality control e.g. ./data_QC.csv')
+        parser.add_argument("--batch_size", type=int, default=64, help='the size of each batch e.g. 64')
+        parser.add_argument("--save_dir", type=str, default='../AE',
+                            help='base dir to saved AE models e.g. ./AE')
+        parser.add_argument("--num_epoch", type=int, default=200,
+                            help='min number of epochs e.g. 200')
+        parser.add_argument("--ratio", type=int, default=64,
+                            help='compression ratio for smallest layer NB: ideally a number that is power of 2')
         return parent_parser
