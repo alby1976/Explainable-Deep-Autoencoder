@@ -103,7 +103,7 @@ if __name__ == '__main__':
     parser = AutoGenoShallow.add_model_specific_args(parser)
 
     # add DataModule specific args
-    parser = GPDataSet.add_model_specific_args(parser)
+    # parser = GPDataSet.add_argparse_args(parser)
 
     # add all the available trainer options to argparse
     # ie: now --gpus --num_nodes ... --fast_dev_run all work in the cli

@@ -17,7 +17,7 @@ from torch import nn, Tensor
 from torch.nn import functional as f
 from torch.optim.lr_scheduler import CyclicLR
 from torch.utils.data import Dataset, DataLoader, TensorDataset
-from pl_bolts.datamodules import SklearnDataModule, SklearnDataset
+from pl_bolts.datamodules import SklearnDataset
 
 # custom modules
 from CommonTools import get_dict_values_1d, get_dict_values_2d, get_transformed_data
@@ -36,14 +36,14 @@ class GPDataSet(pl.LightningDataModule):
         # mnist_full = MNIST(self.data_dir, train=True)
         # self.mnist_train, self.mnist_val = random_split(mnist_full, [55000, 5000])
 
-    def train_dataloader(self):
-        return DataLoader(self.gpdataset_train, batch_size=self.batch_size)
+    def train_dataloader(self) -> TRAIN_DATALOADERS:
+        pass
 
-    def val_dataloader(self):
-        return DataLoader(self.gpdataset_val, batch_size=self.batch_size)
+    def val_dataloader(self) -> EVAL_DATALOADERS:
+        pass
 
-    def test_dataloader(self):
-        return DataLoader(self.gpdataset_test, batch_size=self.batch_size)
+    def test_dataloader(self) -> EVAL_DATALOADERS:
+        pass
 
     def predict_dataloader(self) -> EVAL_DATALOADERS:
         pass
@@ -62,10 +62,11 @@ class AutoGenoShallow(pl.LightningModule):
                  name: str, ratio: int, batch_size: int, cyclic: bool,
                  learning_rate: float):
         super().__init__()  # I guess this inherits __init__ from super class
-        self.testing_dataset = None
-        self.train_dataset = None
-        self.test_input_list = None
-        self.input_list = None
+        # self.testing_dataset = None
+        # self.train_dataset = None
+        # self.test_input_list = None
+        # self.input_list = None
+        self.dataset = None
         self.cyclic = cyclic
 
         # get normalized data quality control
