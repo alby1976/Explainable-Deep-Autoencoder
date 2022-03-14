@@ -16,20 +16,19 @@ from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.loggers import CSVLogger, TensorBoardLogger
 from torchinfo import summary
 
-from AutoEncoderModule import AutoGenoShallow
+from AutoEncoderModule import AutoGenoShallow, GPDataSet
 from CommonTools import create_dir
 
 
-def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_save_ae: Path,
-         compression_ratio: int, num_epochs: int, batch_size: int):
-    if not (path_to_data.is_file()):
-        print(f'{path_to_data} is not a file')
+def main(args: ArgumentParser):
+    if not (Path(args.data).is_file()):
+        print(f'{args.data} is not a file')
         sys.exit(-1)
 
     # instantiate model
+    path_to_save_ae = Path(args.save_dir)
     create_dir(path_to_save_ae)
-    model = AutoGenoShallow(save_dir=path_to_save_ae, path_to_data=path_to_data, path_to_save_qc=path_to_save_qc,
-                            model_name=model_name, compression_ratio=compression_ratio, batch_size=batch_size)
+    model = AutoGenoShallow(args)
     # find ideal learning rate
     seed_everything(42)
     stop_loss = EarlyStopping(monitor='testing_loss', mode='min', patience=10, verbose=True,
@@ -39,12 +38,11 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
     ckpt_dir = path_to_save_ae.joinpath('ckpt')
     create_dir(log_dir)
     create_dir(ckpt_dir)
-    csv_logger = CSVLogger(save_dir=str(log_dir), name=model_name)
-    tensor_board_logger = TensorBoardLogger(save_dir=str(log_dir), name=model_name)
+    csv_logger = CSVLogger(save_dir=str(log_dir), name=args.name)
+    tensor_board_logger = TensorBoardLogger(save_dir=str(log_dir), name=args.name)
     if torch.cuda.is_available():
         swa = StochasticWeightAveraging(device='cuda')
-        trainer = pl.Trainer(min_epochs=num_epochs,
-                             max_epochs=-1,
+        trainer = pl.Trainer(max_epochs=-1,
                              default_root_dir=str(ckpt_dir),
                              log_every_n_steps=1,
                              logger=[csv_logger, tensor_board_logger],
@@ -60,7 +58,7 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
                              enable_progress_bar=True)
     else:
         swa = StochasticWeightAveraging(device='cpu')
-        trainer = pl.Trainer(min_epochs=num_epochs,
+        trainer = pl.Trainer(args,
                              max_epochs=-1,
                              default_root_dir=str(ckpt_dir),
                              log_every_n_steps=1,
@@ -71,7 +69,7 @@ def main(model_name: str, path_to_data: Path, path_to_save_qc: Path, path_to_sav
                              # auto_scale_batch_size='binsearch',
                              enable_progress_bar=True)
 
-    if 1 == 0:  # TODO create command-line parameter
+    if args.tune:
         print(f'...Finding ideal batch size....')
         trainer.tuner.scale_batch_size(model=model, init_val=model.hparams.batch_size, mode='binsearch')
 
@@ -94,8 +92,27 @@ if __name__ == '__main__':
         # os.environ["CUDA_VISIBLE_DEVICES"] = device_index
         os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = 'true'
 
-    parser: ArgumentParser = argparse.ArgumentParser()
+    parser: ArgumentParser = argparse.ArgumentParser(description='Generate AE Model that can used Shape to predit the '
+                                                                 'hidden layer features.')
 
+    # add PROGRAM level args
+    parser.add_argument('--tune', type=bool, default=True, help='whether or not pytorch lightning find optimum '
+                                                                'batch_size and learning rate')
+
+    # add model specific args
+    parser = AutoGenoShallow.add_model_specific_args(parser)
+
+    # add DataModule specific args
+    parser = GPDataSet.add_model_specific_args(parser)
+
+    # add all the available trainer options to argparse
+    # ie: now --gpus --num_nodes ... --fast_dev_run all work in the cli
+    parser = Trainer.add_argparse_args(parser)
+    print(parser.parse_args())
+    sys.exit(-1)
+    main(parser.parse_args())
+
+    '''
     if len(sys.argv) < 7:
         print('Default setting are used. Either change AutoEncoder.py to change settings or type:\n')
         print('python AutoEncoder.py model_name original_datafile '
@@ -113,3 +130,4 @@ if __name__ == '__main__':
         main(model_name=sys.argv[1], path_to_data=Path(sys.argv[2]), path_to_save_qc=Path(sys.argv[3]),
              path_to_save_ae=Path(sys.argv[4]),
              compression_ratio=int(sys.argv[5]), num_epochs=int(sys.argv[6]), batch_size=int(sys.argv[7]))
+    '''

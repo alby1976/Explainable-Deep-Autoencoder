@@ -6,17 +6,18 @@ from pathlib import Path
 from typing import Any, Union, Dict, Optional, Tuple
 
 # 3rd party modules
-import pandas as pd
 import pytorch_lightning as pl
 import torch
 import torchmetrics as tm
 from numpy import ndarray
-from pytorch_lightning.utilities.types import EVAL_DATALOADERS
+import pandas as pd
+from pytorch_lightning.utilities.types import EVAL_DATALOADERS, TRAIN_DATALOADERS
 from sklearn.model_selection import train_test_split
 from torch import nn, Tensor
 from torch.nn import functional as f
 from torch.optim.lr_scheduler import CyclicLR
 from torch.utils.data import Dataset, DataLoader, TensorDataset
+from pl_bolts.datamodules import SklearnDataModule, SklearnDataset
 
 # custom modules
 from CommonTools import get_dict_values_1d, get_dict_values_2d, get_transformed_data
@@ -24,37 +25,32 @@ from CommonTools import get_dict_values_1d, get_dict_values_2d, get_transformed_
 
 class GPDataSet(pl.LightningDataModule):
     def __init__(self, data: str, transformed_data: str, batch_size: int):
+        super().__init__()
         self.data: Path = Path(data)
         self.transformed_data: Path = Path(transformed_data)
         self.batch_size: int = batch_size
 
     def setup(self, stage: Optional[str] = None):
-        self.mnist_test = MNIST(self.data_dir, train=False)
-        mnist_full = MNIST(self.data_dir, train=True)
-        self.mnist_train, self.mnist_val = random_split(mnist_full, [55000, 5000])
+        pass
+        # self.mnist_test = MNIST(self.data_dir, train=False)
+        # mnist_full = MNIST(self.data_dir, train=True)
+        # self.mnist_train, self.mnist_val = random_split(mnist_full, [55000, 5000])
 
     def train_dataloader(self):
-        return DataLoader(self.mnist_train, batch_size=self.batch_size)
+        return DataLoader(self.gpdataset_train, batch_size=self.batch_size)
 
     def val_dataloader(self):
-        return DataLoader(self.mnist_val, batch_size=self.batch_size)
+        return DataLoader(self.gpdataset_val, batch_size=self.batch_size)
 
     def test_dataloader(self):
-        return DataLoader(self.mnist_test, batch_size=self.batch_size)
+        return DataLoader(self.gpdataset_test, batch_size=self.batch_size)
+
+    def predict_dataloader(self) -> EVAL_DATALOADERS:
+        pass
 
     def teardown(self, stage: Optional[str] = None):
         # Used to clean-up when the run is finished
         ...
-
-    @staticmethod
-    def add_model_specific_args(parent_parser: argparse.ArgumentParser):
-        parser = parent_parser.add_argument_group("GPDataSet")
-        parser.add_argument("--data", type=str, default='../data_example.csv',
-                            help='original datafile e.g. ../data_example.csv')
-        parser.add_argument("--transformed_data", type=str, default="./data_QC.csv",
-                            help='filename of original data after quality control e.g. ./data_QC.csv')
-        parser.add_argument("--batch_size", type=int, default=64, help='the size of each batch e.g. 64')
-        return parent_parser
 
 
 class AutoGenoShallow(pl.LightningModule):
@@ -63,18 +59,19 @@ class AutoGenoShallow(pl.LightningModule):
     train_dataset: Union[TensorDataset, None]
 
     def __init__(self, save_dir: str, data: str, transformed_data: str,
-                 name: str, ratio: int, batch_size: int,
+                 name: str, ratio: int, batch_size: int, cyclic: bool,
                  learning_rate: float):
         super().__init__()  # I guess this inherits __init__ from super class
         self.testing_dataset = None
         self.train_dataset = None
         self.test_input_list = None
         self.input_list = None
-        self.parametric = True
+        self.cyclic = cyclic
+
         # get normalized data quality control
-        self.geno: ndarray = get_transformed_data(pd.read_csv(Path(data), index_col=0), Path(transformed_data)).to_numpy()
+        self.geno: pd.DataFrame = pd.read_csv(Path(data), index_col=0)
         # self.geno: ndarray = get_filtered_data(pd.read_csv(path_to_data, index_col=0), path_to_save_qc).to_numpy()
-        self.input_features = len(self.geno[0])
+        self.input_features = len(self.geno.to_numpy()[0])
         self.output_features = self.input_features
         self.smallest_layer = math.ceil(self.input_features / ratio)
         '''
@@ -197,17 +194,21 @@ class AutoGenoShallow(pl.LightningModule):
     # configures the optimizers through learning rate
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
-        it_per_epoch = math.ceil(len(self.train_dataloader()) / self.hparams.batch_size)
-        print(f'it_per_epoch: {it_per_epoch}')
-        scheduler: CyclicLR = torch.optim.lr_scheduler.CyclicLR(optimizer, base_lr=self.min_lr,
-                                                                mode='exp_range',
-                                                                cycle_momentum=False,
-                                                                step_size_up=4 * it_per_epoch,
-                                                                max_lr=self.learning_rate)
-        return {"optimizer": optimizer, "lr_scheduler": scheduler}
+        if self.cyclical:
+            it_per_epoch = math.ceil(len(self.train_dataloader()) / self.hparams.batch_size)
+            print(f'it_per_epoch: {it_per_epoch}')
+            scheduler: CyclicLR = torch.optim.lr_scheduler.CyclicLR(optimizer, base_lr=self.min_lr,
+                                                                    mode='exp_range',
+                                                                    cycle_momentum=False,
+                                                                    step_size_up=4 * it_per_epoch,
+                                                                    max_lr=self.learning_rate)
+            return {"optimizer": optimizer, "lr_scheduler": scheduler}
+
+        return {"optimizer": optimizer}
 
     def setup(self, stage: Optional[str] = None):
         # setup of training and testing
+
         geno_train, geno_test = train_test_split(self.geno, test_size=0.1, random_state=42)
         # print(f'geno_train dim:{geno_train.shape} geno_test dim: {geno_test.shape}')
         # Assign train/val datasets for using in data-loaders
@@ -249,10 +250,10 @@ class AutoGenoShallow(pl.LightningModule):
         parser.add_argument("--batch_size", type=int, default=64, help='the size of each batch e.g. 64')
         parser.add_argument("--save_dir", type=str, default='../AE',
                             help='base dir to saved AE models e.g. ./AE')
-        parser.add_argument("--num_epoch", type=int, default=200,
-                            help='min number of epochs e.g. 200')
         parser.add_argument("--ratio", type=int, default=64,
                             help='compression ratio for smallest layer NB: ideally a number that is power of 2')
         parser.add_argument("--learning_rate", type=float, default=0.0001,
                             help='the base learning rate for training e.g 0.0001')
+        parser.add_argument("--cyclical", type=bool, default=False,
+                            help='whether to use cyclical learning rate or not. default is False.')
         return parent_parser
