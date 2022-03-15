@@ -36,20 +36,20 @@ class DataNormalization:
         self.scaler = MinMaxScaler()
         self.column_names = column_names
 
-    def fit_transform(self, x_train:Any):
+    def fit_transform(self, x_train: Any):
         if self.column_names is None:
             return self.scaler.fit_transform(X=x_train)
         else:
             return DataFrame(self.scaler.fit_transform(X=x_train), columns=self.column_names)
 
-    def transform(self, x:Any):
+    def transform(self, x: Any):
         if self.column_names is None:
             return self.scaler.transform(X=x)
         else:
             return DataFrame(self.scaler.transform(X=x), columns=self.column_names)
 
 
-def get_transformed_data(geno: DataFrame, path_to_save_qc: Path) -> DataFrame:
+def get_data(geno: DataFrame, path_to_save_qc: Path) -> DataFrame:
     try:
         geno.drop(columns='phen', inplace=True)
     except KeyError:
@@ -116,15 +116,13 @@ def equality_of_variance_test(*samples: Tuple[ndarray, ...]) -> Tuple[bool, floa
         return True, stat, p_value
 
 
-def get_transformed_data(data: DataFrame):
+def get_transformed_data(data):
     # log2(TPM+0.25) transformation (0.25 to prevent negative inf)
     modified = DataFrame(data=np.log2(data + 0.25), columns=data.columns)
 
-    '''
     med_exp = np.median(modified.values[:, 1:], axis=1)
     for i in range(modified.shape[0]):
         modified.iloc[i, 1:] = modified.values[i, 1:] - med_exp[i]  # fold change respect to median
-    '''
 
     return modified
 
@@ -138,7 +136,7 @@ def get_device() -> device:
     return torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
-def filter_data(data:DataFrame, filter_str: str):
+def filter_data(data: DataFrame, filter_str: str):
     try:
         return data[data.phen != filter_str]
     except KeyError:

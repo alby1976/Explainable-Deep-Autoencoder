@@ -20,8 +20,30 @@ from AutoEncoderModule import AutoGenoShallow, GPDataSet
 from CommonTools import create_dir
 
 
-def main(args: ArgumentParser):
-    if not (Path(args.data).is_file()):
+def main():
+    parser: ArgumentParser = argparse.ArgumentParser(description='Generate AE Model that can used Shape to predit the '
+                                                                 'hidden layer features.')
+
+    # add PROGRAM level args
+    parser.add_argument('--tune', type=bool, default=True, help='whether or not pytorch lightning find optimum '
+                                                                'batch_size and learning rate')
+
+    # add model specific args
+    parser = AutoGenoShallow.add_model_specific_args(parser)
+
+    # add DataModule specific args
+    parser = GPDataSet.add_datamodel_specific_args(parser)
+
+    # add all the available trainer options to argparse
+    # ie: now --gpus --num_nodes ... --fast_dev_run all work in the cli
+    parser = Trainer.add_argparse_args(parser)
+
+    args = parser.parse_args()
+    print(f'cwd: {Path(__file__).absolute().parent.parent.joinpath("data_example.csv")}\n'
+          f'data: {args.data} cyclical: {args.cyclical} batch_size: {args.batch_size}\n'
+          f'args:\n{args}')
+    sys.exit(1)
+    if not args.data.is_file():
         print(f'{args.data} is not a file')
         sys.exit(-1)
 
@@ -92,25 +114,7 @@ if __name__ == '__main__':
         # os.environ["CUDA_VISIBLE_DEVICES"] = device_index
         os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = 'true'
 
-    parser: ArgumentParser = argparse.ArgumentParser(description='Generate AE Model that can used Shape to predit the '
-                                                                 'hidden layer features.')
-
-    # add PROGRAM level args
-    parser.add_argument('--tune', type=bool, default=True, help='whether or not pytorch lightning find optimum '
-                                                                'batch_size and learning rate')
-
-    # add model specific args
-    parser = AutoGenoShallow.add_model_specific_args(parser)
-
-    # add DataModule specific args
-    # parser = GPDataSet.add_argparse_args(parser)
-
-    # add all the available trainer options to argparse
-    # ie: now --gpus --num_nodes ... --fast_dev_run all work in the cli
-    parser = Trainer.add_argparse_args(parser)
-    print(parser.parse_args())
-    sys.exit(-1)
-    main(parser.parse_args())
+    main()
 
     '''
     if len(sys.argv) < 7:
