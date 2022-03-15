@@ -29,14 +29,14 @@ from sklearn.utils import shuffle as sk_shuffle
 
 class GPDataSet(pl.LightningDataModule):
     def __init__(self, data: str, transformed_data: str, batch_size: int, val_split: float, test_split: float,
-                 filter: str, num_workers: int, random_state: int, shuffle: bool, drop_last: bool, pin_memory: bool):
+                 filter_str: str, num_workers: int, random_state: int, shuffle: bool, drop_last: bool, pin_memory: bool):
         super().__init__()
         self.data: Path = Path(data)
         self.transformed_data: Path = Path(transformed_data)
         self.batch_size = batch_size
         self.val_split = val_split
         self.test_split = test_split
-        self.filter = filter
+        self.filter = filter_str
         self.num_workers = num_workers
         self.random_state = random_state
         self.shuffle = shuffle
@@ -141,7 +141,7 @@ class GPDataSet(pl.LightningDataModule):
                             help='test set split ratio. default is 0')
         parser.add_argument("--num_workers", type=int, default=0,
                             help='number of processors used to load data. ie worker = 4 * # of GPU. default is 0')
-        parser.add_argument("--filter", type=str, default="",
+        parser.add_argument("--filter_str", type=str, default="",
                             help='filter string to select which rows are processed. default: \'\'')
         parser.add_argument("--random_state", type=int, default=42,
                             help='sets a seed to the random generator, so that your train-val-test splits are '
@@ -161,19 +161,18 @@ class AutoGenoShallow(pl.LightningModule):
     train_dataset: Union[TensorDataset, None]
 
     def __init__(self, save_dir: str, data: str, transformed_data: str,
-                 name: str, ratio: int, batch_size: int, cyclic: bool,
-                 learning_rate: float, args):
+                 name: str, ratio: int, cyclic: bool,
+                 learning_rate: float, dataset: GPDataSet):
         super().__init__()  # I guess this inherits __init__ from super class
         # self.testing_dataset = None
         # self.train_dataset = None
         # self.test_input_list = None
         # self.input_list = None
-        print(args)
-        sys.exit(1)
+
         self.cyclic = cyclic
 
         # get normalized data quality control
-        self.dataset = GPDataSet(args)
+        self.dataset = dataset
         # self.geno: ndarray = get_filtered_data(pd.read_csv(path_to_data, index_col=0), path_to_save_qc).to_numpy()
         self.input_features = len(self.dataset)
         self.output_features = self.input_features
@@ -194,7 +193,7 @@ class AutoGenoShallow(pl.LightningModule):
 
         # Hyper-parameters
         self.learning_rate = learning_rate
-        self.hparams.batch_size = batch_size
+        self.hparams.batch_size = dataset.batch_size
         self.min_lr = self.learning_rate / 6.0
         self.save_hyperparameters()
 
@@ -222,7 +221,6 @@ class AutoGenoShallow(pl.LightningModule):
 
     # define training step
     def training_step(self, batch, batch_idx) -> Dict[str, Tensor]:
-
         output: Tensor
         coder: Tensor
         x: Tensor = batch[0]
@@ -346,13 +344,14 @@ class AutoGenoShallow(pl.LightningModule):
     @staticmethod
     def add_model_specific_args(parent_parser: argparse.ArgumentParser):
         parser = parent_parser.add_argument_group("AutoGenoShallow")
+        # parser.add_argument("--data", type=str, default='../data_example.csv',
+        #                     help='original datafile e.g. ../data_example.csv')
+        # parser.add_argument("--transformed_data", type=str, default="./data_QC.csv",
+        #                     help='filename of original data after quality control e.g. ./data_QC.csv')
+        # parser.add_argument("--batch_size", type=int, default=64, help='the size of each batch e.g. 64')
+
         parser.add_argument("--name", type=str, default='AE_Geno',
                             help='model name e.g. AE_Geno')
-        # parser.add_argument("--data", type=str, default='../data_example.csv',
-        #                    help='original datafile e.g. ../data_example.csv')
-        # parser.add_argument("--transformed_data", type=str, default="./data_QC.csv",
-        #                    help='filename of original data after quality control e.g. ./data_QC.csv')
-        # parser.add_argument("--batch_size", type=int, default=64, help='the size of each batch e.g. 64')
         parser.add_argument("--save_dir", type=str, default='../AE',
                             help='base dir to saved AE models e.g. ./AE')
         parser.add_argument("--ratio", type=int, default=64,

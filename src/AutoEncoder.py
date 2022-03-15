@@ -39,10 +39,6 @@ def main():
     parser = Trainer.add_argparse_args(parser)
 
     args = parser.parse_args()
-    print(f'cwd: {Path(__file__).absolute().parent.parent.joinpath("data_example.csv")}\n'
-          f'data: {args.data} cyclical: {args.cyclical} batch_size: {args.batch_size}\n'
-          f'args:\n{args}')
-    sys.exit(1)
     if not args.data.is_file():
         print(f'{args.data} is not a file')
         sys.exit(-1)
@@ -50,7 +46,9 @@ def main():
     # instantiate model
     path_to_save_ae = Path(args.save_dir)
     create_dir(path_to_save_ae)
-    model = AutoGenoShallow(args)
+    model = AutoGenoShallow(args, GPDataSet(args))
+    print(model)
+    sys.exit(1)
     # find ideal learning rate
     seed_everything(42)
     stop_loss = EarlyStopping(monitor='testing_loss', mode='min', patience=10, verbose=True,
