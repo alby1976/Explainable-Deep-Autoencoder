@@ -54,9 +54,6 @@ class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
         self.shuffle = shuffle
         self.drop_last = drop_last
         self.pin_memory = pin_memory
-        self.train_dataset = super().train_dataset
-        self.val_dataset = super().val_dataset
-        self.test_dataset = super().test_dataset
         self.dm = DataNormalization(column_names=x.columns)
         self.size: int = len(x.columns)
 
