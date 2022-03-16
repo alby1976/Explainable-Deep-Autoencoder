@@ -48,16 +48,12 @@ class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
             pin_memory,
             drop_last
         )
-        self.batch_size = batch_size
-        self.num_workers = num_workers
-        self.random_state = random_state
-        self.shuffle = shuffle
-        self.drop_last = drop_last
-        self.pin_memory = pin_memory
         self.dm = DataNormalization(column_names=x.columns)
         self.size: int = len(x.columns)
 
     def train_dataloader(self) -> TRAIN_DATALOADERS:
+        print(f'train: batch size: {self.batch_size} shuffle: {self.shuffle} '
+              f'num_workers: {self.num_workers} drop_last: {self.drop_last} pin_memory: {self.pin_memory}')
         loader = DataLoader(
             self.dm.fit_transform(self.train_dataset).to_numpy(),
             batch_size=self.batch_size,
@@ -69,6 +65,8 @@ class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
         return loader
 
     def val_dataloader(self) -> EVAL_DATALOADERS:
+        print(f'val: batch size: {self.batch_size} shuffle: {self.shuffle} '
+              f'num_workers: {self.num_workers} drop_last: {self.drop_last} pin_memory: {self.pin_memory}')
         loader = DataLoader(
             self.dm.transform(self.val_dataset).to_numpy(),
             batch_size=self.batch_size,
@@ -80,6 +78,8 @@ class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
         return loader
 
     def test_dataloader(self) -> EVAL_DATALOADERS:
+        print(f'test: batch size: {self.batch_size} shuffle: {self.shuffle} '
+              f'num_workers: {self.num_workers} drop_last: {self.drop_last} pin_memory: {self.pin_memory}')
         loader = DataLoader(
             self.dm.transform(self.test_dataset).to_numpy(),
             batch_size=self.batch_size,
