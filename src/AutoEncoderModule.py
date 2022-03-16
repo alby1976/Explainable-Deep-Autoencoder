@@ -49,6 +49,8 @@ class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
             drop_last
         )
         dm = DataNormalization(column_names=x.columns)
+        print(f'train data: {[self.train_dataset.__getitem__(i) for i in range(len(self.train_dataset))]}')
+        sys.exit(1)
         self.train_dataset = SklearnDataset(dm.fit_transform(self.train_dataset.X).to_numpy(), self.train_dataset.Y)
         self.val_dataset = SklearnDataset(dm.transform(self.val_dataset.X).to_numpy(), self.val_dataset.Y)
         self.test_dataset = SklearnDataset(dm.transform(self.test_dataset.X).to_numpy(), self.test_dataset.Y)
