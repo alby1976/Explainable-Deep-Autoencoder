@@ -139,5 +139,5 @@ def get_device() -> device:
 def filter_data(data: DataFrame, filter_str: str):
     try:
         return data[data.phen != filter_str]
-    except KeyError:
+    except AttributeError:
         return data

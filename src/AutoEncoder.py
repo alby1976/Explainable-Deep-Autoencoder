@@ -16,7 +16,7 @@ from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.loggers import CSVLogger, TensorBoardLogger
 from torchinfo import summary
 
-from AutoEncoderModule import AutoGenoShallow, GPDataSet
+from AutoEncoderModule import AutoGenoShallow, GPDataModule
 from CommonTools import create_dir
 
 
@@ -31,14 +31,12 @@ def main():
     # add model specific args
     parser = AutoGenoShallow.add_model_specific_args(parser)
 
-    # add DataModule specific args
-    parser = GPDataSet.add_datamodel_specific_args(parser)
-
     # add all the available trainer options to argparse
     # ie: now --gpus --num_nodes ... --fast_dev_run all work in the cli
     parser = Trainer.add_argparse_args(parser)
 
     args = parser.parse_args()
+    print(args)
     if not args.data.is_file():
         print(f'{args.data} is not a file')
         sys.exit(-1)
@@ -46,11 +44,11 @@ def main():
     # instantiate model
     path_to_save_ae = Path(args.save_dir)
     create_dir(path_to_save_ae)
-    model = AutoGenoShallow(args, GPDataSet(args))
-    print(model)
-    sys.exit(1)
-    # find ideal learning rate
-    seed_everything(42)
+    model = AutoGenoShallow(args.save_dir, args.name, args.ratio, args.cyclical, args.learning_rate, args.data,
+                            args.transformed_data, args.batch_size, args.val_split, args.test_split, args.filter_str,
+                            args.num_workers, args.random_state, args.shuffle, args.drop_last, args.pin_memory)
+
+    seed_everything(args.random_state)
     stop_loss = EarlyStopping(monitor='testing_loss', mode='min', patience=10, verbose=True,
                               check_on_train_epoch_end=False)
     trainer: Trainer
@@ -62,33 +60,34 @@ def main():
     tensor_board_logger = TensorBoardLogger(save_dir=str(log_dir), name=args.name)
     if torch.cuda.is_available():
         swa = StochasticWeightAveraging(device='cuda')
-        trainer = pl.Trainer(max_epochs=-1,
-                             default_root_dir=str(ckpt_dir),
-                             log_every_n_steps=1,
-                             logger=[csv_logger, tensor_board_logger],
-                             deterministic=True,
-                             gpus=1,
-                             auto_select_gpus=True,
-                             stochastic_weight_avg=False,
-                             callbacks=[stop_loss, ModelSummary(max_depth=2), swa],
-                             # amp_backend="apex",
-                             # amp_level="O2",
-                             precision=16,
-                             # auto_scale_batch_size='binsearch',
-                             enable_progress_bar=True)
+        trainer = pl.Trainer.from_argparse_args(args, max_epochs=-1,
+                                                default_root_dir=str(ckpt_dir),
+                                                log_every_n_steps=1,
+                                                logger=[csv_logger, tensor_board_logger],
+                                                deterministic=True,
+                                                gpus=1,
+                                                auto_select_gpus=True,
+                                                stochastic_weight_avg=False,
+                                                callbacks=[stop_loss, ModelSummary(max_depth=2), swa],
+                                                # amp_backend="apex",
+                                                # amp_level="O2",
+                                                precision=16,
+                                                # auto_scale_batch_size='binsearch',
+                                                enable_progress_bar=True)
     else:
         swa = StochasticWeightAveraging(device='cpu')
-        trainer = pl.Trainer(args,
-                             max_epochs=-1,
-                             default_root_dir=str(ckpt_dir),
-                             log_every_n_steps=1,
-                             logger=[csv_logger, tensor_board_logger],
-                             deterministic=True,
-                             stochastic_weight_avg=False,
-                             callbacks=[stop_loss, ModelSummary(max_depth=2), swa],
-                             # auto_scale_batch_size='binsearch',
-                             enable_progress_bar=True)
+        trainer = pl.Trainer.from_argparse_args(args,
+                                                max_epochs=-1,
+                                                default_root_dir=str(ckpt_dir),
+                                                log_every_n_steps=1,
+                                                logger=[csv_logger, tensor_board_logger],
+                                                deterministic=True,
+                                                stochastic_weight_avg=False,
+                                                callbacks=[stop_loss, ModelSummary(max_depth=2), swa],
+                                                # auto_scale_batch_size='binsearch',
+                                                enable_progress_bar=True)
 
+    # find ideal learning rate and batch_size
     if args.tune:
         print(f'...Finding ideal batch size....')
         trainer.tuner.scale_batch_size(model=model, init_val=model.hparams.batch_size, mode='binsearch')
@@ -101,9 +100,6 @@ def main():
     # train & validate model
     print(f'...Training and Validating model...')
     trainer.fit(model=model)
-    print('f...Model Summary')
-    tmp: Tuple[int, int] = pd.read_csv(path_to_data, index_col=0).shape
-    summary(model, (tmp[0], model.input_features))
 
 
 if __name__ == '__main__':
