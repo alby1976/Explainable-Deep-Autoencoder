@@ -33,6 +33,7 @@ class GPDataModule(pl.LightningDataModule):
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.random_state = random_state
+        self.shuffle = shuffle
         self.drop_last = drop_last
         self.pin_memory = pin_memory
         self.size: int = 0
@@ -343,7 +344,7 @@ class AutoGenoShallow(pl.LightningModule):
         parser.add_argument("--random_state", type=int, default=42,
                             help='sets a seed to the random generator, so that your train-val-test splits are '
                                  'always deterministic. default is 42')
-        parser.add_argument("--shuffle", action='store_false', default=True,
+        parser.add_argument("--shuffle", action='store_true', default=False,
                             help='whether to shuffle the dataset before splitting the dataset. default is True.')
         parser.add_argument("--drop_last", action='store_true', default=False,
                             help='whether to drop the last column or not. default is False.')
