@@ -48,23 +48,20 @@ class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
             pin_memory,
             drop_last
         )
-        dm = DataNormalization(column_names=x.columns)
         '''
         print(f'train data: \n{self.train_dataset} {range(len(self.train_dataset))}\n'
               f'{[self.train_dataset[i] for i in range(len(self.train_dataset))]}\n'
               f'{self.train_dataset[0]}')
         sys.exit(1)
         '''
-        self.train_dataset = SklearnDataset(dm.fit_transform(self.train_dataset.X).to_numpy(), self.train_dataset.Y)
-        self.val_dataset = SklearnDataset(dm.transform(self.val_dataset.X).to_numpy(), self.val_dataset.Y)
-        self.test_dataset = SklearnDataset(dm.transform(self.test_dataset.X).to_numpy(), self.test_dataset.Y)
+        self.dm = DataNormalization(column_names=x.columns)
         self.size: int = len(x.columns)
 
     def train_dataloader(self) -> TRAIN_DATALOADERS:
         print(f'train: batch size: {self.batch_size} shuffle: {self.shuffle} '
               f'num_workers: {self.num_workers} drop_last: {self.drop_last} pin_memory: {self.pin_memory}')
         loader = DataLoader(
-            self.train_dataset.X,
+            SklearnDataset(self.dm.fit_transform(self.train_dataset.X).to_numpy(), self.train_dataset.Y),
             batch_size=self.batch_size,
             shuffle=self.shuffle,
             num_workers=self.num_workers,
@@ -77,7 +74,7 @@ class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
         print(f'val: batch size: {self.batch_size} shuffle: {self.shuffle} '
               f'num_workers: {self.num_workers} drop_last: {self.drop_last} pin_memory: {self.pin_memory}')
         loader = DataLoader(
-            self.val_dataset,
+            SklearnDataset(self.dm.transform(self.val_dataset.X).to_numpy(), self.val_dataset.Y),
             batch_size=self.batch_size,
             shuffle=self.shuffle,
             num_workers=self.num_workers,
@@ -90,7 +87,7 @@ class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
         print(f'test: batch size: {self.batch_size} shuffle: {self.shuffle} '
               f'num_workers: {self.num_workers} drop_last: {self.drop_last} pin_memory: {self.pin_memory}')
         loader = DataLoader(
-            self.test_dataset,
+            SklearnDataset(self.transform(self.test_dataset.X).to_numpy(), self.test_dataset.Y),
             batch_size=self.batch_size,
             shuffle=self.shuffle,
             num_workers=self.num_workers,
