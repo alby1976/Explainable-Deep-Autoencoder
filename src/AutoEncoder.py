@@ -44,7 +44,7 @@ def main():
     # instantiate model
     path_to_save_ae = Path(args.save_dir)
     create_dir(path_to_save_ae)
-    model = AutoGenoShallow(args.save_dir, args.name, args.ratio, args.cyclical, args.learning_rate, args.data,
+    model = AutoGenoShallow(args.save_dir, args.name, args.ratio, args.cyclical_lr, args.learning_rate, args.data,
                             args.transformed_data, args.batch_size, args.val_split, args.test_split, args.filter_str,
                             args.num_workers, args.random_state, args.shuffle, args.drop_last, args.pin_memory)
 
