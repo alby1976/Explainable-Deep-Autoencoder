@@ -33,7 +33,7 @@ class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
                  num_workers: int, random_state: int, shuffle: bool, batch_size: int,
                  pin_memory: bool, drop_last: bool):
         super().__init__(
-            x,
+            x.to_numpy(),
             np.zeros(shape=len(x.index)),
             None,
             None,
