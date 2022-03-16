@@ -345,7 +345,7 @@ class AutoGenoShallow(pl.LightningModule):
                             help='sets a seed to the random generator, so that your train-val-test splits are '
                                  'always deterministic. default is 42')
         parser.add_argument("--shuffle", action='store_true', default=False,
-                            help='whether to shuffle the dataset before splitting the dataset. default is True.')
+                            help='whether to shuffle the dataset before splitting the dataset. default is False.')
         parser.add_argument("--drop_last", action='store_true', default=False,
                             help='whether to drop the last column or not. default is False.')
         parser.add_argument("--pin_memory", action='store_false', default=True,
