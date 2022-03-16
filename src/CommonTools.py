@@ -118,8 +118,10 @@ def equality_of_variance_test(*samples: Tuple[ndarray, ...]) -> Tuple[bool, floa
 
 def get_transformed_data(data: DataFrame):
     # log2(TPM+0.25) transformation (0.25 to prevent negative inf)
-    result: ndarray = np.log2(data.to_numpy() + 0.25)
-    modified = DataFrame(data=result, columns=data.columns)
+    tmp: ndarray = data.to_numpy(dtype=float)
+    tmp = tmp + 0.25
+    tmp = np.log2(tmp)
+    modified = DataFrame(data=tmp, columns=data.columns)
 
     med_exp = np.median(modified.values[:, 1:], axis=1)
     for i in range(modified.shape[0]):
