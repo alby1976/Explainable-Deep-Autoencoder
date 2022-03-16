@@ -8,10 +8,13 @@ from typing import Any, Union, Dict, Optional, Tuple
 
 # 3rd party modules
 import numpy
+import numpy as np
 import pandas as pd
+import pl_bolts.datamodules
 import pytorch_lightning as pl
 import torch
 import torchmetrics as tm
+from pandas import DataFrame
 from pl_bolts.datamodules import SklearnDataset
 from pytorch_lightning.utilities.types import EVAL_DATALOADERS, TRAIN_DATALOADERS
 from sklearn.utils import shuffle as sk_shuffle
@@ -25,64 +28,41 @@ from CommonTools import get_dict_values_1d, get_dict_values_2d, get_transformed_
     filter_data
 
 
-class GPDataModule(pl.LightningDataModule):
-    def __init__(self, data: Path, transformed_data: Path, batch_size: int, val_split: float, test_split: float,
-                 filter_str: str, num_workers: int, random_state: int, shuffle: bool, drop_last: bool,
-                 pin_memory: bool):
-        super().__init__()
+class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
+    def __init__(self, x: DataFrame, val_split: float, test_split: float,
+                 num_workers: int, random_state: int, shuffle: bool, batch_size: int,
+                 pin_memory: bool, drop_last: bool):
+        super().__init__(
+            x,
+            np.zeros(shape=len(x.index)),
+            None,
+            None,
+            None,
+            None,
+            val_split,
+            test_split,
+            num_workers,
+            random_state,
+            shuffle,
+            batch_size,
+            pin_memory,
+            drop_last
+        )
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.random_state = random_state
         self.shuffle = shuffle
         self.drop_last = drop_last
         self.pin_memory = pin_memory
-        self.size: int = 0
-        self.train_dataset, self.val_dataset, self.test_dataset = \
-            self.__init_datasets(data, transformed_data, filter_str, val_split, test_split, random_state, shuffle)
-
-    def __init_datasets(self, data: Path, transformed_data: Path, filter_str: str, val_split: float, test_split: float,
-                        random_state: int, shuffle: bool) -> Tuple[Any, Any, Any]:
-        x = get_data(geno=filter_data(pd.read_csv(data, index_col=0), filter_str), path_to_save_qc=transformed_data)
-        dm = DataNormalization(column_names=x.columns)
-        self.size = len(x.columns)
-        x = x.to_numpy()
-
-        x_val = []
-        x_test = []
-        if shuffle:
-            x = sk_shuffle(x, random_state=random_state)
-
-        hold_out_split = val_split + test_split
-        if hold_out_split > 0:
-            val_split = val_split / hold_out_split
-            hold_out_size = math.floor(len(x) * hold_out_split)
-            x_holdout = x[:hold_out_size, :]
-            test_i_start = int(val_split * hold_out_size)
-            x_val_hold_out = x_holdout[:test_i_start, :]
-            x_test_hold_out = x_holdout[test_i_start:, :]
-            x = dm.fit_transform(x[hold_out_size:, :])
-
-            # if don't have x_val and y_val create split from X
-            if val_split > 0:
-                x_val = dm.transform(x_val_hold_out)
-
-            # if don't have x_test, y_test create split from X
-            if test_split > 0:
-                x_test = dm.transform(x_test_hold_out)
-        print(f'x_val-transformed:\n{x_val}')
-        tmp1 = SklearnDataset(x, numpy.asarray([]))
-        tmp2 = SklearnDataset(x_val, numpy.asarray([]))
-        tmp3 = SklearnDataset(x_test, numpy.asarray([]))
-        print(tmp1 is None, tmp2 is None, tmp3 is None)
-        print(tmp1, tmp2, tmp3)
-        return tmp1, tmp2, tmp3
-        # self.mnist_test = MNIST(self.data_dir, train=False)
-        # mnist_full = MNIST(self.data_dir, train=True)
-        # self.mnist_train, self.mnist_val = random_split(mnist_full, [55000, 5000])
+        self.train_dataset = super().train_dataset
+        self.val_dataset = super().val_dataset
+        self.test_dataset = super().test_dataset
+        self.dm = DataNormalization(column_names=x.columns)
+        self.size: int = len(x.columns)
 
     def train_dataloader(self) -> TRAIN_DATALOADERS:
         loader = DataLoader(
-            self.train_dataset,
+            self.dm.fit_transform(self.train_dataset).to_numpy(),
             batch_size=self.batch_size,
             shuffle=self.shuffle,
             num_workers=self.num_workers,
@@ -93,7 +73,7 @@ class GPDataModule(pl.LightningDataModule):
 
     def val_dataloader(self) -> EVAL_DATALOADERS:
         loader = DataLoader(
-            self.val_dataset,
+            self.dm.transform(self.val_dataset).to_numpy(),
             batch_size=self.batch_size,
             shuffle=self.shuffle,
             num_workers=self.num_workers,
@@ -104,7 +84,7 @@ class GPDataModule(pl.LightningDataModule):
 
     def test_dataloader(self) -> EVAL_DATALOADERS:
         loader = DataLoader(
-            self.test_dataset,
+            self.dm.transform(self.test_dataset).to_numpy(),
             batch_size=self.batch_size,
             shuffle=self.shuffle,
             num_workers=self.num_workers,
@@ -140,8 +120,10 @@ class AutoGenoShallow(pl.LightningModule):
         self.cyclical = cyclical_lr
 
         # get normalized data quality control
-        self.dataset = GPDataModule(data, transformed_data, batch_size, val_split, test_split, filter_str, num_workers,
-                                    random_state, shuffle, drop_last, pin_memory)
+        self.dataset = GPDataModule(
+            get_data(geno=filter_data(pd.read_csv(data, index_col=0), filter_str), path_to_save_qc=transformed_data),
+            val_split, test_split, num_workers, random_state, shuffle, batch_size, pin_memory, drop_last
+        )
         # self.geno: ndarray = get_filtered_data(pd.read_csv(path_to_data, index_col=0), path_to_save_qc).to_numpy()
         self.input_features = self.dataset.size
         self.output_features = self.input_features
