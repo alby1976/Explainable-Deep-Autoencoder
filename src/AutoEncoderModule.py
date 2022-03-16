@@ -223,7 +223,7 @@ class AutoGenoShallow(pl.LightningModule):
         x = batch[0]
         output, _ = self.forward(x)
 
-        # r2_node = self.testing_r2score_node.forward(preds=output, target=x)
+        r2_node = self.testing_r2score_node.forward(preds=output, target=x)
         loss = f.mse_loss(input=output, target=x)
         '''
         print(f'{batch_idx} val step batch size: {self.hparams.batch_size} output dim: {output.size()} '
