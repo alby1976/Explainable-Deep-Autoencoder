@@ -319,7 +319,7 @@ class AutoGenoShallow(pl.LightningModule):
         parser.add_argument("--save_dir", type=Path,
                             default=Path(__file__).absolute().parent.parent.joinpath("AE"),
                             help='base dir to saved AE models e.g. ./AE')
-        parser.add_argument("--ratio", type=int, default=64,
+        parser.add_argument("--ratio", type=int, default=8,
                             help='compression ratio for smallest layer NB: ideally a number that is power of 2')
         parser.add_argument("-lr", "--learning_rate", type=float, default=0.0001,
                             help='the base learning rate for training e.g 0.0001')
