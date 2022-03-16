@@ -90,6 +90,7 @@ def main():
     # find ideal learning rate and batch_size
     if args.tune:
         print(f'...Finding ideal batch size....')
+        print(f'starting batch size: {model.hparams.batch_size}')
         trainer.tuner.scale_batch_size(model=model, init_val=model.hparams.batch_size, mode='binsearch')
 
         print('...Finding ideal learning rate....')
