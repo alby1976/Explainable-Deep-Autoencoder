@@ -42,7 +42,7 @@ class GPDataModule(pl.LightningDataModule):
     def __init_datasets(self, data: Path, transformed_data: Path, filter_str: str, val_split: float, test_split: float,
                         random_state: int, shuffle: bool) -> Tuple[Any, Any, Any]:
         geno = pd.read_csv(data, index_col=0)
-        x = get_data(get_transformed_data(filter_data(geno, filter_str)), transformed_data).to_numpy()
+        x = get_data(geno=filter_data(geno, filter_str), path_to_save_qc=transformed_data).to_numpy()
         self.size = len(x[0])
 
         x_val = []

@@ -55,6 +55,7 @@ def get_data(geno: DataFrame, path_to_save_qc: Path) -> DataFrame:
     except KeyError:
         pass
 
+    geno = get_transformed_data(geno)
     create_dir(path_to_save_qc.parent)
     geno.to_csv(path_to_save_qc)
     return geno
@@ -118,10 +119,7 @@ def equality_of_variance_test(*samples: Tuple[ndarray, ...]) -> Tuple[bool, floa
 
 def get_transformed_data(data: DataFrame):
     # log2(TPM+0.25) transformation (0.25 to prevent negative inf)
-    tmp: ndarray = data.to_numpy(dtype=float)
-    tmp = tmp + 0.25
-    tmp = np.log2(tmp)
-    modified = DataFrame(data=tmp, columns=data.columns)
+    modified = DataFrame(data=np.log2(data + 0.25), columns=data.columns)
 
     med_exp = np.median(modified.values[:, 1:], axis=1)
     for i in range(modified.shape[0]):
