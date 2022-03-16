@@ -126,7 +126,7 @@ class AutoGenoShallow(pl.LightningModule):
     testing_dataset: Union[TensorDataset, None]
     train_dataset: Union[TensorDataset, None]
 
-    def __init__(self, save_dir: Path, name: str, ratio: int, cyclical: bool, learning_rate: float,
+    def __init__(self, save_dir: Path, name: str, ratio: int, cyclical_lr: bool, learning_rate: float,
                  data: Path, transformed_data: Path,
                  batch_size: int, val_split: float, test_split: float,
                  filter_str: str, num_workers: int, random_state: int, shuffle: bool, drop_last: bool,
@@ -137,7 +137,7 @@ class AutoGenoShallow(pl.LightningModule):
         # self.test_input_list = None
         # self.input_list = None
 
-        self.cyclical = cyclical
+        self.cyclical = cyclical_lr
 
         # get normalized data quality control
         self.dataset = GPDataModule(data, transformed_data, batch_size, val_split, test_split, filter_str, num_workers,
@@ -324,7 +324,7 @@ class AutoGenoShallow(pl.LightningModule):
                             help='compression ratio for smallest layer NB: ideally a number that is power of 2')
         parser.add_argument("-lr", "--learning_rate", type=float, default=0.0001,
                             help='the base learning rate for training e.g 0.0001')
-        parser.add_argument("--cyclical", action='store_true', default=False,
+        parser.add_argument("-c", "--cyclical_lr", action='store_true', default=False,
                             help='whether to use cyclical learning rate or not. default is False.')
         parser.add_argument("--data", type=Path,
                             default=Path(__file__).absolute().parent.parent.joinpath("data_example.csv"),
