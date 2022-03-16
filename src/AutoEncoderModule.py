@@ -324,8 +324,6 @@ class AutoGenoShallow(pl.LightningModule):
                             help='compression ratio for smallest layer NB: ideally a number that is power of 2')
         parser.add_argument("-lr", "--learning_rate", type=float, default=0.0001,
                             help='the base learning rate for training e.g 0.0001')
-        parser.add_argument("-c", "--cyclical_lr", action='store_true', default=False,
-                            help='whether to use cyclical learning rate or not. default is False.')
         parser.add_argument("--data", type=Path,
                             default=Path(__file__).absolute().parent.parent.joinpath("data_example.csv"),
                             help='original datafile e.g. ./data_example.csv')
@@ -344,10 +342,12 @@ class AutoGenoShallow(pl.LightningModule):
         parser.add_argument("--random_state", type=int, default=42,
                             help='sets a seed to the random generator, so that your train-val-test splits are '
                                  'always deterministic. default is 42')
-        parser.add_argument("--shuffle", action='store_true', default=False,
+        parser.add_argument("--shuffle", type=bool, default=False,
                             help='whether to shuffle the dataset before splitting the dataset. default is False.')
-        parser.add_argument("--drop_last", action='store_true', default=False,
+        parser.add_argument("-c", "--cyclical_lr", type=bool, default=False,
+                            help='whether to use cyclical learning rate or not. default is False.')
+        parser.add_argument("--drop_last", type=bool, default=False,
                             help='whether to drop the last column or not. default is False.')
-        parser.add_argument("--pin_memory", action='store_false', default=True,
+        parser.add_argument("--pin_memory", type=bool, default=True,
                             help='whether to pin_memory or not. default is True.')
         return parent_parser
