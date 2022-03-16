@@ -48,14 +48,17 @@ class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
             pin_memory,
             drop_last
         )
-        self.dm = DataNormalization(column_names=x.columns)
+        dm = DataNormalization(column_names=x.columns)
+        self.train_dataset = SklearnDataset(dm.fit_transform(self.train_dataset.X),self.train_dataset.Y)
+        self.val_dataset = SklearnDataset(dm.transform(self.val_dataset.X),self.val_dataset.Y)
+        self.test_dataset = SklearnDataset(dm.transform(self.test_dataset.X),self.test_dataset.Y)
         self.size: int = len(x.columns)
 
     def train_dataloader(self) -> TRAIN_DATALOADERS:
         print(f'train: batch size: {self.batch_size} shuffle: {self.shuffle} '
               f'num_workers: {self.num_workers} drop_last: {self.drop_last} pin_memory: {self.pin_memory}')
         loader = DataLoader(
-            self.dm.fit_transform(self.train_dataset).to_numpy(),
+            self.dm.fit_transform(self.train_dataset.X).to_numpy(),
             batch_size=self.batch_size,
             shuffle=self.shuffle,
             num_workers=self.num_workers,
@@ -294,19 +297,19 @@ class AutoGenoShallow(pl.LightningModule):
         #                     help='filename of original data after quality control e.g. ./data_QC.csv')
         # parser.add_argument("--batch_size", type=int, default=64, help='the size of each batch e.g. 64')
 
-        parser.add_argument("--name", type=str, default='AE_Geno',
+        parser.add_argument("-n", "--name", type=str, default='AE_Geno',
                             help='model name e.g. AE_Geno')
-        parser.add_argument("--save_dir", type=Path,
+        parser.add_argument("-sd", "--save_dir", type=Path,
                             default=Path(__file__).absolute().parent.parent.joinpath("AE"),
                             help='base dir to saved AE models e.g. ./AE')
-        parser.add_argument("--ratio", type=int, default=8,
+        parser.add_argument("-cr", "--ratio", type=int, default=8,
                             help='compression ratio for smallest layer NB: ideally a number that is power of 2')
         parser.add_argument("-lr", "--learning_rate", type=float, default=0.0001,
                             help='the base learning rate for training e.g 0.0001')
         parser.add_argument("--data", type=Path,
                             default=Path(__file__).absolute().parent.parent.joinpath("data_example.csv"),
                             help='original datafile e.g. ./data_example.csv')
-        parser.add_argument("--transformed_data", type=Path,
+        parser.add_argument("-td", "--transformed_data", type=Path,
                             default=Path(__file__).absolute().parent.parent.joinpath("data_QC.csv"),
                             help='filename of original data after quality control e.g. ./data_QC.csv')
         parser.add_argument("-bs", "--batch_size", type=int, default=64, help='the size of each batch e.g. 64')
@@ -314,14 +317,14 @@ class AutoGenoShallow(pl.LightningModule):
                             help='validation set split ratio. default is 0.1')
         parser.add_argument("-ts", "--test_split", type=float, default=0.0,
                             help='test set split ratio. default is 0.0')
-        parser.add_argument("--num_workers", type=int, default=0,
+        parser.add_argument("-w", "--num_workers", type=int, default=0,
                             help='number of processors used to load data. ie worker = 4 * # of GPU. default is 0')
-        parser.add_argument("--filter_str", type=str, default="",
+        parser.add_argument("-f", "--filter_str", type=str, default="",
                             help='filter string to select which rows are processed. default: \'\'')
-        parser.add_argument("--random_state", type=int, default=42,
+        parser.add_argument("-rs", "--random_state", type=int, default=42,
                             help='sets a seed to the random generator, so that your train-val-test splits are '
                                  'always deterministic. default is 42')
-        parser.add_argument("--shuffle", type=bool, default=False,
+        parser.add_argument("-s", "--shuffle", type=bool, default=False,
                             help='whether to shuffle the dataset before splitting the dataset. default is False.')
         parser.add_argument("-c", "--cyclical_lr", type=bool, default=False,
                             help='whether to use cyclical learning rate or not. default is False.')
