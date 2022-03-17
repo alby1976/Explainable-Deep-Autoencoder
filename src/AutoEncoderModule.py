@@ -65,8 +65,10 @@ class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
                                                                   random_state=random_state)
         self.dm.fit(x_train)
         if holding_split > 0:
+            size = val_split / holding_split
+            print(f'train_size: {size}')
             x_val, x_test, y_val, y_test = train_test_split(x_holding, y_holding,
-                                                            train_size=val_split / holding_split,
+                                                            train_size=size,
                                                             random_state=random_state)
             if val_split != 0 and holding_split - val_split != 0:
                 return (
