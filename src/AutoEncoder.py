@@ -68,7 +68,8 @@ def main():
                                                 gpus=1,
                                                 auto_select_gpus=True,
                                                 stochastic_weight_avg=False,
-                                                callbacks=[stop_loss, ModelSummary(max_depth=2), swa],
+                                                # callbacks=[stop_loss, ModelSummary(max_depth=2), swa],
+                                                callbacks=[stop_loss, ModelSummary(max_depth=2)],
                                                 # amp_backend="apex",
                                                 # amp_level="O2",
                                                 precision=16,
@@ -83,7 +84,8 @@ def main():
                                                 logger=[csv_logger, tensor_board_logger],
                                                 deterministic=True,
                                                 stochastic_weight_avg=False,
-                                                callbacks=[stop_loss, ModelSummary(max_depth=2), swa],
+                                                # callbacks=[stop_loss, ModelSummary(max_depth=2), swa],
+                                                callbacks=[stop_loss, ModelSummary(max_depth=2)],
                                                 # auto_scale_batch_size='binsearch',
                                                 enable_progress_bar=False)
 
