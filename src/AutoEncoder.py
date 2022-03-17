@@ -92,11 +92,13 @@ def main():
         print(f'...Finding ideal batch size....')
         print(f'starting batch size: {model.hparams.batch_size}')
         trainer.tuner.scale_batch_size(model=model, init_val=model.hparams.batch_size, mode='binsearch')
+        torch.cuda.empty_cache()
 
         print('...Finding ideal learning rate....')
         model.learning_rate = trainer.tuner.lr_find(model).suggestion()
         model.min_lr = model.learning_rate / 6.0
         print(f'min lr: {model.min_lr} max lr: {model.learning_rate}')
+        torch.cuda.empty_cache()
 
     # train & validate model
     print(f'...Training and Validating model...')

@@ -1,6 +1,7 @@
 # python system library
 # import argparse
 import argparse
+import gc
 import math
 import sys
 from pathlib import Path
@@ -217,6 +218,11 @@ class AutoGenoShallow(pl.LightningModule):
 
         # clean up
         self.training_r2score_node.reset()
+        del losses
+        del r2_node
+        del coder
+        del coder_file
+        gc.collect()
 
     # define validation step
     def validation_step(self, batch, batch_idx) -> Dict[str, Tensor]:
@@ -247,7 +253,12 @@ class AutoGenoShallow(pl.LightningModule):
         # logging validation metrics into log file
         self.log('testing_loss', torch.sum(losses), on_step=False, on_epoch=True)
         self.log('testing_r2score', r2_node, on_step=False, on_epoch=True)
+
+        # clean up
         self.testing_r2score_node.reset()
+        del r2_node
+        del losses
+        gc.collect()
 
     # configures the optimizers through learning rate
     def configure_optimizers(self):
