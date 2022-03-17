@@ -217,7 +217,8 @@ class AutoGenoShallow(pl.LightningModule):
         # self.training_r2score_node.update(preds=output, target=x)
         loss: Tensor = f.mse_loss(input=output, target=x)
         # return {'model': coder, 'loss': loss, 'r2_node': r2_node, 'input': x, 'output': output}
-        return {'model': coder.detach(), 'loss': loss, "input": x, "'output": output.detach()}
+        # return {'model': coder.detach(), 'loss': loss, "input": x, "'output": output.detach()}
+        return {'model': coder.detach(), 'loss': loss}
 
     # end of training epoch
     def training_epoch_end(self, training_step_outputs):
@@ -227,8 +228,8 @@ class AutoGenoShallow(pl.LightningModule):
         # extracting training batch data
         losses: Tensor = get_dict_values_1d('loss', training_step_outputs)
         coder: Tensor = get_dict_values_2d('model', training_step_outputs)
-        target: Tensor = get_dict_values_2d('input', training_step_outputs)
-        output: Tensor = get_dict_values_2d('output', training_step_outputs)
+        # target: Tensor = get_dict_values_2d('input', training_step_outputs)
+        # output: Tensor = get_dict_values_2d('output', training_step_outputs)
 
         # ===========save model============
         coder_file = self.save_dir.joinpath(f"{self.model_name}-{epoch}.pt")
@@ -238,21 +239,27 @@ class AutoGenoShallow(pl.LightningModule):
         # np.savetxt(fname=coder_file, X=coder_np, fmt='%f', delimiter=',')
 
         # ======goodness of fit======
-        r2_node = tm.functional.regression.r2_score(preds=output, target=target, multioutput='variance_weighted')
+        # r2_node = tm.functional.regression.r2_score(preds=output, target=target, multioutput='variance_weighted')
+        '''
         print(f"epoch[{epoch + 1:4d}]  "
               f"learning_rate: {self.learning_rate:.6f} "
               f"loss: {losses.sum():.6f}  "
               f"r2_mode: {r2_node}",
               end=' ', file=sys.stderr)
+        '''
+        print(f"epoch[{epoch + 1:4d}]  "
+              f"learning_rate: {self.learning_rate:.6f} "
+              f"loss: {losses.sum():.6f}  ",
+              end=' ', file=sys.stderr)
 
         # logging metrics into log file
         self.log('learning_rate', self.learning_rate, on_step=False, on_epoch=True)
         self.log('loss', torch.sum(losses), on_step=False, on_epoch=True)
-        self.log('r2score', r2_node, on_step=False, on_epoch=True)
+        # self.log('r2score', r2_node, on_step=False, on_epoch=True)
 
         # clean up
         del losses
-        del r2_node
+        # del r2_node
         del coder
         del coder_file
         gc.collect()
@@ -269,30 +276,36 @@ class AutoGenoShallow(pl.LightningModule):
               f'batch dim: {x.size()} loss dim: {loss.size()}')
         '''
         # return {'loss': loss, 'r2_node': r2_node, 'input': x, 'output': output}
-        return {'loss': loss, "input": x, "output": output}
+        # return {'loss': loss, "input": x, "output": output}
+        return {'Loss': loss}
 
     # end of validation epoch
     def validation_epoch_end(self, testing_step_outputs):
         # extracting training batch data
-        losses = get_dict_values_1d('loss', testing_step_outputs)
-        target = get_dict_values_2d('input', testing_step_outputs)
-        output = get_dict_values_2d('output', testing_step_outputs)
+        loss = get_dict_values_1d('loss', testing_step_outputs)
+        # target = get_dict_values_2d('input', testing_step_outputs)
+        # output = get_dict_values_2d('output', testing_step_outputs)
         # print(f'regular losses: {losses.size()} pred: {pred.size()} target: {target.size()}')
 
         # ======goodness of fit ======
+        '''
         r2_node: Tensor = tm.functional.regression.r2_score(preds=output, target=target,
                                                             multioutput='variance_weighted')
-        print(f"test_loss: {torch.sum(losses):.6f} "
+        
+        print(f"test_loss: {torch.sum(loss):.6f} "
               f"test_r2_node: {r2_node}",
+              file=sys.stderr)
+        '''
+        print(f"test_loss: {torch.sum(loss):.6f} ",
               file=sys.stderr)
 
         # logging validation metrics into log file
-        self.log('testing_loss', torch.sum(losses), on_step=False, on_epoch=True)
-        self.log('testing_r2score', r2_node, on_step=False, on_epoch=True)
+        self.log('testing_loss', torch.sum(loss), on_step=False, on_epoch=True)
+        # self.log('testing_r2score', r2_node, on_step=False, on_epoch=True)
 
         # clean up
-        del r2_node
-        del losses
+        # del r2_node
+        del loss
         gc.collect()
 
     # configures the optimizers through learning rate
