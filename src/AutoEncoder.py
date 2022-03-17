@@ -73,7 +73,7 @@ def main():
                                                 # amp_level="O2",
                                                 precision=16,
                                                 # auto_scale_batch_size='binsearch',
-                                                enable_progress_bar=True)
+                                                enable_progress_bar=False)
     else:
         swa = StochasticWeightAveraging(device='cpu')
         trainer = pl.Trainer.from_argparse_args(args,
@@ -85,7 +85,7 @@ def main():
                                                 stochastic_weight_avg=False,
                                                 callbacks=[stop_loss, ModelSummary(max_depth=2), swa],
                                                 # auto_scale_batch_size='binsearch',
-                                                enable_progress_bar=True)
+                                                enable_progress_bar=False)
 
     # find ideal learning rate and batch_size
     if args.tune:
