@@ -36,6 +36,9 @@ class DataNormalization:
         self.scaler = MinMaxScaler()
         self.column_names = column_names
 
+    def fit(self, x_train: Any):
+        self.scaler = self.scaler.fit(X=x_train)
+
     def fit_transform(self, x_train: Any):
         if self.column_names is None:
             return self.scaler.fit_transform(X=x_train)

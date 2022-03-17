@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import Any, Union, Dict, Optional, Tuple
 
 # 3rd party modules
-import numpy
 import numpy as np
 import pandas as pd
 import pl_bolts.datamodules
@@ -16,16 +15,15 @@ import pytorch_lightning as pl
 import torch
 import torchmetrics as tm
 from pandas import DataFrame
-from pl_bolts.datamodules import SklearnDataset
 from pytorch_lightning.utilities.types import EVAL_DATALOADERS, TRAIN_DATALOADERS
-from sklearn.utils import shuffle as sk_shuffle
+from sklearn.model_selection import train_test_split
 from torch import nn, Tensor
 from torch.nn import functional as f
 from torch.optim.lr_scheduler import CyclicLR
 from torch.utils.data import DataLoader, TensorDataset
 
 # custom modules
-from CommonTools import get_dict_values_1d, get_dict_values_2d, get_transformed_data, DataNormalization, get_data, \
+from CommonTools import get_dict_values_1d, get_dict_values_2d, DataNormalization, get_data, \
     filter_data
 
 
@@ -33,13 +31,18 @@ class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
     def __init__(self, x: DataFrame, val_split: float, test_split: float,
                  num_workers: int, random_state: int, shuffle: bool, batch_size: int,
                  pin_memory: bool, drop_last: bool):
+
+        self.dm = DataNormalization()
+        result = self.split_dataset(x.to_numpy(), np.zeros(shape=len(x.index)), val_split, test_split, random_state)
+        self.size: int = len(x.columns)
+
         super().__init__(
-            x.to_numpy(),
-            np.zeros(shape=len(x.index)),
-            None,
-            None,
-            None,
-            None,
+            result[0],
+            result[1],
+            result[2],
+            result[3],
+            result[4],
+            result[5],
             val_split,
             test_split,
             num_workers,
@@ -55,14 +58,48 @@ class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
               f'{self.train_dataset[0]}')
         sys.exit(1)
         '''
-        self.dm = DataNormalization(column_names=x.columns)
-        self.size: int = len(x.columns)
+
+    def split_dataset(self, x, y, val_split, test_split, random_state) -> Tuple[Any, Any, Any, Any, Any, Any]:
+        holding_split = val_split + test_split
+        x_train, x_holding, y_train, y_holding = train_test_split(x, y, test_size=holding_split,
+                                                                  random_state=random_state)
+        self.dm.fit(x_train)
+        if holding_split > 0:
+            x_val, x_test, y_val, y_test = train_test_split(x_holding, y_holding,
+                                                            train_size=val_split / holding_split,
+                                                            random_state=random_state)
+            if val_split != 0 and holding_split - val_split != 0:
+                return (
+                    self.dm.transform(x_train), y_train,
+                    self.dm.transform(x_val), y_val,
+                    self.dm.transform(x_test), y_test
+                )
+            elif val_split == holding_split:
+                return (
+                    self.dm.transform(x_train), y_train,
+                    self.dm.transform(x_val), y_val,
+                    None, y_test
+                )
+            else:
+                return (
+                    self.dm.transform(x_train), y_train,
+                    None, y_val,
+                    self.dm.transform(x_test), y_test
+
+                )
+        else:
+            return (
+                self.dm.transform(x_train), y_train,
+                None, None,
+                None, None
+
+            )
 
     def train_dataloader(self) -> TRAIN_DATALOADERS:
         print(f'train: batch size: {self.batch_size} shuffle: {self.shuffle} '
               f'num_workers: {self.num_workers} drop_last: {self.drop_last} pin_memory: {self.pin_memory}')
         loader = DataLoader(
-            SklearnDataset(self.dm.fit_transform(self.train_dataset.X).to_numpy(), self.train_dataset.Y),
+            self.train_dataset,
             batch_size=self.batch_size,
             shuffle=self.shuffle,
             num_workers=self.num_workers,
@@ -75,7 +112,7 @@ class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
         print(f'val: batch size: {self.batch_size} shuffle: {self.shuffle} '
               f'num_workers: {self.num_workers} drop_last: {self.drop_last} pin_memory: {self.pin_memory}')
         loader = DataLoader(
-            SklearnDataset(self.dm.transform(self.val_dataset.X).to_numpy(), self.val_dataset.Y),
+            self.val_dataset,
             batch_size=self.batch_size,
             shuffle=self.shuffle,
             num_workers=self.num_workers,
@@ -88,7 +125,7 @@ class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
         print(f'test: batch size: {self.batch_size} shuffle: {self.shuffle} '
               f'num_workers: {self.num_workers} drop_last: {self.drop_last} pin_memory: {self.pin_memory}')
         loader = DataLoader(
-            SklearnDataset(self.transform(self.test_dataset.X).to_numpy(), self.test_dataset.Y),
+            self.test_dataset,
             batch_size=self.batch_size,
             shuffle=self.shuffle,
             num_workers=self.num_workers,
