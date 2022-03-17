@@ -59,42 +59,33 @@ class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
         sys.exit(1)
         '''
 
-    def split_dataset(self, x, y, val_split, test_split, random_state) -> Tuple[Any, Any, Any, Any, Any, Any]:
-        holding_split = val_split + test_split
+    def split_dataset(self, x, y, val_split: float, test_split: float, random_state: int) -> \
+            Tuple[Any, Any, Any, Any, Any, Any]:
+        holding_split: float = val_split + test_split
         x_train, x_holding, y_train, y_holding = train_test_split(x, y, test_size=holding_split,
                                                                   random_state=random_state)
         self.dm.fit(x_train)
-        if holding_split > 0:
-            size = val_split / holding_split
-            print(f'\n\ntrain_size: {size}\n\n')
-            x_val, x_test, y_val, y_test = train_test_split(x_holding, y_holding,
-                                                            train_size=size,
-                                                            random_state=random_state)
-            if val_split != 0 and holding_split - val_split != 0:
-                return (
-                    self.dm.transform(x_train), y_train,
-                    self.dm.transform(x_val), y_val,
-                    self.dm.transform(x_test), y_test
-                )
-            elif val_split == holding_split:
-                return (
-                    self.dm.transform(x_train), y_train,
-                    self.dm.transform(x_val), y_val,
-                    None, y_test
-                )
-            else:
-                return (
-                    self.dm.transform(x_train), y_train,
-                    None, y_val,
-                    self.dm.transform(x_test), y_test
-
-                )
-        else:
+        if holding_split == val_split:
+            return (
+                self.dm.transform(x_train), y_train,
+                self.dm.transform(x_holding), y_holding,
+                None, None
+            )
+        elif holding_split == test_split:
             return (
                 self.dm.transform(x_train), y_train,
                 None, None,
-                None, None
-
+                self.dm.transform(x_holding), y_holding
+            )
+        else:
+            size: float = val_split / holding_split
+            x_val, x_test, y_val, y_test = train_test_split(x_holding, y_holding,
+                                                            train_size=size,
+                                                            random_state=random_state)
+            return (
+                self.dm.transform(x_train), y_train,
+                self.dm.transform(x_val), y_val,
+                self.dm.transform(x_test), y_test
             )
 
     def train_dataloader(self) -> TRAIN_DATALOADERS:
