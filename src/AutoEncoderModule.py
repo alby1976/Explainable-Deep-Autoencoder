@@ -171,12 +171,12 @@ class AutoGenoShallow(pl.LightningModule):
             self.smallest_layer = tmp
         '''
         self.hidden_layer = 2 * self.smallest_layer
-        '''
+
         self.training_r2score_node = tm.R2Score(num_outputs=self.input_features,
-                                                multioutput='variance_weighted', compute_on_step=False)
+                                                multioutput='variance_weighted', compute_on_step=True)
         self.testing_r2score_node = tm.R2Score(num_outputs=self.input_features,
-                                               multioutput='variance_weighted', compute_on_step=False)
-        '''
+                                               multioutput='variance_weighted', compute_on_step=True)
+
         self.save_dir = save_dir
         self.model_name = name
 
@@ -233,11 +233,11 @@ class AutoGenoShallow(pl.LightningModule):
         coder: Tensor
         x: Tensor = batch[0]
         output, coder = self.forward(x)
-        # self.training_r2score_node.update(preds=output, target=x)
+        r2_node: Tensor = self.training_r2score_node.forward(preds=output, target=x)
         loss: Tensor = f.mse_loss(input=output, target=x)
         # return {'model': coder, 'loss': loss, 'r2_node': r2_node, 'input': x, 'output': output}
         # return {'model': coder.detach(), 'loss': loss, "input": x, "'output": output.detach()}
-        return {'model': coder.detach(), 'loss': loss}
+        return {'model': coder.detach(), 'loss': loss, 'r2': r2_node}
 
     # end of training epoch
     def training_epoch_end(self, training_step_outputs):
@@ -246,6 +246,7 @@ class AutoGenoShallow(pl.LightningModule):
 
         # extracting training batch data
         losses: Tensor = get_dict_values_1d('loss', training_step_outputs)
+        r2_node: Tensor = get_dict_values_1d('r2', training_step_outputs)
         coder: Tensor = get_dict_values_2d('model', training_step_outputs)
         # target: Tensor = get_dict_values_2d('input', training_step_outputs)
         # output: Tensor = get_dict_values_2d('output', training_step_outputs)
@@ -259,28 +260,29 @@ class AutoGenoShallow(pl.LightningModule):
 
         # ======goodness of fit======
         # r2_node = tm.functional.regression.r2_score(preds=output, target=target, multioutput='variance_weighted')
-        '''
         print(f"epoch[{epoch + 1:4d}]  "
               f"learning_rate: {self.learning_rate:.6f} "
               f"loss: {losses.sum():.6f}  "
-              f"r2_mode: {r2_node}",
+              f"r2_mode: {torch.mean(r2_node)}",
               end=' ', file=sys.stderr)
         '''
         print(f"epoch[{epoch + 1:4d}]  "
               f"learning_rate: {self.learning_rate:.6f} "
               f"loss: {losses.sum():.6f}  ",
               end=' ', file=sys.stderr)
+        '''
 
         # logging metrics into log file
         self.log('learning_rate', self.learning_rate, on_step=False, on_epoch=True)
         self.log('loss', torch.sum(losses), on_step=False, on_epoch=True)
-        # self.log('r2score', r2_node, on_step=False, on_epoch=True)
+        self.log('r2score', torch.mean(r2_node), on_step=False, on_epoch=True)
 
         # clean up
         del losses
-        # del r2_node
+        del r2_node
         del coder
         del coder_file
+        self.training_r2score_node.reset()
         gc.collect()
 
     # define validation step
@@ -288,7 +290,7 @@ class AutoGenoShallow(pl.LightningModule):
         x = batch[0]
         output, _ = self.forward(x)
 
-        # r2_node = self.testing_r2score_node.forward(preds=output, target=x)
+        r2_node = self.testing_r2score_node.forward(preds=output, target=x)
         loss = f.mse_loss(input=output, target=x)
         '''
         print(f'{batch_idx} val step batch size: {self.hparams.batch_size} output dim: {output.size()} '
@@ -296,12 +298,13 @@ class AutoGenoShallow(pl.LightningModule):
         '''
         # return {'loss': loss, 'r2_node': r2_node, 'input': x, 'output': output}
         # return {'loss': loss, "input": x, "output": output}
-        return {"loss": loss}
+        return {"loss": loss, "r2": r2_node}
 
     # end of validation epoch
     def validation_epoch_end(self, testing_step_outputs):
         # extracting training batch data
         loss = get_dict_values_1d('loss', testing_step_outputs)
+        r2_node = get_dict_values_1d('r2', testing_step_outputs)
         # target = get_dict_values_2d('input', testing_step_outputs)
         # output = get_dict_values_2d('output', testing_step_outputs)
         # print(f'regular losses: {losses.size()} pred: {pred.size()} target: {target.size()}')
@@ -310,21 +313,23 @@ class AutoGenoShallow(pl.LightningModule):
         '''
         r2_node: Tensor = tm.functional.regression.r2_score(preds=output, target=target,
                                                             multioutput='variance_weighted')
-        
+        '''
         print(f"test_loss: {torch.sum(loss):.6f} "
-              f"test_r2_node: {r2_node}",
+              f"test_r2_node: {torch.mean(r2_node)}",
               file=sys.stderr)
         '''
         print(f"test_loss: {torch.sum(loss):.6f} ",
               file=sys.stderr)
-
+        '''
         # logging validation metrics into log file
         self.log('testing_loss', torch.sum(loss), on_step=False, on_epoch=True)
-        # self.log('testing_r2score', r2_node, on_step=False, on_epoch=True)
+        self.log('testing_r2score', torch.mean(r2_node), on_step=False, on_epoch=True)
 
         # clean up
         # del r2_node
         del loss
+        del r2_node
+        self.testing_r2score_node.reset()
         gc.collect()
 
     # configures the optimizers through learning rate
