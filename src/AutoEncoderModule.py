@@ -269,7 +269,7 @@ class AutoGenoShallow(pl.LightningModule):
               f'batch dim: {x.size()} loss dim: {loss.size()}')
         '''
         # return {'loss': loss, 'r2_node': r2_node, 'input': x, 'output': output}
-        return {'loss': loss, "input": x, "'output": output}
+        return {'loss': loss, "input": x, "output": output}
 
     # end of validation epoch
     def validation_epoch_end(self, testing_step_outputs):
