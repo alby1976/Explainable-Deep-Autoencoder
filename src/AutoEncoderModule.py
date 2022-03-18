@@ -34,7 +34,7 @@ class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
 
         self.dm = DataNormalization()
         result = self.split_dataset(x.to_numpy(), np.zeros(shape=len(x.index)), val_split, test_split, random_state)
-        self.size: int = len(x.columns)
+        self.size: int = len(result[0].shape[1])
 
         super().__init__(
             result[0],
