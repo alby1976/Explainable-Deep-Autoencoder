@@ -351,7 +351,7 @@ class AutoGenoShallow(pl.LightningModule):
                                                           step_size_up=4 * it_per_epoch,
                                                           max_lr=self.learning_rate)
         else:
-            scheduler = SWALR(optimizer, swa_lr=self.learning_rate, anneal_strategy="cos")
+            scheduler = SWALR(optimizer, swa_lr=self.learning_rate, anneal_epochs=10, anneal_strategy="cos")
 
         return {"optimizer": optimizer, "lr_scheduler": scheduler}
 
