@@ -62,7 +62,7 @@ def main():
     tensor_board_logger = TensorBoardLogger(save_dir=str(log_dir), name=args.name)
     callbacks: List[Union[EarlyStopping, ModelSummary, LearningRateMonitor, StochasticWeightAveraging]]
     swa: bool = False
-    if args.cyclic_lr:
+    if args.cyclical_lr:
         callbacks = [stop_loss, ModelSummary(max_depth=2), learning_rate_monitor]
     else:
         swa = True
