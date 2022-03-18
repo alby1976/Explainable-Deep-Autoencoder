@@ -158,4 +158,5 @@ def filter_data(data: DataFrame, filter_str: str):
 def med_var(data, axis=0):
     med = np.median(data, axis=axis)
     tmp = np.sum(np.power(data - med, 2), axis=axis)
+    print(f'med: {med}\ntmp: {tmp}\nmed_var: {np.median(tmp, axis=axis)}\n\n')
     return np.median(tmp, axis=axis)
