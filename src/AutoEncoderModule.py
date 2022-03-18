@@ -329,6 +329,7 @@ class AutoGenoShallow(pl.LightningModule):
         # del r2_node
         del loss
         del r2_node
+
         self.testing_r2score_node.reset()
         gc.collect()
 

@@ -11,7 +11,7 @@ import pandas as pd
 import pytorch_lightning as pl
 import torch
 from pytorch_lightning import seed_everything, Trainer
-from pytorch_lightning.callbacks import ModelSummary, StochasticWeightAveraging
+from pytorch_lightning.callbacks import ModelSummary, StochasticWeightAveraging, LearningRateMonitor
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.loggers import CSVLogger, TensorBoardLogger
 from torchinfo import summary
@@ -57,6 +57,7 @@ def main():
     create_dir(log_dir)
     create_dir(ckpt_dir)
     csv_logger = CSVLogger(save_dir=str(log_dir), name=args.name)
+    learning_rate_monitor = LearningRateMonitor(logging_interval='epoch')
     tensor_board_logger = TensorBoardLogger(save_dir=str(log_dir), name=args.name)
     if torch.cuda.is_available():
         swa = StochasticWeightAveraging(device='cuda')
@@ -69,7 +70,7 @@ def main():
                                                 auto_select_gpus=True,
                                                 stochastic_weight_avg=False,
                                                 # callbacks=[stop_loss, ModelSummary(max_depth=2), swa],
-                                                callbacks=[stop_loss, ModelSummary(max_depth=2)],
+                                                callbacks=[stop_loss, ModelSummary(max_depth=2), learning_rate_monitor],
                                                 # amp_backend="apex",
                                                 # amp_level="O2",
                                                 precision=16,
@@ -85,7 +86,7 @@ def main():
                                                 deterministic=True,
                                                 stochastic_weight_avg=False,
                                                 # callbacks=[stop_loss, ModelSummary(max_depth=2), swa],
-                                                callbacks=[stop_loss, ModelSummary(max_depth=2)],
+                                                callbacks=[stop_loss, ModelSummary(max_depth=2), learning_rate_monitor],
                                                 # auto_scale_batch_size='binsearch',
                                                 enable_progress_bar=False)
 
