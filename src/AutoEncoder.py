@@ -5,19 +5,19 @@ import os
 import sys
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import Tuple
+from typing import List, Union
 
-import pandas as pd
 import pytorch_lightning as pl
 import torch
 from pytorch_lightning import seed_everything, Trainer
 from pytorch_lightning.callbacks import ModelSummary, StochasticWeightAveraging, LearningRateMonitor
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.loggers import CSVLogger, TensorBoardLogger
-from torchinfo import summary
 
-from AutoEncoderModule import AutoGenoShallow, GPDataModule
+from AutoEncoderModule import AutoGenoShallow
 from CommonTools import create_dir
+
+_DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 
 def main():
@@ -25,8 +25,9 @@ def main():
                                                                  'hidden layer features.')
 
     # add PROGRAM level args
-    parser.add_argument('--tune', type=bool, default=True, help='whether or not pytorch lightning find optimum '
-                                                                'batch_size and learning rate')
+    parser.add_argument('--tune', action='store_true', default=False,
+                        help='including this flag causes pytorch lightning to find optimum '
+                             'batch_size and learning rate')
 
     # add model specific args
     parser = AutoGenoShallow.add_model_specific_args(parser)
@@ -59,8 +60,16 @@ def main():
     csv_logger = CSVLogger(save_dir=str(log_dir), name=args.name)
     learning_rate_monitor = LearningRateMonitor(logging_interval='epoch')
     tensor_board_logger = TensorBoardLogger(save_dir=str(log_dir), name=args.name)
+    callbacks: List[Union[EarlyStopping, ModelSummary, LearningRateMonitor, StochasticWeightAveraging]]
+    swa: bool = False
+    if args.cyclic_lr:
+        callbacks = [stop_loss, ModelSummary(max_depth=2), learning_rate_monitor]
+    else:
+        swa = True
+        swa_module: StochasticWeightAveraging = StochasticWeightAveraging(device=_DEVICE)
+        callbacks = [stop_loss, ModelSummary(max_depth=2), learning_rate_monitor, swa_module]
+
     if torch.cuda.is_available():
-        swa = StochasticWeightAveraging(device='cuda')
         trainer = pl.Trainer.from_argparse_args(args, max_epochs=-1,
                                                 default_root_dir=str(ckpt_dir),
                                                 log_every_n_steps=1,
@@ -68,25 +77,22 @@ def main():
                                                 deterministic=True,
                                                 gpus=1,
                                                 auto_select_gpus=True,
-                                                stochastic_weight_avg=False,
-                                                # callbacks=[stop_loss, ModelSummary(max_depth=2), swa],
-                                                callbacks=[stop_loss, ModelSummary(max_depth=2), learning_rate_monitor],
+                                                stochastic_weight_avg=swa,
+                                                callbacks=callbacks,
                                                 # amp_backend="apex",
                                                 # amp_level="O2",
                                                 precision=16,
                                                 # auto_scale_batch_size='binsearch',
                                                 enable_progress_bar=False)
     else:
-        swa = StochasticWeightAveraging(device='cpu')
         trainer = pl.Trainer.from_argparse_args(args,
                                                 max_epochs=-1,
                                                 default_root_dir=str(ckpt_dir),
                                                 log_every_n_steps=1,
                                                 logger=[csv_logger, tensor_board_logger],
                                                 deterministic=True,
-                                                stochastic_weight_avg=False,
-                                                # callbacks=[stop_loss, ModelSummary(max_depth=2), swa],
-                                                callbacks=[stop_loss, ModelSummary(max_depth=2), learning_rate_monitor],
+                                                stochastic_weight_avg=swa,
+                                                callbacks=callbacks,
                                                 # auto_scale_batch_size='binsearch',
                                                 enable_progress_bar=False)
 

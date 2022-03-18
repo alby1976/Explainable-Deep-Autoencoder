@@ -5,7 +5,7 @@ import gc
 import math
 import sys
 from pathlib import Path
-from typing import Any, Union, Dict, Optional, Tuple
+from typing import Any, Union, Dict, Optional, Tuple, List
 
 # 3rd party modules
 import numpy as np
@@ -19,7 +19,7 @@ from pytorch_lightning.utilities.types import EVAL_DATALOADERS, TRAIN_DATALOADER
 from sklearn.model_selection import train_test_split
 from torch import nn, Tensor
 from torch.nn import functional as f
-from torch.optim.lr_scheduler import CyclicLR
+from torch.optim.swa_utils import SWALR
 from torch.utils.data import DataLoader, TensorDataset
 
 # custom modules
@@ -155,7 +155,7 @@ class AutoGenoShallow(pl.LightningModule):
 
         # get normalized data quality control
         self.dataset = GPDataModule(
-            get_data(geno=filter_data(pd.read_csv(data, index_col=0), filter_str), path_to_save_qc=transformed_data),
+            get_data(geno=pd.read_csv(data, index_col=0), filter_str=filter_str, path_to_save_qc=transformed_data),
             val_split, test_split, num_workers, random_state, shuffle, batch_size, pin_memory, drop_last
         )
         # self.geno: ndarray = get_filtered_data(pd.read_csv(path_to_data, index_col=0), path_to_save_qc).to_numpy()
@@ -173,9 +173,9 @@ class AutoGenoShallow(pl.LightningModule):
         self.hidden_layer = 2 * self.smallest_layer
 
         self.training_r2score_node = tm.R2Score(num_outputs=self.input_features,
-                                                multioutput='variance_weighted', compute_on_step=True)
+                                                multioutput='variance_weighted', compute_on_step=False)
         self.testing_r2score_node = tm.R2Score(num_outputs=self.input_features,
-                                               multioutput='variance_weighted', compute_on_step=True)
+                                               multioutput='variance_weighted', compute_on_step=False)
 
         self.save_dir = save_dir
         self.model_name = name
@@ -233,20 +233,20 @@ class AutoGenoShallow(pl.LightningModule):
         coder: Tensor
         x: Tensor = batch[0]
         output, coder = self.forward(x)
-        r2_node: Tensor = self.training_r2score_node.forward(preds=output, target=x)
+        self.training_r2score_node.update(preds=output, target=x)
         loss: Tensor = f.mse_loss(input=output, target=x)
         # return {'model': coder, 'loss': loss, 'r2_node': r2_node, 'input': x, 'output': output}
         # return {'model': coder.detach(), 'loss': loss, "input": x, "'output": output.detach()}
-        return {'model': coder.detach(), 'loss': loss, 'r2': r2_node}
+        return {'model': coder.detach(), 'loss': loss}
 
     # end of training epoch
     def training_epoch_end(self, training_step_outputs):
         # scheduler: CyclicLR = self.lr_schedulers()
         epoch = self.current_epoch
+        lr_scheduler: Union[Optional[List[Any]], Any] = self.lr_schedulers()
 
         # extracting training batch data
         losses: Tensor = get_dict_values_1d('loss', training_step_outputs)
-        r2_node: Tensor = get_dict_values_1d('r2', training_step_outputs)
         coder: Tensor = get_dict_values_2d('model', training_step_outputs)
         # target: Tensor = get_dict_values_2d('input', training_step_outputs)
         # output: Tensor = get_dict_values_2d('output', training_step_outputs)
@@ -259,9 +259,9 @@ class AutoGenoShallow(pl.LightningModule):
         # np.savetxt(fname=coder_file, X=coder_np, fmt='%f', delimiter=',')
 
         # ======goodness of fit======
-        # r2_node = tm.functional.regression.r2_score(preds=output, target=target, multioutput='variance_weighted')
+        r2_node: Tensor = self.training_r2score_node.compute()
         print(f"epoch[{epoch + 1:4d}]  "
-              f"learning_rate: {self.learning_rate:.6f} "
+              f"learning_rate: {lr_scheduler.get_last_lr():.6f} "
               f"loss: {losses.sum():.6f}  "
               f"r2_mode: {torch.mean(r2_node)}",
               end=' ', file=sys.stderr)
@@ -273,9 +273,9 @@ class AutoGenoShallow(pl.LightningModule):
         '''
 
         # logging metrics into log file
-        self.log('learning_rate', self.learning_rate, on_step=False, on_epoch=True)
-        self.log('loss', torch.sum(losses), on_step=False, on_epoch=True)
-        self.log('r2score', torch.mean(r2_node), on_step=False, on_epoch=True)
+        self.log('learning_rate', lr_scheduler.get_last_lr())
+        self.log('loss', torch.sum(losses))
+        self.log('r2score', r2_node)
 
         # clean up
         del losses
@@ -284,13 +284,15 @@ class AutoGenoShallow(pl.LightningModule):
         del coder_file
         self.training_r2score_node.reset()
         gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
 
     # define validation step
     def validation_step(self, batch, batch_idx) -> Dict[str, Tensor]:
         x = batch[0]
         output, _ = self.forward(x)
 
-        r2_node = self.testing_r2score_node.forward(preds=output, target=x)
+        self.testing_r2score_node.update(preds=output, target=x)
         loss = f.mse_loss(input=output, target=x)
         '''
         print(f'{batch_idx} val step batch size: {self.hparams.batch_size} output dim: {output.size()} '
@@ -298,24 +300,24 @@ class AutoGenoShallow(pl.LightningModule):
         '''
         # return {'loss': loss, 'r2_node': r2_node, 'input': x, 'output': output}
         # return {'loss': loss, "input": x, "output": output}
-        return {"loss": loss, "r2": r2_node}
+        return {"loss": loss}
 
     # end of validation epoch
     def validation_epoch_end(self, testing_step_outputs):
         # extracting training batch data
         loss = get_dict_values_1d('loss', testing_step_outputs)
-        r2_node = get_dict_values_1d('r2', testing_step_outputs)
         # target = get_dict_values_2d('input', testing_step_outputs)
         # output = get_dict_values_2d('output', testing_step_outputs)
         # print(f'regular losses: {losses.size()} pred: {pred.size()} target: {target.size()}')
 
         # ======goodness of fit ======
+        r2_node: Tensor = self.testing_r2score_node.compute()
         '''
         r2_node: Tensor = tm.functional.regression.r2_score(preds=output, target=target,
                                                             multioutput='variance_weighted')
         '''
         print(f"test_loss: {torch.sum(loss):.6f} "
-              f"test_r2_node: {torch.mean(r2_node)}",
+              f"test_r2_node: {r2_node}",
               file=sys.stderr)
         '''
         print(f"test_loss: {torch.sum(loss):.6f} ",
@@ -323,30 +325,34 @@ class AutoGenoShallow(pl.LightningModule):
         '''
         # logging validation metrics into log file
         self.log('testing_loss', torch.sum(loss), on_step=False, on_epoch=True)
-        self.log('testing_r2score', torch.mean(r2_node), on_step=False, on_epoch=True)
+        self.log('testing_r2score', r2_node, on_step=False, on_epoch=True)
 
         # clean up
-        # del r2_node
+        del r2_node
         del loss
         del r2_node
 
         self.testing_r2score_node.reset()
         gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
 
-    # configures the optimizers through learning rate
+            # configures the optimizers through learning rate
+
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
+        scheduler: Any
         if self.cyclical:
             it_per_epoch = math.ceil(len(self.train_dataloader()) / self.hparams.batch_size)
             print(f'it_per_epoch: {it_per_epoch}')
-            scheduler: CyclicLR = torch.optim.lr_scheduler.CyclicLR(optimizer, base_lr=self.min_lr,
-                                                                    mode='exp_range',
-                                                                    cycle_momentum=False,
-                                                                    step_size_up=4 * it_per_epoch,
-                                                                    max_lr=self.learning_rate)
+            scheduler = torch.optim.lr_scheduler.CyclicLR(optimizer, base_lr=self.min_lr,
+                                                          mode='exp_range',
+                                                          cycle_momentum=False,
+                                                          step_size_up=4 * it_per_epoch,
+                                                          max_lr=self.learning_rate)
+        else:
+            scheduler = SWALR(optimizer, swa_lr=self.learning_rate)
             return {"optimizer": optimizer, "lr_scheduler": scheduler}
-
-        return {"optimizer": optimizer}
 
     def setup(self, stage: Optional[str] = None):
         # setup of training and testing
@@ -411,12 +417,13 @@ class AutoGenoShallow(pl.LightningModule):
         parser.add_argument("-rs", "--random_state", type=int, default=42,
                             help='sets a seed to the random generator, so that your train-val-test splits are '
                                  'always deterministic. default is 42')
-        parser.add_argument("-s", "--shuffle", type=bool, default=False,
-                            help='whether to shuffle the dataset before splitting the dataset. default is False.')
-        parser.add_argument("-c", "--cyclical_lr", type=bool, default=False,
-                            help='whether to use cyclical learning rate or not. default is False.')
-        parser.add_argument("--drop_last", type=bool, default=False,
-                            help='whether to drop the last column or not. default is False.')
+        parser.add_argument("-s", "--shuffle", action='store_true', default=False,
+                            help='when this flag is used the dataset is shuffled before splitting the dataset.')
+        parser.add_argument("-clr", "--cyclical_lr", action="store_true", default=False,
+                            help='when this flag is used cyclical learning rate will be use other stochastic weight '
+                                 'average is implored for training.')
+        parser.add_argument("--drop_last", action='store_true', default=False,
+                            help='selecting this flag causes the last column in the dataset to be dropped.')
         parser.add_argument("--pin_memory", type=bool, default=True,
-                            help='whether to pin_memory or not. default is True.')
+                            help='selecting this flag causes the numpy to tensor conversion to be less efficient.')
         return parent_parser
