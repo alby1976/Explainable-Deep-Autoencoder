@@ -331,7 +331,6 @@ class AutoGenoShallow(pl.LightningModule):
         # clean up
         del r2_node
         del loss
-        del r2_node
 
         self.testing_r2score_node.reset()
         gc.collect()
@@ -352,8 +351,9 @@ class AutoGenoShallow(pl.LightningModule):
                                                           step_size_up=4 * it_per_epoch,
                                                           max_lr=self.learning_rate)
         else:
-            scheduler = SWALR(optimizer, swa_lr=self.learning_rate)
-            return {"optimizer": optimizer, "lr_scheduler": scheduler}
+            scheduler = SWALR(optimizer, swa_lr=self.learning_rate, anneal_strategy="cos")
+
+        return {"optimizer": optimizer, "lr_scheduler": scheduler}
 
     def setup(self, stage: Optional[str] = None):
         # setup of training and testing
