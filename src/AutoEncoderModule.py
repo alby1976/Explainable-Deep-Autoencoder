@@ -247,7 +247,7 @@ class AutoGenoShallow(pl.LightningModule):
         lr_scheduler: Any
         try:
             lr_scheduler = self.lr_schedulers()[0]
-        except IndexError:
+        except TypeError:
             lr_scheduler = self.lr_schedulers()
 
         # extracting training batch data
