@@ -244,7 +244,7 @@ class AutoGenoShallow(pl.LightningModule):
     def training_epoch_end(self, training_step_outputs):
         # scheduler: CyclicLR = self.lr_schedulers()
         epoch = self.current_epoch
-        lr_scheduler: Union[Optional[List[Any]], Any] = self.lr_schedulers()
+        lr_scheduler = self.lr_schedulers()
 
         # extracting training batch data
         losses: Tensor = get_dict_values_1d('loss', training_step_outputs)
