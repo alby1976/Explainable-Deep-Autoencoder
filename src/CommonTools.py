@@ -23,8 +23,9 @@ class DataNormalization:
         self.column_names = None
 
     def fit(self, x_train, column_names: Union[ndarray, Any] = None):
-        print(f'median_var: {med_var(x_train)}')
-        self.column_mask = med_var(x_train) > 1
+        tmp = get_transformed_data(x_train)
+        print(f'median_var: {med_var(tmp)}')
+        self.column_mask = med_var(tmp) > 1
         self.scaler = self.scaler.fit(X=np.log2(x_train[:, self.column_mask] + 0.25))
         if column_names is not None:
             self.column_names = column_names[self.column_mask]
@@ -132,7 +133,7 @@ def get_data(geno: DataFrame, path_to_save_qc: Path, filter_str: str) -> DataFra
     return geno
 
 
-def get_transformed_data(data: DataFrame, return_df: bool = False):
+def get_transformed_data(data, columns=None):
     # filter out outliers
 
     # log2(TPM+0.25) transformation (0.25 to prevent negative inf)
@@ -142,7 +143,7 @@ def get_transformed_data(data: DataFrame, return_df: bool = False):
     # fold change respect to  row median
     result = np.asarray([modified.values[i, 1:] - med_exp[i] for i in range(modified.shape[0])])
 
-    if bool:
+    if columns is not None:
         return DataFrame(data=result, columns=data.columns)
 
     return modified
