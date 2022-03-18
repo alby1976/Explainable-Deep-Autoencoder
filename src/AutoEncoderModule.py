@@ -19,6 +19,7 @@ from pytorch_lightning.utilities.types import EVAL_DATALOADERS, TRAIN_DATALOADER
 from sklearn.model_selection import train_test_split
 from torch import nn, Tensor
 from torch.nn import functional as f
+from torch.optim.lr_scheduler import CyclicLR
 from torch.optim.swa_utils import SWALR
 from torch.utils.data import DataLoader, TensorDataset
 
@@ -266,9 +267,9 @@ class AutoGenoShallow(pl.LightningModule):
         # ======goodness of fit======
         r2_node: Tensor = self.training_r2score_node.compute()
         print(f"epoch[{epoch + 1:4d}]  "
-              f"learning_rate: {lr_scheduler.get_last_lr():.6f} "
+              f"learning_rate: {lr_scheduler.get_last_lr()[0]:.6f} "
               f"loss: {losses.sum():.6f}  "
-              f"r2_mode: {torch.mean(r2_node)}",
+              f"r2_mode: {r2_node}",
               end=' ', file=sys.stderr)
         '''
         print(f"epoch[{epoch + 1:4d}]  "
@@ -278,7 +279,7 @@ class AutoGenoShallow(pl.LightningModule):
         '''
 
         # logging metrics into log file
-        self.log('learning_rate', lr_scheduler.get_last_lr())
+        self.log('learning_rate', lr_scheduler.get_last_lr()[0])
         self.log('loss', torch.sum(losses))
         self.log('r2score', r2_node)
 
