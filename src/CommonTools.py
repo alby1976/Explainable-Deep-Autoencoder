@@ -25,7 +25,7 @@ class DataNormalization:
     def fit(self, x_train, column_names: Union[ndarray, Any] = None):
         print(f'median_var: {np.median(x_train, axis=0)}')
         self.column_mask = np.median(x_train, axis=0) > 1
-        tmp = get_transformed_data[:, self.column_mask]
+        tmp = get_transformed_data(x_train[:, self.column_mask])
         self.scaler = self.scaler.fit(X=tmp)
         if column_names is not None:
             self.column_names = column_names[self.column_mask]
