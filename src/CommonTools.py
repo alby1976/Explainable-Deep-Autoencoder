@@ -23,16 +23,15 @@ class DataNormalization:
         self.column_names = None
 
     def fit(self, x_train, column_names: Union[ndarray, Any] = None):
-        tmp = get_transformed_data(x_train)
-        print(f'median_var: {np.median(tmp, axis=0)}')
-        self.column_mask = np.median(tmp, axis=0) > 1
-        self.scaler = self.scaler.fit(X=np.log2(x_train[:, self.column_mask] + 0.25))
+        print(f'median_var: {np.median(x_train, axis=0)}')
+        self.column_mask = np.median(x_train, axis=0) > 1
+        tmp = get_transformed_data[:, self.column_mask]
+        self.scaler = self.scaler.fit(X=tmp)
         if column_names is not None:
             self.column_names = column_names[self.column_mask]
 
     def transform(self, x: Any):
-        tmp = x[:, self.column_mask]
-        tmp = np.log2(tmp + 0.25)
+        tmp = get_transformed_data(x[:, self.column_mask])
         if self.column_names is None:
             return self.scaler.transform(X=tmp)
         else:
