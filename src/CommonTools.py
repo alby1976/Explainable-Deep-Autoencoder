@@ -24,8 +24,8 @@ class DataNormalization:
 
     def fit(self, x_train, column_names: Union[ndarray, Any] = None):
         tmp = get_transformed_data(x_train)
-        print(f'median_var: {med_var(tmp)}')
-        self.column_mask = med_var(tmp) > 1
+        print(f'median_var: {np.median(tmp, axis=0)}')
+        self.column_mask = np.median(tmp, axis=0) > 1
         self.scaler = self.scaler.fit(X=np.log2(x_train[:, self.column_mask] + 0.25))
         if column_names is not None:
             self.column_names = column_names[self.column_mask]
@@ -159,5 +159,4 @@ def filter_data(data: DataFrame, filter_str: str):
 def med_var(data, axis=0):
     med = np.median(data, axis=axis)
     tmp = np.median(np.power(data - med, 2), axis=axis)
-    print(f'med: {med}\ntmp: {tmp}\n\n')
     return tmp
