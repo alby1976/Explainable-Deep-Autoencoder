@@ -17,7 +17,7 @@ class DataNormalization:
         from sklearn.preprocessing import MinMaxScaler, MaxAbsScaler
 
         super().__init__()
-        self.scaler = MinMaxScaler()
+        self.scaler = MaxAbsScaler()
         self.column_mask = None
         self.column_names = None
 
