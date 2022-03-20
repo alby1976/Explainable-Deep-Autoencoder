@@ -14,7 +14,7 @@ from torch import device, Tensor
 class DataNormalization:
 
     def __init__(self):
-        from sklearn.preprocessing import MinMaxScaler
+        from sklearn.preprocessing import MinMaxScaler, MaxAbsScaler
 
         super().__init__()
         self.scaler = MinMaxScaler()
@@ -22,8 +22,9 @@ class DataNormalization:
         self.column_names = None
 
     def fit(self, x_train, column_names: Union[ndarray, Any] = None):
-        print(f'median_var: {np.median(x_train, axis=0)}')
-        self.column_mask = np.median(x_train, axis=0) > 1
+        print(f'median_var: {med_var(x_train, axis=0)}')
+        # self.column_mask = np.median(x_train, axis=0) > 1
+        self.column_mask = med_var(x_train, axis=0) > 1
         tmp = get_transformed_data(x_train[:, self.column_mask])
         self.scaler = self.scaler.fit(X=tmp)
         if column_names is not None:
@@ -131,15 +132,18 @@ def get_data(geno: DataFrame, path_to_save_qc: Path, filter_str: str) -> DataFra
     return geno
 
 
-def get_transformed_data(data, columns=None):
+def get_transformed_data(data, columns=None, fold=False):
     # filter out outliers
 
     # log2(TPM+0.25) transformation (0.25 to prevent negative inf)
     modified = np.log2(data + 0.25)
 
-    med_exp = np.median(modified, axis=1)
-    # fold change respect to  row median
-    result = np.asarray([modified[i, 1:] - med_exp[i] for i in range(modified.shape[0])])
+    if fold:
+        med_exp = np.median(modified, axis=1)
+        # fold change respect to  row median
+        result = np.asarray([modified[i, 1:] - med_exp[i] for i in range(modified.shape[0])])
+    else:
+        result = modified
 
     if columns is not None:
         return DataFrame(data=result, columns=data.columns)
