@@ -144,7 +144,7 @@ def get_transformed_data(data, columns=None):
     if columns is not None:
         return DataFrame(data=result, columns=data.columns)
 
-    return modified
+    return result
 
 
 def filter_data(data: DataFrame, filter_str: str):
