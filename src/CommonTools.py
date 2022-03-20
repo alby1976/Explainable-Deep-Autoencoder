@@ -1,24 +1,23 @@
-import os
+from itertools import islice
 from itertools import islice
 from pathlib import Path
-from typing import Tuple, Union, Iterable, Dict, Any, List, Mapping
+from typing import Tuple, Union, Iterable, Dict, Any, List
 
 import numpy as np
 import torch
 from numpy import ndarray
-from pandas import DataFrame, Series
-from scipy.stats import anderson_ksamp, levene, anderson, ks_2samp, epps_singleton_2samp
-from sklearn.preprocessing import MinMaxScaler
+from pandas import DataFrame
+from scipy.stats import levene, anderson, ks_2samp
 from torch import device, Tensor
-from torchmetrics import Metric
 
 
 class DataNormalization:
-    from sklearn.preprocessing import MinMaxScaler
 
     def __init__(self):
+        from sklearn.preprocessing import MaxAbsScaler
+
         super().__init__()
-        self.scaler = MinMaxScaler()
+        self.scaler = MaxAbsScaler()
         self.column_mask = None
         self.column_names = None
 
@@ -59,7 +58,7 @@ def data_parametric(*samples) -> bool:
         result2, _, _ = normality_test(samples[0])
         result3, _, _ = equality_of_variance_test(*samples)
     else:
-        pass # TODO need to define
+        pass  # TODO need to define
 
     return result1 and result2 and result3
 
