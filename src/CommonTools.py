@@ -14,10 +14,10 @@ from torch import device, Tensor
 class DataNormalization:
 
     def __init__(self):
-        from sklearn.preprocessing import MaxAbsScaler
+        from sklearn.preprocessing import MinMaxScaler
 
         super().__init__()
-        self.scaler = MaxAbsScaler()
+        self.scaler = MinMaxScaler()
         self.column_mask = None
         self.column_names = None
 
