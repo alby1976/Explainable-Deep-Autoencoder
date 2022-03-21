@@ -1,7 +1,7 @@
 from itertools import islice
 from itertools import islice
 from pathlib import Path
-from typing import Tuple, Union, Iterable, Dict, Any, List
+from typing import Tuple, Union, Iterable, Dict, Any, List, Optional
 
 import numpy as np
 import torch
@@ -12,22 +12,21 @@ from torch import device, Tensor
 
 
 class DataNormalization:
-
     def __init__(self):
         from sklearn.preprocessing import MinMaxScaler, MaxAbsScaler
 
         super().__init__()
         self.scaler = MaxAbsScaler()
-        self.column_mask = None
+        self.column_mask: ndarray = []
         self.column_names = None
 
     def fit(self, x_train, column_names: Union[ndarray, Any] = None):
         # the data is log2 transformed and then change to fold change relative to the row's median
         # Those columns whose column modian fold change relative to median is > 0 is keep
         # This module uses MaxABsScaler to scale the data
-        tmp = get_transformed_data(x_train, fold=True)
-        self.column_mask = np.median(tmp, axis=0) > 0
-        print(f'median_var: {np.median(tmp[:, self.column_mask], axis=0)}')
+        tmp: Union[Optional[DataFrame], Any] = get_transformed_data(x_train, fold=True)
+        self.column_mask: ndarray = np.median(tmp, axis=0) > 0
+        print(f'\nshape: {self.column_mask.shape}\nmedian: {np.median(tmp[:, self.column_mask], axis=0)}')
         # self.column_mask = med_var(x_train, axis=0) > 1
 
         self.scaler = self.scaler.fit(X=tmp[:, self.column_mask])
@@ -35,7 +34,8 @@ class DataNormalization:
             self.column_names = column_names[self.column_mask]
 
     def transform(self, x: Any):
-        tmp = get_transformed_data(x[:, self.column_mask])
+        print(f'\nmask shape: {self.column_mask.shape} data shape: {x.shape}')
+        tmp = get_transformed_data(x[:, self.column_mask], True)
         if self.column_names is None:
             return self.scaler.transform(X=tmp)
         else:
