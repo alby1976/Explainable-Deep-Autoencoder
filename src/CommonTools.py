@@ -38,7 +38,6 @@ class DataNormalization:
 
     def transform(self, x: Any):
         tmp, _ = get_transformed_data(x[:, self.column_mask], median=self.med_fold_change, fold=True)
-        print(f'x dim: {x.shape} tmp dim: {tmp.shape}')
         if self.column_names is None:
             return self.scaler.transform(X=tmp)
         else:
@@ -147,7 +146,6 @@ def get_transformed_data(data, fold=False, median=None, col_names=None):
 
     if fold:
         med_exp:ndarray = np.median(modified, axis=1) if median is None else median
-        print(f'\n med_exp: {med_exp.shape} {np.all(med_exp == median)} median: {0 if median is None else median}')
         # fold change respect to  row median
         modified = np.asarray([modified[i, :] - med_exp[i] for i in range(modified.shape[0])])
 
