@@ -152,7 +152,7 @@ def get_transformed_data(data, fold=False, median=None, col_names=None):
     if col_names is not None:
         return DataFrame(data=modified, columns=col_names)
 
-    return modified, median
+    return modified, med_exp
 
 
 def filter_data(data: DataFrame, filter_str: str):
