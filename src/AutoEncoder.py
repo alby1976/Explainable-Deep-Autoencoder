@@ -55,7 +55,7 @@ def main():
                         help="In 'min' mode, training will stop when the quantity monitored has stopped decreasing and "
                              "in 'max' mode it will stop when the quantity monitored has stopped increasing. "
                              "(default: %(default)s)")
-    parser.add_argument("-p" "--patience", type=int, default=10,
+    parser.add_argument("-p", "--patience", type=int, default=10,
                         help="the number of metric checks before this module assume no change and trigger early stop"
                              "\n\n"
                              "It must be noted that the patience parameter counts the number of validation checks "
