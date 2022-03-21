@@ -29,7 +29,7 @@ class DataNormalization:
         # This module uses MaxABsScaler to scale the data
         tmp, self.med_fold_change = get_transformed_data(x_train, fold=True)
         self.column_mask: ndarray = np.median(tmp, axis=0) > 0
-        printf(f'\ntmp: {tmp.shape} fold: {self.med_fold_change.shape} mask: {self.med_fold_change.shape}')
+        print(f'\ntmp: {tmp.shape} fold: {self.med_fold_change.shape} mask: {self.med_fold_change.shape}')
         # self.column_mask = med_var(x_train, axis=0) > 1
 
         self.scaler = self.scaler.fit(X=tmp[:, self.column_mask])
