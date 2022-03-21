@@ -28,6 +28,12 @@ def main():
     parser.add_argument('--tune', action='store_true', default=False,
                         help='including this flag causes pytorch lightning to find optimum '
                              'batch_size and learning rate')
+    # add EarlyStop parameters
+    #stop_loss = EarlyStopping(monitor='testing_loss', mode='min', patience=10, verbose=True,
+    #                          check_on_train_epoch_end=False)
+    # todo: need to add  earlystopping parameters
+    parser.add_argument("-p" "--patience", type=int, default=10,
+                        help="the number of metric checks before this module assume no change and trigger early stop")
 
     # add model specific args
     parser = AutoGenoShallow.add_model_specific_args(parser)
@@ -36,6 +42,7 @@ def main():
     # ie: now --gpus --num_nodes ... --fast_dev_run all work in the cli
     parser = Trainer.add_argparse_args(parser)
 
+    # parse the command line arguements
     args = parser.parse_args()
     print(args)
     if not args.data.is_file():
