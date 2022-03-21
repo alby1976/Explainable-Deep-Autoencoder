@@ -29,7 +29,7 @@ class DataNormalization:
         # This module uses MaxABsScaler to scale the data
         tmp, self.med_fold_change = get_transformed_data(x_train, fold=True)
         self.column_mask: ndarray = np.median(tmp, axis=0) > 0
-        print(f'\ntmp: {tmp.shape} fold: {self.med_fold_change.shape} mask: {self.med_fold_change.shape}')
+        print(f'\ntmp: {tmp.shape} fold: {self.med_fold_change.shape} mask: {self.column_mask.shape}')
         # self.column_mask = med_var(x_train, axis=0) > 1
 
         self.scaler = self.scaler.fit(X=tmp[:, self.column_mask])
@@ -38,6 +38,7 @@ class DataNormalization:
 
     def transform(self, x: Any):
         tmp = get_transformed_data(x[:, self.column_mask], median=self.med_fold_change, fold=True)
+        print(f'x dim: {x.shape} tmp dim: {tmp.shape}')
         if self.column_names is None:
             return self.scaler.transform(X=tmp)
         else:
@@ -146,7 +147,7 @@ def get_transformed_data(data, fold=False, median=None, col_names=None):
 
     if fold:
         med_exp:ndarray = np.median(modified, axis=1) if median is None else median
-        print(f'\n med_exp: {med_exp.shape} median: {0 if median is None else median}')
+        print(f'\n med_exp: {med_exp.shape} {med_exp == median} median: {0 if median is None else median}')
         # fold change respect to  row median
         modified = np.asarray([modified[i, :] - med_exp[i] for i in range(modified.shape[0])])
 
