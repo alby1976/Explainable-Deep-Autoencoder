@@ -52,6 +52,10 @@ def main():
     seed_everything(args.random_state)
     stop_loss = EarlyStopping(monitor='testing_loss', mode='min', patience=10, verbose=True,
                               check_on_train_epoch_end=False)
+    '''
+    stop_loss = EarlyStopping(monitor='testing_r2score', mode='max', patience=10, verbose=True,
+                              check_on_train_epoch_end=False)
+    '''
     trainer: Trainer
     log_dir = path_to_save_ae.joinpath('log')
     ckpt_dir = path_to_save_ae.joinpath('ckpt')

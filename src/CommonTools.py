@@ -22,11 +22,15 @@ class DataNormalization:
         self.column_names = None
 
     def fit(self, x_train, column_names: Union[ndarray, Any] = None):
-        print(f'median_var: {med_var(x_train, axis=0)}')
-        # self.column_mask = np.median(x_train, axis=0) > 1
-        self.column_mask = med_var(x_train, axis=0) > 1
-        tmp = get_transformed_data(x_train[:, self.column_mask])
-        self.scaler = self.scaler.fit(X=tmp)
+        # the data is log2 transformed and then change to fold change relative to the row's median
+        # Those columns whose column modian fold change relative to median is > 0 is keep
+        # This module uses MaxABsScaler to scale the data
+        tmp = get_transformed_data(x_train, fold=True)
+        self.column_mask = np.median(tmp, axis=0) > 0
+        print(f'median_var: {np.median(tmp[:, self.column_mask], axis=0)}')
+        # self.column_mask = med_var(x_train, axis=0) > 1
+
+        self.scaler = self.scaler.fit(X=tmp[:, self.column_mask])
         if column_names is not None:
             self.column_names = column_names[self.column_mask]
 
