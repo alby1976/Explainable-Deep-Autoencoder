@@ -145,7 +145,7 @@ def get_transformed_data(data, columns=None, fold=False):
     if fold:
         med_exp = np.median(modified, axis=1)
         # fold change respect to  row median
-        result = np.asarray([modified[i, 1:] - med_exp[i] for i in range(modified.shape[0])])
+        result = np.asarray([modified[i, :] - med_exp[i] for i in range(modified.shape[0])])
     else:
         result = modified
 
