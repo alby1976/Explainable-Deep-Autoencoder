@@ -258,7 +258,10 @@ class AutoGenoShallow(pl.LightningModule):
         # output: Tensor = get_dict_values_2d('output', training_step_outputs)
 
         # ===========save model============
-        coder_file = self.save_dir.joinpath(f"{self.model_name}-{epoch}={date}.pt")
+        from datetime import datetime
+        now = datetime.now()
+        dt_string = now.strftime("%d-%m-%Y %H:%M:%S")
+        coder_file = self.save_dir.joinpath(f"{self.model_name}-{epoch}={dt_string}.pt")
         torch.save(coder, coder_file)
         # print(f'\n*** save_dir: {self.save_dir} coder_file: {coder_file} ***\n')
         # save_tensor(x=coder, file=coder_file)
