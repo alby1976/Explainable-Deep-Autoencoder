@@ -5,7 +5,7 @@ from typing import Tuple, Union, Iterable, Dict, Any, List, Optional
 import numpy as np
 import torch
 from numpy import ndarray
-from pandas import DataFrame
+from pandas import DataFrame, Series
 from scipy.stats import levene, anderson, ks_2samp
 from torch import device, Tensor
 
@@ -26,12 +26,11 @@ class DataNormalization:
         # the data is log2 transformed and then change to fold change relative to the row's median
         # Those columns whose column modian fold change relative to median is > 0 is keep
         # This module uses MaxABsScaler to scale the data
-        tmp, self.med_fold_change = get_transformed_data(x_train, fold=True)
-        self.column_mask: ndarray = np.median(tmp, axis=0) > 1
-        print(f'\ntmp: {tmp.shape} fold: {self.med_fold_change.shape} mask: {self.column_mask.shape}')
+        tmp, self.med_fold_change = get_transformed_data(x_train)
+        self.column_mask: ndarray = np.var(tmp, axis=0) > 1
+        # print(f'\ntmp: {tmp.shape} fold: {self.med_fold_change.shape} mask: {self.column_mask.shape}')
         # self.column_mask = med_var(x_train, axis=0) > 1
-        tmp, _ = get_transformed_data(x_train[:, self.column_mask])
-        self.scaler = self.scaler.fit(X=tmp)
+        self.scaler = self.scaler.fit(X=tmp[:, self.column_mask])
         if column_names is not None:
             self.column_names = column_names[self.column_mask]
 
@@ -128,16 +127,18 @@ def create_dir(directory: Path):
     directory.mkdir(parents=True, exist_ok=True)
 
 
-def get_data(geno: DataFrame, path_to_save_qc: Path, filter_str: str) -> DataFrame:
+def get_data(geno: DataFrame, path_to_save_qc: Path, filter_str: str) -> Tuple[DataFrame, Series]:
     geno = filter_data(geno, filter_str)
+    phen = None
     try:
+        phen = geno.phen
         geno.drop(columns='phen', inplace=True)
     except KeyError:
         pass
 
     create_dir(path_to_save_qc.parent)
     geno.to_csv(path_to_save_qc)
-    return geno
+    return geno,
 
 
 def get_transformed_data(data, fold=False, median=None, col_names=None):

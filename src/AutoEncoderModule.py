@@ -8,13 +8,12 @@ from pathlib import Path
 from typing import Any, Union, Dict, Optional, Tuple
 
 # 3rd party modules
-import numpy as np
 import pandas as pd
 import pl_bolts.datamodules
 import pytorch_lightning as pl
 import torch
 import torchmetrics as tm
-from pandas import DataFrame
+from pandas import DataFrame, Series
 from pytorch_lightning.utilities.types import EVAL_DATALOADERS, TRAIN_DATALOADERS
 from sklearn.model_selection import train_test_split
 from torch import nn, Tensor
@@ -27,12 +26,12 @@ from CommonTools import get_dict_values_1d, get_dict_values_2d, DataNormalizatio
 
 
 class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
-    def __init__(self, x: DataFrame, val_split: float, test_split: float,
+    def __init__(self, x: DataFrame, y: Series, val_split: float, test_split: float,
                  num_workers: int, random_state: int, shuffle: bool, batch_size: int,
                  pin_memory: bool, drop_last: bool):
 
         self.dm = DataNormalization()
-        result = self.split_dataset(x.to_numpy(), np.zeros(shape=len(x.index)), val_split, test_split, random_state)
+        result = self.split_dataset(x.to_numpy(), y.to_numpy(), val_split, test_split, random_state)
         dataset = result[0]
         self.size: int = dataset.shape[1]
 
@@ -63,7 +62,7 @@ class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
             Tuple[Any, Any, Any, Any, Any, Any]:
         holding_split: float = val_split + test_split
         x_train, x_holding, y_train, y_holding = train_test_split(x, y, test_size=holding_split,
-                                                                  random_state=random_state)
+                                                                  random_state=random_state, stratify=y)
         self.dm.fit(x_train)
         if holding_split == val_split:
             return (
@@ -81,6 +80,7 @@ class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
             size: float = val_split / holding_split
             x_val, x_test, y_val, y_test = train_test_split(x_holding, y_holding,
                                                             train_size=size,
+                                                            shuffle=self.shuffle,
                                                             random_state=random_state)
             return (
                 self.dm.transform(x_train), y_train,
@@ -94,7 +94,7 @@ class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
         loader = DataLoader(
             self.train_dataset,
             batch_size=self.batch_size,
-            shuffle=self.shuffle,
+            # shuffle=self.shuffle,
             num_workers=self.num_workers,
             drop_last=self.drop_last,
             pin_memory=self.pin_memory,
@@ -152,9 +152,9 @@ class AutoGenoShallow(pl.LightningModule):
         self.cyclical = cyclical_lr
 
         # get normalized data quality control
+        x, y = get_data(geno=pd.read_csv(data, index_col=0), filter_str=filter_str, path_to_save_qc=transformed_data)
         self.dataset = GPDataModule(
-            get_data(geno=pd.read_csv(data, index_col=0), filter_str=filter_str, path_to_save_qc=transformed_data),
-            val_split, test_split, num_workers, random_state, shuffle, batch_size, pin_memory, drop_last
+            x, y, val_split, test_split, num_workers, random_state, shuffle, batch_size, pin_memory, drop_last
         )
         # self.geno: ndarray = get_filtered_data(pd.read_csv(path_to_data, index_col=0), path_to_save_qc).to_numpy()
         self.input_features = self.dataset.size
