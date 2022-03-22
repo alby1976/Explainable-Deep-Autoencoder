@@ -1,5 +1,4 @@
 from itertools import islice
-from itertools import islice
 from pathlib import Path
 from typing import Tuple, Union, Iterable, Dict, Any, List, Optional
 
@@ -13,12 +12,12 @@ from torch import device, Tensor
 
 class DataNormalization:
     def __init__(self):
-        from sklearn.preprocessing import MinMaxScaler, MaxAbsScaler
+        from sklearn.preprocessing import MaxAbsScaler
 
         super().__init__()
         self.scaler = MaxAbsScaler()
         self.med_fold_change = None
-        self.column_mask: ndarray = []
+        self.column_mask: ndarray = np.asarray([])
         self.column_names = None
 
     def fit(self, x_train, column_names: Union[ndarray, Any] = None):
@@ -28,7 +27,7 @@ class DataNormalization:
         # Those columns whose column modian fold change relative to median is > 0 is keep
         # This module uses MaxABsScaler to scale the data
         tmp, self.med_fold_change = get_transformed_data(x_train, fold=True)
-        self.column_mask: ndarray = np.median(tmp, axis=0) > 0
+        self.column_mask: ndarray = np.median(tmp, axis=0) > 1
         print(f'\ntmp: {tmp.shape} fold: {self.med_fold_change.shape} mask: {self.column_mask.shape}')
         # self.column_mask = med_var(x_train, axis=0) > 1
 
@@ -60,6 +59,9 @@ def get_dict_values_2d(key: str, lists: List[Dict[str, Tensor]], dim: int = 0) -
 
 def data_parametric(*samples) -> bool:
     # print(f'samples: {type(samples)}\n\n{samples}\n\n')
+    result1: bool = False
+    result2: bool = False
+    result3: bool = False
     if len(samples) > 1:
         result1, _, _ = same_distribution_test(*samples)
         result2, _, _ = normality_test(samples[0])
@@ -143,9 +145,10 @@ def get_transformed_data(data, fold=False, median=None, col_names=None):
 
     # log2(TPM+0.25) transformation (0.25 to prevent negative inf)
     modified = np.log2(data + 0.25)
+    med_exp: ndarray = np.asarray([])
 
     if fold:
-        med_exp:ndarray = np.median(modified, axis=1) if median is None else median
+        med_exp = np.median(modified, axis=1) if median is None else median
         # fold change respect to  row median
         modified = np.asarray([modified[i, :] - med_exp[i] for i in range(modified.shape[0])])
 

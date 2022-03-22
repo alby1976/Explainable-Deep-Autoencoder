@@ -5,7 +5,7 @@ import gc
 import math
 import sys
 from pathlib import Path
-from typing import Any, Union, Dict, Optional, Tuple, List
+from typing import Any, Union, Dict, Optional, Tuple
 
 # 3rd party modules
 import numpy as np
@@ -19,13 +19,11 @@ from pytorch_lightning.utilities.types import EVAL_DATALOADERS, TRAIN_DATALOADER
 from sklearn.model_selection import train_test_split
 from torch import nn, Tensor
 from torch.nn import functional as f
-from torch.optim.lr_scheduler import CyclicLR
 from torch.optim.swa_utils import SWALR
 from torch.utils.data import DataLoader, TensorDataset
 
 # custom modules
-from CommonTools import get_dict_values_1d, get_dict_values_2d, DataNormalization, get_data, \
-    filter_data
+from CommonTools import get_dict_values_1d, get_dict_values_2d, DataNormalization, get_data
 
 
 class GPDataModule(pl_bolts.datamodules.SklearnDataModule):

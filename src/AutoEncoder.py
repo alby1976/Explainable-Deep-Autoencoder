@@ -29,7 +29,7 @@ def main():
                         help='including this flag causes pytorch lightning to find optimum '
                              'batch_size and learning rate')
     # add EarlyStop parameters
-    #stop_loss = EarlyStopping(monitor='testing_loss', mode='min', patience=10, verbose=True,
+    # stop_loss = EarlyStopping(monitor='testing_loss', mode='min', patience=10, verbose=True,
     #                          check_on_train_epoch_end=False)
     # todo: need to add  earlystopping parameters
     parser.add_argument("-p" "--patience", type=int, default=10,
