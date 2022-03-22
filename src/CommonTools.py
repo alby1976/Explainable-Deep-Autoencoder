@@ -15,7 +15,7 @@ class DataNormalization:
         from sklearn.preprocessing import MaxAbsScaler
 
         super().__init__()
-        self.scaler = MinMaxScaler()
+        self.scaler = MaxAbsScaler()
         self.med_fold_change = None
         self.column_mask: ndarray = np.asarray([])
         self.column_names = None
@@ -26,7 +26,7 @@ class DataNormalization:
         # the data is log2 transformed and then change to fold change relative to the row's median
         # Those columns whose column modian fold change relative to median is > 0 is keep
         # This module uses MaxABsScaler to scale the data
-        tmp, self.med_fold_change = get_transformed_data(x_train, fold=True)
+        tmp, self.med_fold_change = get_transformed_data(x_train)
         self.column_mask: ndarray = np.median(tmp, axis=0) > 1
         print(f'\ntmp: {tmp.shape} fold: {self.med_fold_change.shape} mask: {self.column_mask.shape}')
         # self.column_mask = med_var(x_train, axis=0) > 1
@@ -36,7 +36,7 @@ class DataNormalization:
             self.column_names = column_names[self.column_mask]
 
     def transform(self, x: Any):
-        tmp, _ = get_transformed_data(x[:, self.column_mask], median=self.med_fold_change, fold=True)
+        tmp, _ = get_transformed_data(x[:, self.column_mask], median=self.med_fold_change)
         if self.column_names is None:
             return self.scaler.transform(X=tmp)
         else:
@@ -169,25 +169,3 @@ def med_var(data, axis=0):
     med = np.median(data, axis=axis)
     tmp = np.median(np.power(data - med, 2), axis=axis)
     return tmp
-
-
-def float_or_none(value: str) -> Optional[float]:
-    """
-    float_or_none.
-
-    Examples:
-        >>> import argparse
-        >>> parser = argparse.ArgumentParser()
-        >>> _ = parser.add_argument('--foo', type=float_or_none)
-        >>> parser.parse_args(['--foo', '4.5'])
-        Namespace(foo=4.5)
-        >>> parser.parse_args(['--foo', 'none'])
-        Namespace(foo=None)
-        >>> parser.parse_args(['--foo', 'null'])
-        Namespace(foo=None)
-        >>> parser.parse_args(['--foo', 'nil'])
-        Namespace(foo=None)
-    """
-    if value.strip().lower() in ("none", "null", "nil"):
-        return None
-    return float(value)
