@@ -15,7 +15,7 @@ from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.loggers import CSVLogger, TensorBoardLogger
 
 from AutoEncoderModule import AutoGenoShallow
-from CommonTools import create_dir
+from CommonTools import create_dir, float_or_none
 
 _DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 
@@ -31,9 +31,39 @@ def main():
     # add EarlyStop parameters
     # stop_loss = EarlyStopping(monitor='testing_loss', mode='min', patience=10, verbose=True,
     #                          check_on_train_epoch_end=False)
-    # todo: need to add  earlystopping parameters
-    parser.add_argument("-p" "--patience", type=int, default=10,
-                        help="the number of metric checks before this module assume no change and trigger early stop")
+    """
+    EarlyStopping(monitor=None, min_delta=0.0, patience=3, verbose=False, mode='min', strict=True, check_finite=True,
+                  stopping_threshold=None, divergence_threshold=None, check_on_train_epoch_end=None)
+    """
+    parser.add_argument("--min_delta", type=float, default=0,
+                        help="minimum change in the monitored quantity to qualify as an improvement, i.e. an absolute "
+                             "change of less than or equal to min_delta, will count as no improvement.")
+    parser.add_argument("--stopping_threshold", type=float_or_none, default='None',
+                        help="Stop training immediately once the monitored quantity reaches this threshold.")
+    parser.add_argument("--divergence_threshold", type=float_or_none, default='None',
+                        help="Stop training as soon as the monitored quantity becomes worse than this threshold.")
+    parser.add_argument("--check_on_train_epoch_end", action='store_true', default=False,
+                        help="whether to run early stopping at the end of the training epoch. If this is False, then "
+                             "the check runs at the end of the validation.")
+    parser.add_argument("--monitor", type=str, default="testing_loss",
+                        help="the metric to monitor. eg. 'testing_loss'")
+    parser.add_argument("--mode",
+                        default='min',
+                        const='min',
+                        nargs='?',
+                        choices=['min', 'max'],
+                        help="In 'min' mode, training will stop when the quantity monitored has stopped decreasing and "
+                             "in 'max' mode it will stop when the quantity monitored has stopped increasing. "
+                             "(default: %(default)s)")
+    parser.add_argument("-p", "--patience", type=int, default=10,
+                        help="the number of metric checks before this module assume no change and trigger early stop"
+                             "\n\n"
+                             "It must be noted that the patience parameter counts the number of validation checks "
+                             "with no improvement and would not be the number of training epoch if "
+                             "pytorch_lightning.trainer.Trainer.params.check_val_every_n_epoch is not 1."
+                             "i.e. pytorch_lightning.trainer.Trainer.params.check_val_every_n_epoch=2 and patience is 3"
+                             "then at least 6 training of no improvement before training will stop.")
+    parser.add_argument("-v", "--verbose", action="store_true", default=False, help="verbosity mode")
 
     # add model specific args
     parser = AutoGenoShallow.add_model_specific_args(parser)
@@ -57,8 +87,8 @@ def main():
                             args.num_workers, args.random_state, args.shuffle, args.drop_last, args.pin_memory)
 
     seed_everything(args.random_state)
-    stop_loss = EarlyStopping(monitor='testing_loss', mode='min', patience=10, verbose=True,
-                              check_on_train_epoch_end=False)
+    stop_loss = EarlyStopping(monitor=args.monitor, mode=args.mode, patience=args.patience, verbose=args.verbose,
+                              check_on_train_epoch_end=args.check_on_train_epoch_end)
     '''
     stop_loss = EarlyStopping(monitor='testing_r2score', mode='max', patience=10, verbose=True,
                               check_on_train_epoch_end=False)

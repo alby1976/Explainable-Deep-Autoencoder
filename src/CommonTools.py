@@ -15,7 +15,7 @@ class DataNormalization:
         from sklearn.preprocessing import MaxAbsScaler
 
         super().__init__()
-        self.scaler = MaxAbsScaler()
+        self.scaler = MinMaxScaler()
         self.med_fold_change = None
         self.column_mask: ndarray = np.asarray([])
         self.column_names = None
@@ -169,3 +169,25 @@ def med_var(data, axis=0):
     med = np.median(data, axis=axis)
     tmp = np.median(np.power(data - med, 2), axis=axis)
     return tmp
+
+
+def float_or_none(value: str) -> Optional[float]:
+    """
+    float_or_none.
+
+    Examples:
+        >>> import argparse
+        >>> parser = argparse.ArgumentParser()
+        >>> _ = parser.add_argument('--foo', type=float_or_none)
+        >>> parser.parse_args(['--foo', '4.5'])
+        Namespace(foo=4.5)
+        >>> parser.parse_args(['--foo', 'none'])
+        Namespace(foo=None)
+        >>> parser.parse_args(['--foo', 'null'])
+        Namespace(foo=None)
+        >>> parser.parse_args(['--foo', 'nil'])
+        Namespace(foo=None)
+    """
+    if value.strip().lower() in ("none", "null", "nil"):
+        return None
+    return float(value)
