@@ -26,7 +26,7 @@ class DataNormalization:
         # This module uses MaxABsScaler to scale the data
 
         tmp: Union[Optional[DataFrame], ndarray]
-        self.column_mask: ndarray = np.med_var(x_train, axis=0) > 1
+        self.column_mask: ndarray = med_var(x_train, axis=0) > 1
         # print(f'\ntmp: {tmp.shape} fold: {self.med_fold_change.shape} mask: {self.column_mask.shape}')
         # self.column_mask = med_var(x_train, axis=0) > 1
         tmp = get_transformed_data(x_train[:, self.column_mask], fold=True)
