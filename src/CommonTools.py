@@ -29,14 +29,16 @@ class DataNormalization:
         tmp, median = get_transformed_data(x_train, fold=True)
         self.column_mask: ndarray = np.median(tmp, axis=0) > 1
         tmp, _ = get_fold_change(tmp, median)
-        # print(f'\ntmp: {tmp.shape} mask: {self.column_mask.shape}')
+        print(f'\ntmp: {tmp.shape} mask: {self.column_mask.shape}')
         self.scaler = self.scaler.fit(X=tmp)
         if column_names is not None:
             self.column_names = column_names[self.column_mask]
 
     def transform(self, x: Any):
         tmp, median = get_transformed_data(x, fold=True)
+        print(f'\ntmp: {tmp.shape} mask: {self.column_mask.shape}')
         tmp, _ = get_fold_change(tmp[:, self.column_mask], median)
+        print(f'\ntmp: {tmp.shape} median: {median.shape}')
 
         if self.column_names is None:
             return self.scaler.transform(X=tmp)
