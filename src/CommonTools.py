@@ -138,7 +138,7 @@ def get_data(geno: DataFrame, path_to_save_qc: Path, filter_str: str) -> Tuple[D
 
     create_dir(path_to_save_qc.parent)
     geno.to_csv(path_to_save_qc)
-    return geno,
+    return geno, phen
 
 
 def get_transformed_data(data, fold=False, col_names=None) -> Union[ndarray, DataFrame]:
