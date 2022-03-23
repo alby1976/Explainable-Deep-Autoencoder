@@ -27,10 +27,9 @@ class DataNormalization:
 
         tmp: Union[Optional[DataFrame], ndarray]
         self.column_mask: ndarray = med_var(x_train, axis=0) > 1
-        # print(f'\ntmp: {tmp.shape} fold: {self.med_fold_change.shape} mask: {self.column_mask.shape}')
-        # self.column_mask = med_var(x_train, axis=0) > 1
         tmp = get_transformed_data(x_train[:, self.column_mask], fold=True)
-        self.scaler = self.scaler.fit(X=tmp[:, self.column_mask])
+        # print(f'\ntmp: {tmp.shape} mask: {self.column_mask.shape}')
+        self.scaler = self.scaler.fit(X=tmp)
         if column_names is not None:
             self.column_names = column_names[self.column_mask]
 
