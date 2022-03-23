@@ -29,9 +29,9 @@ class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
     def __init__(self, x: DataFrame, y: Series, val_split: float, test_split: float,
                  num_workers: int, random_state: int, shuffle: bool, batch_size: int,
                  pin_memory: bool, drop_last: bool):
+        from sklearn import preprocessing
 
         self.dm = DataNormalization()
-        from sklearn import preprocessing
         self.le = preprocessing.LabelEncoder()
 
         result = self.split_dataset(x.to_numpy(), self.le.fit_transform(y=y.to_numpy()), val_split, test_split, random_state)
