@@ -27,11 +27,11 @@ class DataNormalization:
         # Those columns whose column modian fold change relative to median is > 0 is keep
         # This module uses MaxABsScaler to scale the data
         tmp, self.med_fold_change = get_transformed_data(x_train, fold=True)
-        self.column_mask: ndarray = np.var(tmp, axis=0) > 1
+        self.column_mask: ndarray = np.median(tmp, axis=0) > 1
         # print(f'\ntmp: {tmp.shape} fold: {self.med_fold_change.shape} mask: {self.column_mask.shape}')
         # self.column_mask = med_var(x_train, axis=0) > 1
-        self.scaler = self.scaler.fit(
-            X=get_transformed_data(x_train[:, self.column_mask], fold=True, median=self.med_fold_change))
+        tmp, _ = get_transformed_data(x_train[:, self.column_mask], fold=True, median=self.med_fold_change)
+        self.scaler = self.scaler.fit(X=tmp)
         if column_names is not None:
             self.column_names = column_names[self.column_mask]
 
