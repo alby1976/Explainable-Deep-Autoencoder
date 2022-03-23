@@ -160,10 +160,10 @@ if __name__ == '__main__':
     parser = Trainer.add_argparse_args(parser)
 
     # parse the command line arguements
-    args = parser.parse_args()
-    print(args)
+    arguments = parser.parse_args()
+    print(arguments)
 
-    main(args)
+    main(arguments)
 
     '''
     if len(sys.argv) < 7:
