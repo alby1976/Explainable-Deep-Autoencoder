@@ -26,7 +26,7 @@ class DataNormalization:
         # This module uses MaxABsScaler to scale the data
 
         tmp: Union[Optional[DataFrame], ndarray]
-        self.column_mask: ndarray = med_var(x_train, axis=0) > 1
+        self.column_mask: ndarray = np.median(x_train, axis=0) > 1
         tmp = get_transformed_data(x_train[:, self.column_mask], fold=True)
         # print(f'\ntmp: {tmp.shape} mask: {self.column_mask.shape}')
         self.scaler = self.scaler.fit(X=tmp)
