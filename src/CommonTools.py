@@ -21,21 +21,21 @@ class DataNormalization:
         self.column_names = None
 
     def fit(self, x_train, column_names: Union[ndarray, Any] = None):
-        tmp: Union[Optional[DataFrame], Any]
-
         # the data is log2 transformed and then change to fold change relative to the row's median
         # Those columns whose column modian fold change relative to median is > 0 is keep
         # This module uses MaxABsScaler to scale the data
-        tmp, self.med_fold_change = get_transformed_data(x_train)
-        self.column_mask: ndarray = np.var(tmp, axis=0) > 1
+
+        tmp: Union[Optional[DataFrame], ndarray]
+        self.column_mask: ndarray = np.med_var(x_train, axis=0) > 1
         # print(f'\ntmp: {tmp.shape} fold: {self.med_fold_change.shape} mask: {self.column_mask.shape}')
         # self.column_mask = med_var(x_train, axis=0) > 1
+        tmp = get_transformed_data(x_train[:, self.column_mask], fold=True)
         self.scaler = self.scaler.fit(X=tmp[:, self.column_mask])
         if column_names is not None:
             self.column_names = column_names[self.column_mask]
 
     def transform(self, x: Any):
-        tmp, _ = get_transformed_data(x[:, self.column_mask], median=self.med_fold_change)
+        tmp = get_transformed_data(x[:, self.column_mask], fold=True)
         if self.column_names is None:
             return self.scaler.transform(X=tmp)
         else:
@@ -141,7 +141,7 @@ def get_data(geno: DataFrame, path_to_save_qc: Path, filter_str: str) -> Tuple[D
     return geno,
 
 
-def get_transformed_data(data, fold=False, median=None, col_names=None):
+def get_transformed_data(data, fold=False, col_names=None) -> Union[ndarray, DataFrame]:
     # filter out outliers
 
     # log2(TPM+0.25) transformation (0.25 to prevent negative inf)
@@ -149,14 +149,14 @@ def get_transformed_data(data, fold=False, median=None, col_names=None):
     med_exp: ndarray = np.asarray([])
 
     if fold:
-        med_exp = np.median(modified, axis=1) if median is None else median
+        med_exp = np.median(modified, axis=1)
         # fold change respect to  row median
         modified = np.asarray([modified[i, :] - med_exp[i] for i in range(modified.shape[0])])
 
     if col_names is not None:
         return DataFrame(data=modified, columns=col_names)
 
-    return modified, med_exp
+    return modified
 
 
 def filter_data(data: DataFrame, filter_str: str):
