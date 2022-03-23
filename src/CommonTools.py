@@ -12,10 +12,10 @@ from torch import device, Tensor
 
 class DataNormalization:
     def __init__(self):
-        from sklearn.preprocessing import MaxAbsScaler
+        from sklearn.preprocessing import MinMaxScaler
 
         super().__init__()
-        self.scaler = MaxAbsScaler()
+        self.scaler = MinMaxScaler()
         self.med_fold_change = None
         self.column_mask: ndarray = np.asarray([])
         self.column_names = None
@@ -26,15 +26,18 @@ class DataNormalization:
         # This module uses MaxABsScaler to scale the data
 
         tmp: Union[Optional[DataFrame], ndarray]
-        self.column_mask: ndarray = np.median(x_train, axis=0) > 1
-        tmp = get_transformed_data(x_train[:, self.column_mask], fold=True)
+        tmp, median = get_transformed_data(x_train, fold=True)
+        self.column_mask: ndarray = np.median(tmp, axis=0) > 1
+        tmp, _ = get_fold_change(tmp, median)
         # print(f'\ntmp: {tmp.shape} mask: {self.column_mask.shape}')
         self.scaler = self.scaler.fit(X=tmp)
         if column_names is not None:
             self.column_names = column_names[self.column_mask]
 
     def transform(self, x: Any):
-        tmp = get_transformed_data(x[:, self.column_mask], fold=True)
+        tmp, median = get_transformed_data(x, fold=True)
+        tmp, _ = get_fold_change(tmp[:, self.column_mask], median)
+
         if self.column_names is None:
             return self.scaler.transform(X=tmp)
         else:
@@ -140,7 +143,7 @@ def get_data(geno: DataFrame, path_to_save_qc: Path, filter_str: str) -> Tuple[D
     return geno, phen
 
 
-def get_transformed_data(data, fold=False, col_names=None) -> Union[ndarray, DataFrame]:
+def get_transformed_data(data, fold=False, median=None , col_names=None) -> Tuple[Union[ndarray, DataFrame], ndarray]:
     # filter out outliers
 
     # log2(TPM+0.25) transformation (0.25 to prevent negative inf)
@@ -148,14 +151,18 @@ def get_transformed_data(data, fold=False, col_names=None) -> Union[ndarray, Dat
     med_exp: ndarray = np.asarray([])
 
     if fold:
-        med_exp = np.median(modified, axis=1)
-        # fold change respect to  row median
-        modified = np.asarray([modified[i, :] - med_exp[i] for i in range(modified.shape[0])])
+        modified, med_exp = get_fold_change(modified, median)
 
     if col_names is not None:
-        return DataFrame(data=modified, columns=col_names)
+        return DataFrame(data=modified, columns=col_names), med_exp
 
-    return modified
+    return modified, med_exp
+
+
+def get_fold_change(x, median) -> Tuple[ndarray, ndarray]:
+    med_exp = np.median(x, axis=1) if median is None else median
+    # fold change respect to  row median
+    return np.asarray([x[i, :] - med_exp[i] for i in range(x.shape[0])]), med_exp
 
 
 def filter_data(data: DataFrame, filter_str: str):
