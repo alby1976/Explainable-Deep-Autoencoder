@@ -31,7 +31,10 @@ class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
                  pin_memory: bool, drop_last: bool):
 
         self.dm = DataNormalization()
-        result = self.split_dataset(x.to_numpy(), y.to_numpy(), val_split, test_split, random_state)
+        from sklearn import preprocessing
+        self.le = preprocessing.LabelEncoder()
+
+        result = self.split_dataset(x.to_numpy(), self.le.fit_transform(y=y.to_numpy()), val_split, test_split, random_state)
         dataset = result[0]
         self.size: int = dataset.shape[1]
 
@@ -51,12 +54,17 @@ class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
             pin_memory,
             drop_last
         )
+
+
         '''
         print(f'train data: \n{self.train_dataset} {range(len(self.train_dataset))}\n'
               f'{[self.train_dataset[i] for i in range(len(self.train_dataset))]}\n'
               f'{self.train_dataset[0]}')
         sys.exit(1)
         '''
+
+    def get_phenotype(self, item):
+        return self.le.inverse_transform(item)
 
     def split_dataset(self, x, y, val_split: float, test_split: float, random_state: int) -> \
             Tuple[Any, Any, Any, Any, Any, Any]:
