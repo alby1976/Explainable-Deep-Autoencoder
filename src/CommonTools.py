@@ -28,7 +28,7 @@ class DataNormalization:
 
         tmp: Union[Optional[DataFrame], ndarray]
 
-        self.column_mask: ndarray = np.median(tmp, axis=0) > 1
+        self.column_mask: ndarray = np.median(x_train, axis=0) > 1
         tmp, median = get_transformed_data(x_train[:, self.column_mask], fold=True)
         print(f'\ntmp: {tmp.shape} mask: {self.column_mask.shape}', file=sys.stderr)
         self.scaler = self.scaler.fit(X=tmp)
