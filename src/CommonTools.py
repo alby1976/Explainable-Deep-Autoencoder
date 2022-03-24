@@ -30,7 +30,7 @@ class DataNormalization:
         scaler = MaxAbsScaler()
 
         # find column mask
-        tmp = scaler.fit_transform(np.tranpose(x_train))
+        tmp = scaler.fit_transform(np.transpose(x_train))
         tmp = np.transpose(tmp)
         self.column_mask: ndarray = np.median(tmp, axis=0) > 0.5
 
