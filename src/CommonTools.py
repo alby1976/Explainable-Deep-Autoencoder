@@ -26,16 +26,19 @@ class DataNormalization:
         # Those columns whose column modian fold change relative to median is > 0 is keep
         # This module uses MaxABsScaler to scale the data
 
-        tmp: Union[Optional[DataFrame], ndarray]
+        from sklearn.preprocessing import MaxAbsScaler
+        scaler = MaxAbsScaler()
 
-        # scale and transform data to fold change
-        tmp, median = get_transformed_data(x_train, fold=True)
         # find column mask
-        self.column_mask: ndarray = np.median(tmp, axis=0) > 0
-        # apply column mask on data
-        tmp, _ = get_fold_change(tmp[:, self.column_mask], median=median)
+        tmp = scaler.fit_transform(np.tranpose(x_train))
+        tmp = np.transpose(tmp)
+        self.column_mask: ndarray = np.median(tmp, axis=0) > 0.5
+
+        # apply column mask and log2 transformation
         if column_names is not None:
             self.column_names = column_names[self.column_mask]
+
+        tmp, _ = get_transformed_data(x_train[:, self.column_mask])
         print(f'\ntmp: {tmp.shape} mask: {self.column_mask.shape}', file=sys.stderr)
         # fit the data
 
@@ -43,7 +46,7 @@ class DataNormalization:
 
     def transform(self, x: Any):
         # calculate fold change relative to the median after applying column mask
-        tmp, median = get_transformed_data(x[:, self.column_mask], fold=True)
+        tmp, median = get_transformed_data(x[:, self.column_mask])
         print(f'\ntmp: {tmp.shape} mask: {self.column_mask.shape}', file=sys.stderr)
         print(f'\ntmp: {tmp.shape} median: {median.shape}', file=sys.stderr)
 
