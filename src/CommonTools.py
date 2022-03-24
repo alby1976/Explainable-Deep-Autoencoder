@@ -28,19 +28,26 @@ class DataNormalization:
 
         tmp: Union[Optional[DataFrame], ndarray]
 
-        self.column_mask: ndarray = np.median(x_train, axis=0) > 1
-        tmp, median = get_transformed_data(x_train[:, self.column_mask], fold=True)
-        print(f'\ntmp: {tmp.shape} mask: {self.column_mask.shape}', file=sys.stderr)
-        self.scaler = self.scaler.fit(X=tmp)
-
+        # scale and transform data to fold change
+        tmp, median = get_transformed_data(x_train, fold=True)
+        # find column mask
+        self.column_mask: ndarray = np.median(tmp, axis=0) > 0
+        # apply column mask on data
+        tmp, _ = get_fold_change(tmp[:, self.column_mask], median=median)
         if column_names is not None:
             self.column_names = column_names[self.column_mask]
+        print(f'\ntmp: {tmp.shape} mask: {self.column_mask.shape}', file=sys.stderr)
+        # fit the data
+
+        self.scaler = self.scaler.fit(X=tmp)
 
     def transform(self, x: Any):
+        # calculate fold change relative to the median after applying column mask
         tmp, median = get_transformed_data(x[:, self.column_mask], fold=True)
         print(f'\ntmp: {tmp.shape} mask: {self.column_mask.shape}', file=sys.stderr)
         print(f'\ntmp: {tmp.shape} median: {median.shape}', file=sys.stderr)
 
+        # Using MinMaxScaler() transform the data to be between (0..1)
         if self.column_names is None:
             return self.scaler.transform(X=tmp)
         else:
