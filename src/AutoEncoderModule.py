@@ -34,7 +34,8 @@ class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
         self.dm = DataNormalization()
         self.le = preprocessing.LabelEncoder()
 
-        result = self.split_dataset(x.to_numpy(), self.le.fit_transform(y=y.to_numpy()), val_split, test_split, random_state)
+        result = self.split_dataset(x.to_numpy(), self.le.fit_transform(y=y.to_numpy()), val_split, test_split,
+                                    random_state)
         dataset = result[0]
         self.size: int = dataset.shape[1]
 
@@ -54,7 +55,6 @@ class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
             pin_memory,
             drop_last
         )
-
 
         '''
         print(f'train data: \n{self.train_dataset} {range(len(self.train_dataset))}\n'
