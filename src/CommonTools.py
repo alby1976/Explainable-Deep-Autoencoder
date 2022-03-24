@@ -27,18 +27,18 @@ class DataNormalization:
         # This module uses MaxABsScaler to scale the data
 
         tmp: Union[Optional[DataFrame], ndarray]
-        tmp, median = get_transformed_data(x_train, fold=True)
-        self.column_mask: ndarray = np.var(tmp, axis=0) > 0
-        tmp, _ = get_fold_change(tmp[:, self.column_mask], median)
+
+        self.column_mask: ndarray = np.median(tmp, axis=0) > 1
+        tmp, median = get_transformed_data(x_train[:, self.column_mask], fold=True)
         print(f'\ntmp: {tmp.shape} mask: {self.column_mask.shape}', file=sys.stderr)
         self.scaler = self.scaler.fit(X=tmp)
+
         if column_names is not None:
             self.column_names = column_names[self.column_mask]
 
     def transform(self, x: Any):
-        tmp, median = get_transformed_data(x, fold=True)
+        tmp, median = get_transformed_data(x[:, self.column_mask], fold=True)
         print(f'\ntmp: {tmp.shape} mask: {self.column_mask.shape}', file=sys.stderr)
-        tmp, _ = get_fold_change(tmp[:, self.column_mask], median)
         print(f'\ntmp: {tmp.shape} median: {median.shape}', file=sys.stderr)
 
         if self.column_names is None:
