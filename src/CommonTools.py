@@ -180,7 +180,7 @@ def get_fold_change(x, median) -> Tuple[ndarray, ndarray]:
 
 def filter_data(data: DataFrame, filter_str: str):
     try:
-        return data[data.phen == filter_str]
+        return data[data.phen.isin(filter_str) == filter_str]
     except AttributeError:
         return data
 
