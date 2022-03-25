@@ -30,7 +30,7 @@ class DataNormalization:
         median: Union[ndarray, None] = None
         # find column mask
         tmp, median = get_transformed_data(x_train, fold=True)
-        self.column_mask: ndarray = np.median(tmp, axis=0) > 1
+        self.column_mask: ndarray = np.median(tmp, axis=0) > 0
 
         # apply column mask
         tmp, _ = get_fold_change(tmp[:, self.column_mask], median=median)
