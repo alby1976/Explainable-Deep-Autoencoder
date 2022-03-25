@@ -431,7 +431,7 @@ class AutoGenoShallow(pl.LightningModule):
                             help='test set split ratio. default is 0.0')
         parser.add_argument("-w", "--num_workers", type=int, default=0,
                             help='number of processors used to load data. ie worker = 4 * # of GPU. default is 0')
-        parser.add_argument("-f", "--filter_str", nargs="+", type=str, default="",
+        parser.add_argument("-f", "--filter_str", nargs="*",
                             help='filter string(s) to select which rows are processed. default: \'\'')
         parser.add_argument("-rs", "--random_state", type=int, default=42,
                             help='sets a seed to the random generator, so that your train-val-test splits are '

@@ -21,7 +21,7 @@ class DataNormalization:
         self.column_mask: ndarray = np.asarray([])
         self.column_names = None
 
-    def fit(self, x_train, column_names: Union[ndarray, Any] = None):
+    def fit(self, x_train, column_names: Union[ndarray, None] = None):
         # the data is log2 transformed and then change to fold change relative to the row's median
         # Those columns whose column modian fold change relative to median is > 0 is keep
         # This module uses MaxABsScaler to scale the data
@@ -178,7 +178,7 @@ def get_fold_change(x, median) -> Tuple[ndarray, ndarray]:
     return np.asarray([x[i, :] - med_exp[i] for i in range(x.shape[0])]), med_exp
 
 
-def filter_data(data: DataFrame, filter_str: str):
+def filter_data(data: DataFrame, filter_str):
     try:
         return data[data.phen.isin(filter_str)]
     except AttributeError:
