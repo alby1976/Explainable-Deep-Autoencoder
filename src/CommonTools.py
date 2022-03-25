@@ -32,7 +32,7 @@ class DataNormalization:
         self.column_mask: ndarray = np.median(x_train, axis=0) > 1
 
         # apply column mask
-        tmp, median = get_transformed_data(x_train, fold=False)
+        tmp, median = get_transformed_data(x_train[:, self.column_mask], fold=False)
         # tmp, _ = get_fold_change(tmp[:, self.column_mask], median=median)
         if column_names is not None:
             self.column_names = column_names[self.column_mask]
