@@ -217,9 +217,7 @@ class AutoGenoShallow(pl.LightningModule):
         '''
         # def the decoder function
         self.decoder = nn.Sequential(
-            nn.Linear(512, 1024),
-            nn.ReLU(True),
-            nn.Linear(1024, 4096),
+            nn.Linear(512, 4096),
             nn.ReLU(True),
             nn.Linear(4096, self.output_features),
             nn.Sigmoid()
