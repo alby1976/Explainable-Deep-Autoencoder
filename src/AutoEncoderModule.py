@@ -45,7 +45,7 @@ class GPDataSet(Dataset):
 
 class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
     def __init__(self, x: DataFrame, y: Series, val_split: float, test_split: float,
-                 num_workers: int, random_state: int, shuffle: bool, batch_size: int,
+                 num_workers: int, random_state: int, fold:bool, shuffle: bool, batch_size: int,
                  pin_memory: bool, drop_last: bool):
         from sklearn import preprocessing
 
@@ -53,7 +53,7 @@ class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
         self.le = preprocessing.LabelEncoder()
 
         result = self.split_dataset(x.to_numpy(), self.le.fit_transform(y=y.to_numpy()), val_split, test_split,
-                                    random_state)
+                                    random_state, fold)
         dataset = result[0]
         self.size: int = dataset.shape[1]
 
@@ -74,7 +74,7 @@ class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
             drop_last
         )
 
-        self.predict_dataset = pl_bolts.datamodules.SklearnDataset(self.dm.transform(x.to_numpy()),
+        self.predict_dataset = pl_bolts.datamodules.SklearnDataset(self.dm.transform(x.to_numpy(), fold),
                                                                    self.le.transform(y))
 
         '''
@@ -87,16 +87,17 @@ class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
     def get_phenotype(self, item):
         return self.le.inverse_transform(item)
 
-    def split_dataset(self, x, y, val_split: float, test_split: float, random_state: int) -> \
+    def split_dataset(self, x, y, val_split: float, test_split: float, random_state: int,
+                      fold: bool) -> \
             Tuple[Any, Any, Any, Any, Any, Any]:
         holding_split: float = val_split + test_split
         x_train, x_holding, y_train, y_holding = train_test_split(x, y, test_size=holding_split,
                                                                   random_state=random_state, stratify=y)
-        self.dm.fit(x_train)
+        self.dm.fit(x_train, fold)
         if holding_split == val_split:
             return (
-                self.dm.transform(x_train), y_train,
-                self.dm.transform(x_holding), y_holding,
+                self.dm.transform(x_train, fold), y_train,
+                self.dm.transform(x_holding, fold), y_holding,
                 None, None
             )
         elif holding_split == test_split:
@@ -460,6 +461,9 @@ class AutoGenoShallow(pl.LightningModule):
         parser.add_argument("-td", "--transformed_data", type=Path,
                             default=Path(__file__).absolute().parent.parent.joinpath("data_QC.csv"),
                             help='filename of original data after quality control e.g. ./data_QC.csv')
+        parser.add_argument("-f", "--fold", type=bool, default=False,
+                            help='selecting this flag causes the data to be transformed to change fold relative to '
+                                 'row median. default is False')
         parser.add_argument("-bs", "--batch_size", type=int, default=64, help='the size of each batch e.g. 64')
         parser.add_argument("-vs", "--val_split", type=float, default=0.1,
                             help='validation set split ratio. default is 0.1')
@@ -481,4 +485,5 @@ class AutoGenoShallow(pl.LightningModule):
                             help='selecting this flag causes the last column in the dataset to be dropped.')
         parser.add_argument("--pin_memory", type=bool, default=True,
                             help='selecting this flag causes the numpy to tensor conversion to be less efficient.')
+
         return parent_parser
