@@ -27,9 +27,9 @@ from CommonTools import get_dict_values_1d, get_dict_values_2d, DataNormalizatio
 
 
 class GPDataSet(Dataset):
-    def __init__(self, gp_list):
+    def __init__(self, GP_list):
         # 'Initialization'
-        self.GP_list = gp_list
+        self.GP_list = GP_list
 
     def __len__(self):
         # 'Denotes the total number of samples'
@@ -38,9 +38,9 @@ class GPDataSet(Dataset):
     def __getitem__(self, index):
         # 'Generates one sample of data'
         # Load data and get label
-        x = self.GP_list[index]
-        x = np.array(x)
-        return x
+        X = self.GP_list[index]
+        X = np.array(X)
+        return X
 
 
 class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
@@ -74,7 +74,8 @@ class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
             drop_last
         )
 
-        self.predict_dataset = GPDataSet(self.dm.transform(x))
+        self.predict_dataset = pl_bolts.datamodules.SklearnDataset(self.dm.transform(x),
+                                                                   self.le.transform(y))
 
         '''
         print(f'train data: \n{self.train_dataset} {range(len(self.train_dataset))}\n'
@@ -162,6 +163,7 @@ class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
             drop_last=self.drop_last,
             pin_memory=self.pin_memory,
         )
+
         return loader
 
     def teardown(self, stage: Optional[str] = None):
