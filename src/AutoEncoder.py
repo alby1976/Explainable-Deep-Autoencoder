@@ -45,7 +45,8 @@ def main(args):
 
     learning_rate_monitor = LearningRateMonitor(logging_interval='epoch')
     wandb_logger = WandbLogger(name=args.name, save_dir=str(wandb_dir), log_model=True)
-    wandb_logger.log_text("command_line args", dataframe=pd.Dataframe(args))
+
+    wandb_logger.log_text("command_line args", dataframe=pd.DataFrame(args))
     ckpt: ModelCheckpoint = ModelCheckpoint(dirpath=ckpt_dir,
                                             filename='best-{epoch}-{testing_loss:.6f}',
                                             monitor=args.monitor, mode=args.mode, verbose=args.verbose, save_top_k=1)
