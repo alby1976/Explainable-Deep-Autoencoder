@@ -7,12 +7,13 @@ from argparse import ArgumentParser
 from pathlib import Path
 from typing import List, Union
 
+import pandas as pd
 import pytorch_lightning as pl
 import torch
 from pytorch_lightning import seed_everything, Trainer
-from pytorch_lightning.callbacks import ModelSummary, StochasticWeightAveraging, LearningRateMonitor
+from pytorch_lightning.callbacks import ModelSummary, StochasticWeightAveraging, LearningRateMonitor, ModelCheckpoint
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
-from pytorch_lightning.loggers import CSVLogger, TensorBoardLogger
+from pytorch_lightning.loggers import CSVLogger, TensorBoardLogger, WandbLogger
 
 from AutoEncoderModule import AutoGenoShallow
 from CommonTools import create_dir, float_or_none
@@ -35,34 +36,39 @@ def main(args):
     seed_everything(args.random_state)
     trainer: Trainer
     log_dir = path_to_save_ae.joinpath('log')
+    wandb_dir = path_to_save_ae.joinpath('log/wandb')
     ckpt_dir = path_to_save_ae.joinpath('ckpt')
     create_dir(log_dir)
+    create_dir(wandb_dir)
     create_dir(ckpt_dir)
     csv_logger = CSVLogger(save_dir=str(log_dir), name=args.name)
+
     learning_rate_monitor = LearningRateMonitor(logging_interval='epoch')
-    tensor_board_logger = TensorBoardLogger(save_dir=str(log_dir), name=args.name)
-    from pytorch_lightning.callbacks import ModelCheckpoint
-    ckpt = ModelCheckpoint()
+    wandb_logger = WandbLogger(name=args.name, save_dir=str(wandb_dir), log_model=True)
+    wandb_logger.log_text("command_line args", dataframe=pd.Dataframe(args))
+    ckpt: ModelCheckpoint = ModelCheckpoint(dirpath=ckpt_dir,
+                                            filename='best-{epoch}-{testing_loss:.6f}',
+                                            monitor=args.monitor, mode=args.mode, verbose=args.verbose, save_top_k=1)
     stop_loss = EarlyStopping(monitor=args.monitor, mode=args.mode, patience=args.patience, verbose=args.verbose,
                               check_on_train_epoch_end=args.check_on_train_epoch_end)
     '''
     stop_loss = EarlyStopping(monitor='testing_r2score', mode='max', patience=10, verbose=True,
                               check_on_train_epoch_end=False)
     '''
-    callbacks: List[Union[EarlyStopping, ModelSummary, LearningRateMonitor, StochasticWeightAveraging]]
+    callbacks: List[Union[EarlyStopping, ModelSummary, LearningRateMonitor, StochasticWeightAveraging, ModelCheckpoint]]
     swa: bool = False
     if args.cyclical_lr:
-        callbacks = [stop_loss, ModelSummary(max_depth=2), learning_rate_monitor]
+        callbacks = [stop_loss, ModelSummary(max_depth=2), learning_rate_monitor, ckpt]
     else:
         swa = True
         swa_module: StochasticWeightAveraging = StochasticWeightAveraging(device=_DEVICE)
-        callbacks = [stop_loss, ModelSummary(max_depth=2), learning_rate_monitor, swa_module]
+        callbacks = [stop_loss, ModelSummary(max_depth=2), learning_rate_monitor, ckpt, swa_module]
 
     if torch.cuda.is_available():
         trainer = pl.Trainer.from_argparse_args(args, max_epochs=-1,
                                                 default_root_dir=str(ckpt_dir),
                                                 log_every_n_steps=1,
-                                                logger=[csv_logger, tensor_board_logger],
+                                                logger=[csv_logger, wandb_logger],
                                                 deterministic=True,
                                                 gpus=1,
                                                 auto_select_gpus=True,
@@ -78,7 +84,7 @@ def main(args):
                                                 max_epochs=-1,
                                                 default_root_dir=str(ckpt_dir),
                                                 log_every_n_steps=1,
-                                                logger=[csv_logger, tensor_board_logger],
+                                                logger=[csv_logger, wandb_logger],
                                                 deterministic=True,
                                                 stochastic_weight_avg=swa,
                                                 callbacks=callbacks,

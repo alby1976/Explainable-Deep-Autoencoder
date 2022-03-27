@@ -55,6 +55,8 @@ class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
             pin_memory,
             drop_last
         )
+        self.predict_dataset = pl_bolts.datamodules.SklearnDataset(self.dm.transform(x[:, self.dm.column_mask]),
+                                                                   self.le.transform(y))
 
         '''
         print(f'train data: \n{self.train_dataset} {range(len(self.train_dataset))}\n'
@@ -102,7 +104,7 @@ class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
         loader = DataLoader(
             self.train_dataset,
             batch_size=self.batch_size,
-            # shuffle=self.shuffle,
+            shuffle=self.shuffle,
             num_workers=self.num_workers,
             drop_last=self.drop_last,
             pin_memory=self.pin_memory,
@@ -134,6 +136,14 @@ class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
         return loader
 
     def predict_dataloader(self) -> EVAL_DATALOADERS:
+        loader = DataLoader(
+            self.test_dataset,
+            batch_size=self.batch_size,
+            shuffle=self.shuffle,
+            num_workers=self.num_workers,
+            drop_last=self.drop_last,
+            pin_memory=self.pin_memory,
+        )
         pass
 
     def teardown(self, stage: Optional[str] = None):
