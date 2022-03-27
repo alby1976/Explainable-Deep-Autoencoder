@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, Union, Dict, Optional, Tuple
 
 # 3rd party modules
+import numpy as np
 import pandas as pd
 import pl_bolts.datamodules
 import pytorch_lightning as pl
@@ -19,16 +20,16 @@ from sklearn.model_selection import train_test_split
 from torch import nn, Tensor
 from torch.nn import functional as f
 from torch.optim.swa_utils import SWALR
-from torch.utils.data import DataLoader, TensorDataset
+from torch.utils.data import DataLoader, TensorDataset, Dataset
 
 # custom modules
 from CommonTools import get_dict_values_1d, get_dict_values_2d, DataNormalization, get_data
 
 
 class GPDataSet(Dataset):
-    def __init__(self, GP_list):
+    def __init__(self, gp_list):
         # 'Initialization'
-        self.GP_list = GP_list
+        self.GP_list = gp_list
 
     def __len__(self):
         # 'Denotes the total number of samples'
@@ -37,9 +38,9 @@ class GPDataSet(Dataset):
     def __getitem__(self, index):
         # 'Generates one sample of data'
         # Load data and get label
-        X = self.GP_list[index]
-        X = np.array(X)
-        return X
+        x = self.GP_list[index]
+        x = np.array(x)
+        return x
 
 
 class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
@@ -161,7 +162,7 @@ class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
             drop_last=self.drop_last,
             pin_memory=self.pin_memory,
         )
-        pass
+        return loader
 
     def teardown(self, stage: Optional[str] = None):
         # Used to clean-up when the run is finished
