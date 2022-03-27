@@ -461,7 +461,7 @@ class AutoGenoShallow(pl.LightningModule):
         parser.add_argument("-td", "--transformed_data", type=Path,
                             default=Path(__file__).absolute().parent.parent.joinpath("data_QC.csv"),
                             help='filename of original data after quality control e.g. ./data_QC.csv')
-        parser.add_argument("-f", "--fold", type=bool, default=False,
+        parser.add_argument("--fold", type=bool, default=False,
                             help='selecting this flag causes the data to be transformed to change fold relative to '
                                  'row median. default is False')
         parser.add_argument("-bs", "--batch_size", type=int, default=64, help='the size of each batch e.g. 64')
