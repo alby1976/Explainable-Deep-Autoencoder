@@ -74,7 +74,7 @@ class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
             drop_last
         )
 
-        self.predict_dataset = pl_bolts.datamodules.SklearnDataset(self.dm.transform(x),
+        self.predict_dataset = pl_bolts.datamodules.SklearnDataset(self.dm.transform(x.to_numpy()),
                                                                    self.le.transform(y))
 
         '''
