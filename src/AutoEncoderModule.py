@@ -180,8 +180,8 @@ class AutoGenoShallow(pl.LightningModule):
     def __init__(self, save_dir: Path, name: str, ratio: int, cyclical_lr: bool, learning_rate: float,
                  data: Path, transformed_data: Path,
                  batch_size: int, val_split: float, test_split: float,
-                 filter_str: str, num_workers: int, random_state: int, shuffle: bool, drop_last: bool,
-                 pin_memory: bool):
+                 filter_str: str, num_workers: int, random_state: int, fold: bool,
+                 shuffle: bool, drop_last: bool, pin_memory: bool):
         super().__init__()  # I guess this inherits __init__ from super class
         # self.testing_dataset = None
         # self.train_dataset = None
@@ -193,7 +193,7 @@ class AutoGenoShallow(pl.LightningModule):
         # get normalized data quality control
         x, y = get_data(geno=pd.read_csv(data, index_col=0), filter_str=filter_str, path_to_save_qc=transformed_data)
         self.dataset = GPDataModule(
-            x, y, val_split, test_split, num_workers, random_state, shuffle, batch_size, pin_memory, drop_last
+            x, y, val_split, test_split, num_workers, random_state, fold, shuffle, batch_size, pin_memory, drop_last
         )
         # self.geno: ndarray = get_filtered_data(pd.read_csv(path_to_data, index_col=0), path_to_save_qc).to_numpy()
         self.input_features = self.dataset.size

@@ -31,7 +31,7 @@ def main(args):
     create_dir(path_to_save_ae)
     model = AutoGenoShallow(args.save_dir, args.name, args.ratio, args.cyclical_lr, args.learning_rate, args.data,
                             args.transformed_data, args.batch_size, args.val_split, args.test_split, args.filter_str,
-                            args.num_workers, args.random_state, args.shuffle, args.drop_last, args.pin_memory)
+                            args.num_workers, args.random_state, args.fold, args.shuffle, args.drop_last, args.pin_memory)
 
     seed_everything(args.random_state)
     trainer: Trainer
@@ -109,6 +109,10 @@ def main(args):
     # train & validate model
     print(f'...Training and Validating model...')
     trainer.fit(model=model)
+    output = trainer.predict(model=model)
+    if output is not None:
+        df = pd.DataFrame(output)
+        df.to.csv(args.save_dir.joinpath(f"{args.model_name}-final"))
 
 
 if __name__ == '__main__':
