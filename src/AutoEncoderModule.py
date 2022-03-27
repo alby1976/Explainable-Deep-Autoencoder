@@ -25,6 +25,23 @@ from torch.utils.data import DataLoader, TensorDataset
 from CommonTools import get_dict_values_1d, get_dict_values_2d, DataNormalization, get_data
 
 
+class GPDataSet(Dataset):
+    def __init__(self, GP_list):
+        # 'Initialization'
+        self.GP_list = GP_list
+
+    def __len__(self):
+        # 'Denotes the total number of samples'
+        return len(self.GP_list)
+
+    def __getitem__(self, index):
+        # 'Generates one sample of data'
+        # Load data and get label
+        X = self.GP_list[index]
+        X = np.array(X)
+        return X
+
+
 class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
     def __init__(self, x: DataFrame, y: Series, val_split: float, test_split: float,
                  num_workers: int, random_state: int, shuffle: bool, batch_size: int,
@@ -55,8 +72,8 @@ class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
             pin_memory,
             drop_last
         )
-        self.predict_dataset = pl_bolts.datamodules.SklearnDataset(self.dm.transform(x),
-                                                                   self.le.transform(y))
+
+        self.predict_dataset = GPDataSet(self.dm.transform(x))
 
         '''
         print(f'train data: \n{self.train_dataset} {range(len(self.train_dataset))}\n'
