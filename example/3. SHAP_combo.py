@@ -9,8 +9,8 @@ from sklearn.ensemble import RandomForestRegressor
 import shap
 
 #Input
-PATH_TO_DATA_GENE_NAME = 'data_example_QC_name.csv'    # path to cleaned data with gene annotation (not gene id) (after quatlity control)
-PATH_TO_DATA_GENE_ID = 'data_example_QC.csv'    # path to cleaned data with gene id (not gene name) (after quality control)
+PATH_TO_DATA_GENE_NAME = 'data_example_QC_name.csv'    # path to cleaned x with gene annotation (not gene id) (after quatlity control)
+PATH_TO_DATA_GENE_ID = 'data_example_QC.csv'    # path to cleaned x with gene id (not gene name) (after quality control)
 PATH_TO_AE_RESULT = '/example/breast_cancer199.csv'    # path to AutoEncoder results, alwarys the last epoch result
 
 #Output
@@ -36,7 +36,7 @@ for i in range(column_num):
   my_model = RandomForestRegressor(bootstrap=True, oob_score=False,max_depth=20, random_state=42, n_estimators=100)
   my_model.fit(X_train, Y_train)
   explainer = shap.TreeExplainer(my_model)
-  #explainer = shap.KernelExplainer(my_model.predict, data = X_test.iloc[0:10])
+  #explainer = shap.KernelExplainer(my_model.predict, x = X_test.iloc[0:10])
   shap_values = explainer.shap_values(X_test)
   ## generate gene module
   shap_values_mean = np.sum(abs(shap_values),axis=0)/sample_num

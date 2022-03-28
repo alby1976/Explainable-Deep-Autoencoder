@@ -22,7 +22,7 @@ def get_last_model(directory: Path):
 
 def main(path_to_data_gene_name: Path, path_to_data_gene_id: Path, path_to_ae_result: Path,
          path_to_save_bar: str, path_to_save_scatter: str, path_to_save_gene_model: str):
-    # TODO need to refactor this method to incorporate the changes in data normalization
+    # TODO need to refactor this method to incorporate the changes in x normalization
     create_dir(Path(path_to_save_bar).parent)
     create_dir(Path(path_to_save_scatter).parent)
     create_dir(Path(path_to_save_gene_model).parent)
@@ -49,7 +49,7 @@ def main(path_to_data_gene_name: Path, path_to_data_gene_id: Path, path_to_ae_re
                                                                 random_state=42, n_estimators=100)
         my_model.fit(x_train, y_train)
         explainer = shap.TreeExplainer(my_model)
-        # **explainer = shap.KernelExplainer(my_model.predict, data = x_test.iloc[0:10])
+        # **explainer = shap.KernelExplainer(my_model.predict, x = x_test.iloc[0:10])
         shap_values = explainer.shap_values(x_test)
         # **generate gene model
         shap_values_mean = np.sum(abs(shap_values), axis=0) / sample_num
@@ -81,9 +81,9 @@ if __name__ == '__main__':
         print('Default setting are used. Either change SHAP_combo.py to change settings or type:\n')
         print('python SHAP_combo.py path_to_data_gene_name PATH_TO_DATA_GENE_ID PATH_TO_AE_RESULT '
               'PATH_TO_SAVE_BAR PATH_TO_SAVE_SCATTER PATH_TO_SAVE_GENE_MODULE')
-        print('\tpath_to_data_gene_name - path to cleaned data with gene name after quality control '
+        print('\tpath_to_data_gene_name - path to cleaned x with gene name after quality control '
               'e.g. ./gene_name_QC.csv')
-        print('\tPATH_TO_DATA_GENE_ID - path to cleaned data with gene id after quality control e.g ./gene_id_QC.csv')
+        print('\tPATH_TO_DATA_GENE_ID - path to cleaned x with gene id after quality control e.g ./gene_id_QC.csv')
         print('\tPATH_TO_AE_RESULT - path to AutoEncoder results, always the last epoch result e.g. ./AE_199.csv')
         print('\tPATH_TO_SAVE_BAR - path to save SHAP bar chart e.g. ./shap/bar')
         print('\tPATH_TO_SAVE_SCATTER - path to save SHAP scatter chart e.g. ./shap/scatter')

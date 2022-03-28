@@ -8,14 +8,14 @@ from sklearn import preprocessing
 from sklearn.ensemble import RandomForestRegressor
 import shap
 
-PATH_TO_DATA_GENE_ID = './gene_id_QC.txt'    # path to cleaned data with gene id (not gene name) (after quality control)
+PATH_TO_DATA_GENE_ID = './gene_id_QC.txt'    # path to cleaned x with gene id (not gene name) (after quality control)
 PATH_TO_AE_RESULT = './AE_199.txt'    # path to AutoEncoder results, alwarys the last epoch result
 PATH_TO_SAVE = './shap.txt'          # path to save gene module
 
 gene_id = pd.read_csv(PATH_TO_DATA_GENE_ID, index_col=0)
 hidden_vars = pd.read_csv(PATH_TO_AE_RESULT, header = None)
 column_num = len(hidden_vars.columns)       # column number of AE results
-sample_num = len(gene_id.index)             # sample number of data
+sample_num = len(gene_id.index)             # sample number of x
 top_num = int((1/20)*len(gene_id.columns))  # threshold for row number of gene module
 
 for i in range(column_num):
@@ -26,7 +26,7 @@ for i in range(column_num):
   my_model = RandomForestRegressor(bootstrap=True, oob_score=False,max_depth=20, random_state=42, n_estimators=100)
   my_model.fit(X_train, Y_train)
   explainer = shap.TreeExplainer(my_model)
-  # explainer = shap.KernelExplainer(my_model.predict, data = X_test.iloc[0:10])
+  # explainer = shap.KernelExplainer(my_model.predict, x = X_test.iloc[0:10])
   shap_values = explainer.shap_values(X_test)
   # generate gene module
   shap_values_mean = np.sum(abs(shap_values),axis=0)/sample_num

@@ -21,24 +21,24 @@ class DataNormalization:
         self.column_mask: ndarray = np.asarray([])
         self.column_names = None
 
-    def fit(self, x_train, fold:bool, column_names: Union[ndarray, None] = None):
-        # the data is log2 transformed and then change to fold change relative to the row's median
+    def fit(self, x, fold:bool, column_names: Union[ndarray, None] = None):
+        # the x is log2 transformed and then change to fold change relative to the row's median
         # Those columns whose column modian fold change relative to median is > 0 is keep
-        # This module uses MaxABsScaler to scale the data
+        # This module uses MaxABsScaler to scale the x
 
         tmp: Union[ndarray, None] = None
         median: Union[ndarray, None] = None
         # find column mask
-        self.column_mask: ndarray = np.median(x_train, axis=0) > 1
+        self.column_mask: ndarray = np.median(x, axis=0) > 1
 
         # apply column mask
-        tmp, _ = get_transformed_data(x_train[:, self.column_mask], fold=fold)
+        tmp, _ = get_transformed_data(x[:, self.column_mask], fold=fold)
         # tmp, _ = get_fold_change(tmp[:, self.column_mask], median=median)
         if column_names is not None:
             self.column_names = column_names[self.column_mask]
 
         print(f'\ntmp: {tmp.shape} mask: {self.column_mask.shape}', file=sys.stderr)
-        # fit the data
+        # fit the x
 
         self.scaler = self.scaler.fit(X=tmp)
 
@@ -50,7 +50,7 @@ class DataNormalization:
         print(f'\ntmp: {tmp.shape} mask: {self.column_mask.shape}', file=sys.stderr)
         # print(f'\ntmp: {tmp.shape} median: {median.shape}', file=sys.stderr)
 
-        # Using MinMaxScaler() transform the data to be between (0..1)
+        # Using MinMaxScaler() transform the x to be between (0..1)
         if self.column_names is None:
             return self.scaler.transform(X=tmp)
         else:

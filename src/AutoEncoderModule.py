@@ -36,8 +36,8 @@ class GPDataSet(Dataset):
         return len(self.GP_list)
 
     def __getitem__(self, index):
-        # 'Generates one sample of data'
-        # Load data and get label
+        # 'Generates one sample of x'
+        # Load x and get label
         X = self.GP_list[index]
         X = np.array(X)
         return X
@@ -78,7 +78,7 @@ class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
                                                                    self.le.transform(y))
 
         '''
-        print(f'train data: \n{self.train_dataset} {range(len(self.train_dataset))}\n'
+        print(f'train x: \n{self.train_dataset} {range(len(self.train_dataset))}\n'
               f'{[self.train_dataset[i] for i in range(len(self.train_dataset))]}\n'
               f'{self.train_dataset[0]}')
         sys.exit(1)
@@ -93,18 +93,18 @@ class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
         holding_split: float = val_split + test_split
         x_train, x_holding, y_train, y_holding = train_test_split(x, y, test_size=holding_split,
                                                                   random_state=random_state, stratify=y)
-        self.dm.fit(x_train, fold)
+        self.dm.fit(x=x_train, fold=fold)
         if holding_split == val_split:
             return (
-                self.dm.transform(x_train, fold), y_train,
-                self.dm.transform(x_holding, fold), y_holding,
+                self.dm.transform(x_train, fold=fold), y_train,
+                self.dm.transform(x_holding, fold=fold), y_holding,
                 None, None
             )
         elif holding_split == test_split:
             return (
-                self.dm.transform(x_train), y_train,
+                self.dm.transform(x_train, fold=fold), y_train,
                 None, None,
-                self.dm.transform(x_holding), y_holding
+                self.dm.transform(x_holding, fold=fold), y_holding
             )
         else:
             size: float = val_split / holding_split
@@ -190,7 +190,7 @@ class AutoGenoShallow(pl.LightningModule):
 
         self.cyclical = cyclical_lr
 
-        # get normalized data quality control
+        # get normalized x quality control
         x, y = get_data(geno=pd.read_csv(data, index_col=0), filter_str=filter_str, path_to_save_qc=transformed_data)
         self.dataset = GPDataModule(
             x, y, val_split, test_split, num_workers, random_state, fold, shuffle, batch_size, pin_memory, drop_last
@@ -298,7 +298,7 @@ class AutoGenoShallow(pl.LightningModule):
         except TypeError:
             lr_scheduler = self.lr_schedulers()
 
-        # extracting training batch data
+        # extracting training batch x
         losses: Tensor = get_dict_values_1d('loss', training_step_outputs)
         coder: Tensor = get_dict_values_2d('model', training_step_outputs)
         # target: Tensor = get_dict_values_2d('input', training_step_outputs)
@@ -360,7 +360,7 @@ class AutoGenoShallow(pl.LightningModule):
 
     # end of validation epoch
     def validation_epoch_end(self, testing_step_outputs):
-        # extracting training batch data
+        # extracting training batch x
         loss = get_dict_values_1d('loss', testing_step_outputs)
         # target = get_dict_values_2d('input', testing_step_outputs)
         # output = get_dict_values_2d('output', testing_step_outputs)
@@ -440,10 +440,10 @@ class AutoGenoShallow(pl.LightningModule):
     @staticmethod
     def add_model_specific_args(parent_parser: argparse.ArgumentParser):
         parser = parent_parser.add_argument_group("AutoGenoShallow")
-        # parser.add_argument("--data", type=str, default='../data_example.csv',
+        # parser.add_argument("--x", type=str, default='../data_example.csv',
         #                     help='original datafile e.g. ../data_example.csv')
         # parser.add_argument("--transformed_data", type=str, default="./data_QC.csv",
-        #                     help='filename of original data after quality control e.g. ./data_QC.csv')
+        #                     help='filename of original x after quality control e.g. ./data_QC.csv')
         # parser.add_argument("--batch_size", type=int, default=64, help='the size of each batch e.g. 64')
 
         parser.add_argument("-n", "--name", type=str, default='AE_Geno',
@@ -455,14 +455,14 @@ class AutoGenoShallow(pl.LightningModule):
                             help='compression ratio for smallest layer NB: ideally a number that is power of 2')
         parser.add_argument("-lr", "--learning_rate", type=float, default=0.0001,
                             help='the base learning rate for training e.g 0.0001')
-        parser.add_argument("--data", type=Path,
+        parser.add_argument("--x", type=Path,
                             default=Path(__file__).absolute().parent.parent.joinpath("data_example.csv"),
                             help='original datafile e.g. ./data_example.csv')
         parser.add_argument("-td", "--transformed_data", type=Path,
                             default=Path(__file__).absolute().parent.parent.joinpath("data_QC.csv"),
-                            help='filename of original data after quality control e.g. ./data_QC.csv')
+                            help='filename of original x after quality control e.g. ./data_QC.csv')
         parser.add_argument("--fold", type=bool, default=False,
-                            help='selecting this flag causes the data to be transformed to change fold relative to '
+                            help='selecting this flag causes the x to be transformed to change fold relative to '
                                  'row median. default is False')
         parser.add_argument("-bs", "--batch_size", type=int, default=64, help='the size of each batch e.g. 64')
         parser.add_argument("-vs", "--val_split", type=float, default=0.1,
@@ -470,7 +470,7 @@ class AutoGenoShallow(pl.LightningModule):
         parser.add_argument("-ts", "--test_split", type=float, default=0.0,
                             help='test set split ratio. default is 0.0')
         parser.add_argument("-w", "--num_workers", type=int, default=0,
-                            help='number of processors used to load data. ie worker = 4 * # of GPU. default is 0')
+                            help='number of processors used to load x. ie worker = 4 * # of GPU. default is 0')
         parser.add_argument("-f", "--filter_str", nargs="*",
                             help='filter string(s) to select which rows are processed. default: \'\'')
         parser.add_argument("-rs", "--random_state", type=int, default=42,

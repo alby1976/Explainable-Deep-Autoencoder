@@ -14,16 +14,16 @@ import pickle
 import os
 import time
 
-PATH_TO_DATA = 'data_example.csv'      #path to original data 
+PATH_TO_DATA = 'data_example.csv'      #path to original x
 PATH_TO_SAVE_AE = '/example/'      #path to save AutoEncoder results
-PATH_TO_SAVE_QC = 'data_example_QC.csv'       #path to save original data after quality control
+PATH_TO_SAVE_QC = 'data_example_QC.csv'       #path to save original x after quality control
 
 model_name = 'AE_Geno'
 save_dir = PATH_TO_SAVE_AE
 if not os.path.exists(save_dir):
     os.mkdir(save_dir)
 
-geno = pd.read_csv(PATH_TO_DATA,index_col=0) #data quality control
+geno = pd.read_csv(PATH_TO_DATA,index_col=0) #x quality control
 geno_var = geno.var()
 geno.drop(geno_var[geno_var < 1].index.values, axis=1, inplace=True)
 geno.to_csv(PATH_TO_SAVE_QC)
@@ -44,8 +44,8 @@ class GPDataSet(Dataset):
         return len(self.GP_list)
 
     def __getitem__(self, index):
-        # 'Generates one sample of data'
-        # Load data and get label
+        # 'Generates one sample of x'
+        # Load x and get label
         X = self.GP_list[index]
         X = np.array(X)
         return X

@@ -153,7 +153,7 @@ def merge_gene(slurm: bool, ensembl_version: int, geno: pd.DataFrame, filename: 
 
 def process_pathways(slurm: bool, ensembl_version: int, filename: Path, pathways: pd.DataFrame,
                      base_to_save_filtered_data: Path, dir_to_model: Path):
-    geno: pd.DataFrame = pd.read_csv(filename, index_col=0)  # original data
+    geno: pd.DataFrame = pd.read_csv(filename, index_col=0)  # original x
     with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
         executor.map(lambda x, y: merge_gene(slurm, ensembl_version, geno, filename, pathways,
                                              base_to_save_filtered_data, dir_to_model, index=x, gene_set=y),
@@ -192,15 +192,15 @@ if __name__ == '__main__':
         print('python GeneSelectionPathway.py ensemble_version dir_original_data '
               'filename_pathway_data dir_filtered_data dir_AE_model session_id')
         print('\tensembl_version - Ensembl Release version e.g. 104')
-        print('\tdir_original_data - path to original data e.g. ./data/input/ or ./data_example.csv')
-        print('\tfilename_pathway_data - filename of pathway data e.g. ./data/pathway.csv')
-        print('\tdir_filtered_data - base dir to saved filtered original data e.g. ./data/filter')
-        print('\tdir_AE_model - base dir to saved AE models e.g. .data/filter/AE')
+        print('\tdir_original_data - path to original x e.g. ./x/input/ or ./data_example.csv')
+        print('\tfilename_pathway_data - filename of pathway x e.g. ./x/pathway.csv')
+        print('\tdir_filtered_data - base dir to saved filtered original x e.g. ./x/filter')
+        print('\tdir_AE_model - base dir to saved AE models e.g. .x/filter/AE')
         print('\tslurm - where to run program on slurm')
         print('\tsession_id - slurm job id')
         sys.exit(-1)
 
-    # data setup
+    # x setup
     tmp = distutils.util.strtobool(sys.argv[6])
     print(f'slurm: {sys.argv[6]} {bool(tmp)}')
     if bool(tmp):
