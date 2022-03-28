@@ -45,7 +45,7 @@ class GPDataSet(Dataset):
 
 class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
     def __init__(self, x: DataFrame, y: Series, val_split: float, test_split: float,
-                 num_workers: int, random_state: int, fold:bool, shuffle: bool, batch_size: int,
+                 num_workers: int, random_state: int, fold: bool, shuffle: bool, batch_size: int,
                  pin_memory: bool, drop_last: bool):
         from sklearn import preprocessing
 
@@ -74,8 +74,8 @@ class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
             drop_last
         )
 
-        self.predict_dataset = pl_bolts.datamodules.SklearnDataset(self.dm.transform(x.to_numpy(), fold),
-                                                                   self.le.transform(y))
+        self.predict_dataset = pl_bolts.datamodules.SklearnDataset(X=self.dm.transform(x.to_numpy(), fold),
+                                                                   y=self.le.transform(y))
 
         '''
         print(f'train x: \n{self.train_dataset} {range(len(self.train_dataset))}\n'
@@ -113,9 +113,9 @@ class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
                                                             shuffle=self.shuffle,
                                                             random_state=random_state)
             return (
-                self.dm.transform(x_train), y_train,
-                self.dm.transform(x_val), y_val,
-                self.dm.transform(x_test), y_test
+                self.dm.transform(x_train, fold=fold), y_train,
+                self.dm.transform(x_val, fold=fold), y_val,
+                self.dm.transform(x_test, fold=fold), y_test
             )
 
     def train_dataloader(self) -> TRAIN_DATALOADERS:
@@ -157,7 +157,7 @@ class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
 
     def predict_dataloader(self) -> EVAL_DATALOADERS:
         loader = DataLoader(
-            self.test_dataset,
+            self.predict_dataset,
             batch_size=self.batch_size,
             shuffle=self.shuffle,
             num_workers=self.num_workers,
