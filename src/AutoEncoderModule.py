@@ -156,8 +156,10 @@ class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
         return loader
 
     def predict_dataloader(self) -> EVAL_DATALOADERS:
+        print(f'predict: batch size: {self.batch_size} shuffle: {self.shuffle} '
+              f'num_workers: {self.num_workers} drop_last: {self.drop_last} pin_memory: {self.pin_memory}')
         loader = DataLoader(
-            self.predict_dataset,
+            dataset=self.predict_dataset,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
             drop_last=self.drop_last,
