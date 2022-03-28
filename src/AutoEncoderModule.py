@@ -159,7 +159,6 @@ class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
         loader = DataLoader(
             self.predict_dataset,
             batch_size=self.batch_size,
-            shuffle=self.shuffle,
             num_workers=self.num_workers,
             drop_last=self.drop_last,
             pin_memory=self.pin_memory,

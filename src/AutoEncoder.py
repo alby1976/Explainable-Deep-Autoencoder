@@ -32,8 +32,10 @@ def main(args):
         path_to_save_ae = Path(args.save_dir)
         create_dir(path_to_save_ae)
         model = AutoGenoShallow(args.save_dir, args.name, args.ratio, args.cyclical_lr, args.learning_rate, args.data,
-                                args.transformed_data, args.batch_size, args.val_split, args.test_split, args.filter_str,
-                                args.num_workers, args.random_state, args.fold, args.shuffle, args.drop_last, args.pin_memory)
+                                args.transformed_data, args.batch_size, args.val_split, args.test_split,
+                                args.filter_str,
+                                args.num_workers, args.random_state, args.fold, args.shuffle, args.drop_last,
+                                args.pin_memory)
 
         seed_everything(args.random_state)
         trainer: Trainer
@@ -51,14 +53,17 @@ def main(args):
 
         ckpt: ModelCheckpoint = ModelCheckpoint(dirpath=ckpt_dir,
                                                 filename='best-{epoch}-{testing_loss:.6f}',
-                                                monitor=args.monitor, mode=args.mode, verbose=args.verbose, save_top_k=1)
+                                                monitor=args.monitor, mode=args.mode, verbose=args.verbose,
+                                                save_top_k=1)
         stop_loss = EarlyStopping(monitor=args.monitor, mode=args.mode, patience=args.patience, verbose=args.verbose,
                                   check_on_train_epoch_end=args.check_on_train_epoch_end)
         '''
         stop_loss = EarlyStopping(monitor='testing_r2score', mode='max', patience=10, verbose=True,
                                   check_on_train_epoch_end=False)
         '''
-        callbacks: List[Union[EarlyStopping, ModelSummary, LearningRateMonitor, StochasticWeightAveraging, ModelCheckpoint]]
+
+        callbacks: List[
+            Union[EarlyStopping, ModelSummary, LearningRateMonitor, StochasticWeightAveraging, ModelCheckpoint]]
         swa: bool = False
         if args.cyclical_lr:
             callbacks = [stop_loss, ModelSummary(max_depth=2), learning_rate_monitor, ckpt]
