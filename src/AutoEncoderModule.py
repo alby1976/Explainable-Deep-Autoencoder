@@ -440,7 +440,7 @@ class AutoGenoShallow(pl.LightningModule):
     @staticmethod
     def add_model_specific_args(parent_parser: argparse.ArgumentParser):
         parser = parent_parser.add_argument_group("AutoGenoShallow")
-        # parser.add_argument("--x", type=str, default='../data_example.csv',
+        # parser.add_argument("--data", type=str, default='../data_example.csv',
         #                     help='original datafile e.g. ../data_example.csv')
         # parser.add_argument("--transformed_data", type=str, default="./data_QC.csv",
         #                     help='filename of original x after quality control e.g. ./data_QC.csv')
@@ -455,7 +455,7 @@ class AutoGenoShallow(pl.LightningModule):
                             help='compression ratio for smallest layer NB: ideally a number that is power of 2')
         parser.add_argument("-lr", "--learning_rate", type=float, default=0.0001,
                             help='the base learning rate for training e.g 0.0001')
-        parser.add_argument("--x", type=Path,
+        parser.add_argument("--data", type=Path,
                             default=Path(__file__).absolute().parent.parent.joinpath("data_example.csv"),
                             help='original datafile e.g. ./data_example.csv')
         parser.add_argument("-td", "--transformed_data", type=Path,
