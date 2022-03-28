@@ -10,6 +10,7 @@ from typing import List, Union
 import pandas as pd
 import pytorch_lightning as pl
 import torch
+import wandb
 from pytorch_lightning import seed_everything, Trainer
 from pytorch_lightning.callbacks import ModelSummary, StochasticWeightAveraging, LearningRateMonitor, ModelCheckpoint
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
@@ -26,92 +27,93 @@ def main(args):
         print(f'{args.data} is not a file')
         sys.exit(-1)
 
-    # instantiate model
-    path_to_save_ae = Path(args.save_dir)
-    create_dir(path_to_save_ae)
-    model = AutoGenoShallow(args.save_dir, args.name, args.ratio, args.cyclical_lr, args.learning_rate, args.data,
-                            args.transformed_data, args.batch_size, args.val_split, args.test_split, args.filter_str,
-                            args.num_workers, args.random_state, args.fold, args.shuffle, args.drop_last, args.pin_memory)
+    with wandb.init(config=args):
+        # instantiate model
+        path_to_save_ae = Path(args.save_dir)
+        create_dir(path_to_save_ae)
+        model = AutoGenoShallow(args.save_dir, args.name, args.ratio, args.cyclical_lr, args.learning_rate, args.data,
+                                args.transformed_data, args.batch_size, args.val_split, args.test_split, args.filter_str,
+                                args.num_workers, args.random_state, args.fold, args.shuffle, args.drop_last, args.pin_memory)
 
-    seed_everything(args.random_state)
-    trainer: Trainer
-    log_dir = path_to_save_ae.joinpath('log')
-    wandb_dir = path_to_save_ae.joinpath('log/wandb')
-    ckpt_dir = path_to_save_ae.joinpath('ckpt')
-    create_dir(log_dir)
-    create_dir(wandb_dir)
-    create_dir(ckpt_dir)
-    csv_logger = CSVLogger(save_dir=str(log_dir), name=args.name)
+        seed_everything(args.random_state)
+        trainer: Trainer
+        log_dir = path_to_save_ae.joinpath('log')
+        wandb_dir = path_to_save_ae.joinpath('log/wandb')
+        ckpt_dir = path_to_save_ae.joinpath('ckpt')
+        create_dir(log_dir)
+        create_dir(wandb_dir)
+        create_dir(ckpt_dir)
+        csv_logger = CSVLogger(save_dir=str(log_dir), name=args.name)
 
-    learning_rate_monitor = LearningRateMonitor(logging_interval='epoch')
-    wandb_logger = WandbLogger(name=args.name, save_dir=str(wandb_dir), log_model=True)
-    wandb_logger.config.update(args)  # adds all of the arguments as config variables
+        learning_rate_monitor = LearningRateMonitor(logging_interval='epoch')
+        wandb_logger = WandbLogger(name=args.name, save_dir=str(wandb_dir), log_model=True)
+        # wandb.config.update(args)  # adds all of the arguments as config variables
 
-    ckpt: ModelCheckpoint = ModelCheckpoint(dirpath=ckpt_dir,
-                                            filename='best-{epoch}-{testing_loss:.6f}',
-                                            monitor=args.monitor, mode=args.mode, verbose=args.verbose, save_top_k=1)
-    stop_loss = EarlyStopping(monitor=args.monitor, mode=args.mode, patience=args.patience, verbose=args.verbose,
-                              check_on_train_epoch_end=args.check_on_train_epoch_end)
-    '''
-    stop_loss = EarlyStopping(monitor='testing_r2score', mode='max', patience=10, verbose=True,
-                              check_on_train_epoch_end=False)
-    '''
-    callbacks: List[Union[EarlyStopping, ModelSummary, LearningRateMonitor, StochasticWeightAveraging, ModelCheckpoint]]
-    swa: bool = False
-    if args.cyclical_lr:
-        callbacks = [stop_loss, ModelSummary(max_depth=2), learning_rate_monitor, ckpt]
-    else:
-        swa = True
-        swa_module: StochasticWeightAveraging = StochasticWeightAveraging(device=_DEVICE)
-        callbacks = [stop_loss, ModelSummary(max_depth=2), learning_rate_monitor, ckpt, swa_module]
+        ckpt: ModelCheckpoint = ModelCheckpoint(dirpath=ckpt_dir,
+                                                filename='best-{epoch}-{testing_loss:.6f}',
+                                                monitor=args.monitor, mode=args.mode, verbose=args.verbose, save_top_k=1)
+        stop_loss = EarlyStopping(monitor=args.monitor, mode=args.mode, patience=args.patience, verbose=args.verbose,
+                                  check_on_train_epoch_end=args.check_on_train_epoch_end)
+        '''
+        stop_loss = EarlyStopping(monitor='testing_r2score', mode='max', patience=10, verbose=True,
+                                  check_on_train_epoch_end=False)
+        '''
+        callbacks: List[Union[EarlyStopping, ModelSummary, LearningRateMonitor, StochasticWeightAveraging, ModelCheckpoint]]
+        swa: bool = False
+        if args.cyclical_lr:
+            callbacks = [stop_loss, ModelSummary(max_depth=2), learning_rate_monitor, ckpt]
+        else:
+            swa = True
+            swa_module: StochasticWeightAveraging = StochasticWeightAveraging(device=_DEVICE)
+            callbacks = [stop_loss, ModelSummary(max_depth=2), learning_rate_monitor, ckpt, swa_module]
 
-    if torch.cuda.is_available():
-        trainer = pl.Trainer.from_argparse_args(args, max_epochs=-1,
-                                                default_root_dir=str(ckpt_dir),
-                                                log_every_n_steps=1,
-                                                logger=[csv_logger, wandb_logger],
-                                                deterministic=True,
-                                                gpus=1,
-                                                auto_select_gpus=True,
-                                                stochastic_weight_avg=swa,
-                                                callbacks=callbacks,
-                                                # amp_backend="apex",
-                                                # amp_level="O2",
-                                                precision=16,
-                                                # auto_scale_batch_size='binsearch',
-                                                enable_progress_bar=False)
-    else:
-        trainer = pl.Trainer.from_argparse_args(args,
-                                                max_epochs=-1,
-                                                default_root_dir=str(ckpt_dir),
-                                                log_every_n_steps=1,
-                                                logger=[csv_logger, wandb_logger],
-                                                deterministic=True,
-                                                stochastic_weight_avg=swa,
-                                                callbacks=callbacks,
-                                                # auto_scale_batch_size='binsearch',
-                                                enable_progress_bar=False)
+        if torch.cuda.is_available():
+            trainer = pl.Trainer.from_argparse_args(args, max_epochs=-1,
+                                                    default_root_dir=str(ckpt_dir),
+                                                    log_every_n_steps=1,
+                                                    logger=[csv_logger, wandb_logger],
+                                                    deterministic=True,
+                                                    gpus=1,
+                                                    auto_select_gpus=True,
+                                                    stochastic_weight_avg=swa,
+                                                    callbacks=callbacks,
+                                                    # amp_backend="apex",
+                                                    # amp_level="O2",
+                                                    precision=16,
+                                                    # auto_scale_batch_size='binsearch',
+                                                    enable_progress_bar=False)
+        else:
+            trainer = pl.Trainer.from_argparse_args(args,
+                                                    max_epochs=-1,
+                                                    default_root_dir=str(ckpt_dir),
+                                                    log_every_n_steps=1,
+                                                    logger=[csv_logger, wandb_logger],
+                                                    deterministic=True,
+                                                    stochastic_weight_avg=swa,
+                                                    callbacks=callbacks,
+                                                    # auto_scale_batch_size='binsearch',
+                                                    enable_progress_bar=False)
 
-    # find ideal learning rate and batch_size
-    if args.tune:
-        print(f'...Finding ideal batch size....')
-        print(f'starting batch size: {model.hparams.batch_size}')
-        trainer.tuner.scale_batch_size(model=model, init_val=model.hparams.batch_size, mode='binsearch')
-        torch.cuda.empty_cache()
+        # find ideal learning rate and batch_size
+        if args.tune:
+            print(f'...Finding ideal batch size....')
+            print(f'starting batch size: {model.hparams.batch_size}')
+            trainer.tuner.scale_batch_size(model=model, init_val=model.hparams.batch_size, mode='binsearch')
+            torch.cuda.empty_cache()
 
-        print('...Finding ideal learning rate....')
-        model.learning_rate = trainer.tuner.lr_find(model).suggestion()
-        model.min_lr = model.learning_rate / 6.0
-        print(f'min lr: {model.min_lr} max lr: {model.learning_rate}')
-        torch.cuda.empty_cache()
+            print('...Finding ideal learning rate....')
+            model.learning_rate = trainer.tuner.lr_find(model).suggestion()
+            model.min_lr = model.learning_rate / 6.0
+            print(f'min lr: {model.min_lr} max lr: {model.learning_rate}')
+            torch.cuda.empty_cache()
 
-    # train & validate model
-    print(f'...Training and Validating model...')
-    trainer.fit(model=model)
-    output = trainer.predict(model=model)
-    if output is not None:
-        df = pd.DataFrame(output)
-        df.to.csv(args.save_dir.joinpath(f"{args.model_name}-final"))
+        # train & validate model
+        print(f'...Training and Validating model...')
+        trainer.fit(model=model)
+        output = trainer.predict(model=model)
+        if output is not None:
+            df = pd.DataFrame(output)
+            df.to.csv(args.save_dir.joinpath(f"{args.model_name}-final"))
 
 
 if __name__ == '__main__':
