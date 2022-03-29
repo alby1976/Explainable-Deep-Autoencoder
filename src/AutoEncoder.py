@@ -54,7 +54,7 @@ def main(args):
         # wandb.config.update(args)  # adds all of the arguments as config variables
 
         ckpt: ModelCheckpoint = ModelCheckpoint(dirpath=ckpt_dir,
-                                                filename='{args.name}-{epoch}-{testing_loss:.6f}',
+                                                filename=args.name + '-{epoch}-{testing_loss:.6f}',
                                                 monitor=args.monitor, mode=args.mode, verbose=args.verbose,
                                                 save_top_k=1)
         stop_loss = EarlyStopping(monitor=args.monitor, mode=args.mode, patience=args.patience, verbose=args.verbose,
