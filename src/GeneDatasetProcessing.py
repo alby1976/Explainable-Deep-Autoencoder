@@ -184,8 +184,20 @@ def main(slurm: bool, ensembl_version: int, path_to_original_data: Path, pathway
 
 
 if __name__ == '__main__':
-    parser: ArgumentParser = argparse.ArgumentParser(description='Combining gene found in the cancer dataset with known pathway'
-                                                                 'hidden layer features.')
+    parser: ArgumentParser = argparse.ArgumentParser(description='Combining genes found in the cancer dataset with '
+                                                                 'genes that exists in known pathway as input to the '
+                                                                 'AE model.')
+    parser.add_argument("--ensembl_version", type=int, default=104, help='Ensembl Release version e.g. 104')
+    print('less than 7 command line arguments')
+    print('python GeneSelectionPathway.py ensemble_version dir_original_data '
+          'filename_pathway_data dir_filtered_data dir_AE_model session_id')
+    print('\tensembl_version - Ensembl Release version e.g. 104')
+    print('\tdir_original_data - path to original x e.g. ./x/input/ or ./data_example.csv')
+    print('\tfilename_pathway_data - filename of pathway x e.g. ./x/pathway.csv')
+    print('\tdir_filtered_data - base dir to saved filtered original x e.g. ./x/filter')
+    print('\tdir_AE_model - base dir to saved AE models e.g. .x/filter/AE')
+    print('\tslurm - where to run program on slurm')
+    print('\tsession_id - slurm job id')
     parser.add_argument("-n", "--name", type=str, default='AE_Geno',
                         help='model name e.g. AE_Geno')
     parser.add_argument("-sd", "--save_dir", type=Path,
