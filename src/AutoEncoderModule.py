@@ -315,28 +315,13 @@ class AutoGenoShallow(pl.LightningModule):
         # save_tensor(x=coder, file=coder_file)
         # np.savetxt(fname=coder_file, X=coder_np, fmt='%f', delimiter=',')
 
-        # ======goodness of fit======
-        r2_node: Tensor = self.training_r2score_node.compute()
-        print(f"epoch[{epoch + 1:4d}]  "
-              f"learning_rate: {lr_scheduler.get_last_lr()[0]:.6f} "
-              f"loss: {losses.sum():.6f}  "
-              f"r2_mode: {r2_node}",
-              end=' ', file=sys.stderr)
-        '''
-        print(f"epoch[{epoch + 1:4d}]  "
-              f"learning_rate: {self.learning_rate:.6f} "
-              f"loss: {losses.sum():.6f}  ",
-              end=' ', file=sys.stderr)
-        '''
-
         # logging metrics into log file
         self.log('learning_rate', lr_scheduler.get_last_lr()[0])
         self.log('loss', torch.sum(losses))
-        self.log('r2score', r2_node)
+        self.log('r2score', self.training_r2score_node.compute())
 
         # clean up
         del losses
-        del r2_node
         del coder
         del coder_file
         self.training_r2score_node.reset()
@@ -351,12 +336,7 @@ class AutoGenoShallow(pl.LightningModule):
 
         self.testing_r2score_node.update(preds=output, target=x)
         loss = f.mse_loss(input=output, target=x)
-        '''
-        print(f'{batch_idx} val step batch size: {self.hparams.batch_size} output dim: {output.size()} '
-              f'batch dim: {x.size()} loss dim: {loss.size()}')
-        '''
-        # return {'loss': loss, 'r2_node': r2_node, 'input': x, 'output': output}
-        # return {'loss': loss, "input": x, "output": output}
+
         return {"loss": loss}
 
     # end of validation epoch
@@ -367,25 +347,11 @@ class AutoGenoShallow(pl.LightningModule):
         # output = get_dict_values_2d('output', testing_step_outputs)
         # print(f'regular losses: {losses.size()} pred: {pred.size()} target: {target.size()}')
 
-        # ======goodness of fit ======
-        r2_node: Tensor = self.testing_r2score_node.compute()
-        '''
-        r2_node: Tensor = tm.functional.regression.r2_score(preds=output, target=target,
-                                                            multioutput='variance_weighted')
-        '''
-        print(f"test_loss: {torch.sum(loss):.6f} "
-              f"test_r2_node: {r2_node}",
-              file=sys.stderr)
-        '''
-        print(f"test_loss: {torch.sum(loss):.6f} ",
-              file=sys.stderr)
-        '''
         # logging validation metrics into log file
         self.log('testing_loss', torch.sum(loss), on_step=False, on_epoch=True)
-        self.log('testing_r2score', r2_node, on_step=False, on_epoch=True)
+        self.log('testing_r2score', self.testing_r2score_node.compute(), on_step=False, on_epoch=True)
 
         # clean up
-        del r2_node
         del loss
 
         self.testing_r2score_node.reset()
