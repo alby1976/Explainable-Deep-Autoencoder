@@ -27,7 +27,9 @@ def main(args):
         print(f'{args.data} is not a file')
         sys.exit(-1)
 
-    with wandb.init(config=args):
+    with wandb.init(name=args.name, project="XAE4Exp", config=args):
+        # wandb configuration
+        wandb.init()
         # instantiate model
         path_to_save_ae = Path(args.save_dir)
         create_dir(path_to_save_ae)
