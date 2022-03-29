@@ -1,5 +1,4 @@
 # python system library
-# import argparse
 import argparse
 import gc
 import math
