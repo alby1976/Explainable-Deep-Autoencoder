@@ -393,8 +393,13 @@ class AutoGenoShallow(pl.LightningModule):
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
 
-            # configures the optimizers through learning rate
+    def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: Optional[int] = None) -> Any:
+        x = batch[0]
+        output, _ = self.forward(x)
 
+        return output
+
+    # configures the optimizers through learning rate
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
         scheduler: Any
