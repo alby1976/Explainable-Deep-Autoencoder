@@ -54,7 +54,7 @@ def main(args):
         # wandb.config.update(args)  # adds all of the arguments as config variables
 
         ckpt: ModelCheckpoint = ModelCheckpoint(dirpath=ckpt_dir,
-                                                filename='best-{epoch}-{testing_loss:.6f}',
+                                                filename='{args.name}-{epoch}-{testing_loss:.6f}',
                                                 monitor=args.monitor, mode=args.mode, verbose=args.verbose,
                                                 save_top_k=1)
         stop_loss = EarlyStopping(monitor=args.monitor, mode=args.mode, patience=args.patience, verbose=args.verbose,
@@ -117,10 +117,10 @@ def main(args):
         # train & validate model
         print(f'...Training and Validating model...')
         trainer.fit(model=model)
-        output = trainer.predict(model=model)
+        output = trainer.predict(model=model, ckpt_path="best")
         if output is not None:
             df = pd.DataFrame(output)
-            df.to.csv(args.save_dir.joinpath(f"{args.model_name}-final"))
+            df.to_csv(args.save_dir.joinpath(f"{args.name}-output.csv"))
 
 
 if __name__ == '__main__':
