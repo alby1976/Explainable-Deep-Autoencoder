@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 from pyensembl import EnsemblRelease
 
-from CommonTools import create_dir, get_filtered_data
+from CommonTools import create_dir
 
 
 def get_gene_ids_from_string(ensembl_release: int, genes: str) -> np.ndarray:
@@ -184,8 +184,47 @@ def main(slurm: bool, ensembl_version: int, path_to_original_data: Path, pathway
 
 
 if __name__ == '__main__':
-    parser: ArgumentParser = argparse.ArgumentParser()
-    parser.add_argument()
+    parser: ArgumentParser = argparse.ArgumentParser(description='Combining gene found in the cancer dataset with known pathway'
+                                                                 'hidden layer features.')
+    parser.add_argument("-n", "--name", type=str, default='AE_Geno',
+                        help='model name e.g. AE_Geno')
+    parser.add_argument("-sd", "--save_dir", type=Path,
+                        default=Path(__file__).absolute().parent.parent.joinpath("AE"),
+                        help='base dir to saved AE models e.g. ./AE')
+    parser.add_argument("-cr", "--ratio", type=int, default=8,
+                        help='compression ratio for smallest layer NB: ideally a number that is power of 2')
+    parser.add_argument("-lr", "--learning_rate", type=float, default=0.0001,
+                        help='the base learning rate for training e.g 0.0001')
+    parser.add_argument("--data", type=Path,
+                        default=Path(__file__).absolute().parent.parent.joinpath("data_example.csv"),
+                        help='original datafile e.g. ./data_example.csv')
+    parser.add_argument("-td", "--transformed_data", type=Path,
+                        default=Path(__file__).absolute().parent.parent.joinpath("data_QC.csv"),
+                        help='filename of original x after quality control e.g. ./data_QC.csv')
+    parser.add_argument("--fold", type=bool, default=False,
+                        help='selecting this flag causes the x to be transformed to change fold relative to '
+                             'row median. default is False')
+    parser.add_argument("-bs", "--batch_size", type=int, default=64, help='the size of each batch e.g. 64')
+    parser.add_argument("-vs", "--val_split", type=float, default=0.1,
+                        help='validation set split ratio. default is 0.1')
+    parser.add_argument("-ts", "--test_split", type=float, default=0.0,
+                        help='test set split ratio. default is 0.0')
+    parser.add_argument("-w", "--num_workers", type=int, default=0,
+                        help='number of processors used to load x. ie worker = 4 * # of GPU. default is 0')
+    parser.add_argument("-f", "--filter_str", nargs="*",
+                        help='filter string(s) to select which rows are processed. default: \'\'')
+    parser.add_argument("-rs", "--random_state", type=int, default=42,
+                        help='sets a seed to the random generator, so that your train-val-test splits are '
+                             'always deterministic. default is 42')
+    parser.add_argument("-s", "--shuffle", action='store_true', default=False,
+                        help='when this flag is used the dataset is shuffled before splitting the dataset.')
+    parser.add_argument("-clr", "--cyclical_lr", action="store_true", default=False,
+                        help='when this flag is used cyclical learning rate will be use other stochastic weight '
+                             'average is implored for training.')
+    parser.add_argument("--drop_last", action='store_true', default=False,
+                        help='selecting this flag causes the last column in the dataset to be dropped.')
+    parser.add_argument("--pin_memory", type=bool, default=True,
+                        help='selecting this flag causes the numpy to tensor conversion to be less efficient.')
 
     if len(sys.argv) < 6:
         print('less than 7 command line arguments')

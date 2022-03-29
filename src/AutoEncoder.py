@@ -130,7 +130,7 @@ if __name__ == '__main__':
         # device_index = "0"
         # os.environ["CUDA_VISIBLE_DEVICES"] = device_index
         os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = 'true'
-    parser: ArgumentParser = argparse.ArgumentParser(description='Generate AE Model that can used Shape to predit the '
+    parser: ArgumentParser = argparse.ArgumentParser(description='Generate AE Model that can used Shape to predict the '
                                                                  'hidden layer features.')
 
     # add PROGRAM level args
