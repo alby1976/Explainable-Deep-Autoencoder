@@ -188,6 +188,15 @@ if __name__ == '__main__':
                                                                  'genes that exists in known pathway as input to the '
                                                                  'AE model.')
     parser.add_argument("--ensembl_version", type=int, default=104, help='Ensembl Release version e.g. 104')
+    parser.add_argument("--data", type=Path,
+                        default=Path(__file__).absolute().parent.parent.joinpath("data_example.csv"),
+                        help='original datafile e.g. ./data_example.csv')
+    parser.add_argument("-td", "--transformed_data", type=Path,
+                        default=Path(__file__).absolute().parent.parent.joinpath("data_QC.csv"),
+                        help='filename of original x after quality control e.g. ./data_QC.csv')
+    parser.add_argument("-td", "--pathway_dir", type=Path,
+                        default=Path(__file__).absolute().parent.parent.joinpath("data_QC.csv"),
+                        help='pathyay filename or directory e.g. data/pathway or pathway ')
     print('less than 7 command line arguments')
     print('python GeneSelectionPathway.py ensemble_version dir_original_data '
           'filename_pathway_data dir_filtered_data dir_AE_model session_id')
@@ -207,12 +216,6 @@ if __name__ == '__main__':
                         help='compression ratio for smallest layer NB: ideally a number that is power of 2')
     parser.add_argument("-lr", "--learning_rate", type=float, default=0.0001,
                         help='the base learning rate for training e.g 0.0001')
-    parser.add_argument("--data", type=Path,
-                        default=Path(__file__).absolute().parent.parent.joinpath("data_example.csv"),
-                        help='original datafile e.g. ./data_example.csv')
-    parser.add_argument("-td", "--transformed_data", type=Path,
-                        default=Path(__file__).absolute().parent.parent.joinpath("data_QC.csv"),
-                        help='filename of original x after quality control e.g. ./data_QC.csv')
     parser.add_argument("--fold", type=bool, default=False,
                         help='selecting this flag causes the x to be transformed to change fold relative to '
                              'row median. default is False')
