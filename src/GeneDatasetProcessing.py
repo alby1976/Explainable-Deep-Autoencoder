@@ -46,38 +46,38 @@ def get_gene_names(ensembl_release: int, gene_list: np.ndarray) -> np.ndarray:
 def create_sbatch_files(job_file, base_name, path_to_save_filtered_data, qc_file_gene_id, save_dir, base_bar_path,
                         qc_file_gene_name, base_scatter_path, base_model_path):
     # process filtered dataset
-    output: list = []
+    line: list = []
     with open(job_file, "w") as fh:
-        list.append("#!/bin/bash\n")
-        list.append("#SBATCH --mail-user=%uR@ucalgary.ca\n")
-        list.append("#SBATCH --mail-type=ALL\n")
-        list.append("#SBATCH --partition=gpu-v100\n")
-        list.append("#SBATCH --gres=gpu:1\n")
-        list.append("#SBATCH --time=2:0:0\n")
-        list.append("#SBATCH --mem=16GB\n")
-        list.append("#SBATCH --cpus-per-task=8")
-        list.append(f"#SBATCH --job-name={base_name}-job.slurm\n")
-        list.append("#SBATCH --out=%x-%N-%j.out\n")
-        list.append("#SBATCH --error=%x-%N-%j.error\n")
+        line.append("#!/bin/bash\n")
+        line.append("#SBATCH --mail-user=%uR@ucalgary.ca\n")
+        line.append("#SBATCH --mail-type=ALL\n")
+        line.append("#SBATCH --partition=gpu-v100\n")
+        line.append("#SBATCH --gres=gpu:1\n")
+        line.append("#SBATCH --time=2:0:0\n")
+        line.append("#SBATCH --mem=16GB\n")
+        line.append("#SBATCH --cpus-per-task=8")
+        line.append(f"#SBATCH --job-name={base_name}-job.slurm\n")
+        line.append("#SBATCH --out=%x-%N-%j.out\n")
+        line.append("#SBATCH --error=%x-%N-%j.error\n")
 
-        list.append("\n####### Set environment variables ###############\n\n")
-        list.append("module load python/anaconda3-2019.10-tensorflowgpu\n")
-        list.append("source $HOME/.bash_profile\n")
-        list.append("conda activate XAI\n")
+        line.append("\n####### Set environment variables ###############\n\n")
+        line.append("module load python/anaconda3-2019.10-tensorflowgpu\n")
+        line.append("source $HOME/.bash_profile\n")
+        line.append("conda activate XAI\n")
 
-        list.append("\n####### Run script ##############################\n")
-        list.append(f"echo \"python src/AutoEncoder.py {base_name}_AE_Geno " +
+        line.append("\n####### Run script ##############################\n")
+        line.append(f"echo \"python src/AutoEncoder.py {base_name}_AE_Geno " +
                     f"{path_to_save_filtered_data} {qc_file_gene_id} {save_dir} 64\"\n")
-        list.append(f"python src/AutoEncoder.py {base_name}_AE_Geno {path_to_save_filtered_data} " +
+        line.append(f"python src/AutoEncoder.py {base_name}_AE_Geno {path_to_save_filtered_data} " +
                     f"{qc_file_gene_id} {save_dir} 64\n")
-        list.append(f"echo \"python src/SHAP_combo.py {qc_file_gene_name} {qc_file_gene_id} {save_dir} "
+        line.append(f"echo \"python src/SHAP_combo.py {qc_file_gene_name} {qc_file_gene_id} {save_dir} "
                     f"{base_bar_path} {base_scatter_path} {base_model_path}\"\n")
-        list.append(f"python src/SHAP_combo.py {qc_file_gene_name} {qc_file_gene_id} {save_dir} "
+        line.append(f"python src/SHAP_combo.py {qc_file_gene_name} {qc_file_gene_id} {save_dir} "
                     f"{base_bar_path} {base_scatter_path} {base_model_path}\n")
 
-        list.append("\n####### Clean up ################################\n")
-        list.append("module unload python/anaconda3-2019.10-tensorflowgpu\n")
-        fh.writelines(list)
+        line.append("\n####### Clean up ################################\n")
+        line.append("module unload python/anaconda3-2019.10-tensorflowgpu\n")
+        fh.writelines(line)
         fh.flush()
         os.fsync(fd=fh)
         fh.close()
@@ -194,9 +194,45 @@ if __name__ == '__main__':
     parser.add_argument("-td", "--transformed_data", type=Path,
                         default=Path(__file__).absolute().parent.parent.joinpath("data_QC.csv"),
                         help='filename of original x after quality control e.g. ./data_QC.csv')
-    parser.add_argument("-td", "--pathway_dir", type=Path,
-                        default=Path(__file__).absolute().parent.parent.joinpath("data_QC.csv"),
-                        help='pathyay filename or directory e.g. data/pathway or pathway ')
+    parser.add_argument("-sd", "--save_dir", type=Path,
+                        default=Path(__file__).absolute().parent.parent.joinpath("AE"),
+                        help='base dir to saved AE models e.g. ./AE')
+    parser.add_argument("-pd", "--pathway_dir", type=Path, required=True,
+                        help='pathway filename or directory e.g. data/pathway or data/pathway.csv')
+    parser.add_argument("-fd", "--filter_dir", type=Path, required=True,
+                        help='base dir to save cancer dataset and corresponding genes that exists in know pathway '
+                             'e.g. ./x/filter')
+    # TODO flesh out group and subparser
+    >> > subparsers = parser.add_subparsers(help='sub-command help')
+    >> >
+    >> >  # create the parser for the "a" command
+    >> > parser_a = subparsers.add_parser('a', help='a help')
+    >> > parser_a.add_argument('bar', type=int, help='bar help')
+    >> >
+    >> >  # create the parser for the "b" command
+    >> > parser_b = subparsers.add_parser('b', help='b help')
+    >> > parser_b.add_argument('--baz', choices='XYZ', help='baz help')
+    >> >
+    >> >  # parse some argument lists
+    >> > parser.parse_args(['a', '12'])
+    Namespace(bar=12, foo=False)
+    >> > parser.parse_args(['--foo', 'b', '--baz', 'Z'])
+    Namespace(baz='Z', foo=True)
+
+    >> > parser = argparse.ArgumentParser(prog='PROG', add_help=False)
+    >> > group = parser.add_argument_group('group')
+    >> > group.add_argument('--foo', help='foo help')
+    >> > group.add_argument('bar', help='bar help')
+    >> > parser.print_help()
+    usage: PROG[--foo
+    FOO] bar
+
+    group:
+        bar    bar  help
+        --foo  FOO  foo  help
+
+    parser.add_argument_group()
+    parser.add_subparsers()
     print('less than 7 command line arguments')
     print('python GeneSelectionPathway.py ensemble_version dir_original_data '
           'filename_pathway_data dir_filtered_data dir_AE_model session_id')
@@ -219,27 +255,6 @@ if __name__ == '__main__':
     parser.add_argument("--fold", type=bool, default=False,
                         help='selecting this flag causes the x to be transformed to change fold relative to '
                              'row median. default is False')
-    parser.add_argument("-bs", "--batch_size", type=int, default=64, help='the size of each batch e.g. 64')
-    parser.add_argument("-vs", "--val_split", type=float, default=0.1,
-                        help='validation set split ratio. default is 0.1')
-    parser.add_argument("-ts", "--test_split", type=float, default=0.0,
-                        help='test set split ratio. default is 0.0')
-    parser.add_argument("-w", "--num_workers", type=int, default=0,
-                        help='number of processors used to load x. ie worker = 4 * # of GPU. default is 0')
-    parser.add_argument("-f", "--filter_str", nargs="*",
-                        help='filter string(s) to select which rows are processed. default: \'\'')
-    parser.add_argument("-rs", "--random_state", type=int, default=42,
-                        help='sets a seed to the random generator, so that your train-val-test splits are '
-                             'always deterministic. default is 42')
-    parser.add_argument("-s", "--shuffle", action='store_true', default=False,
-                        help='when this flag is used the dataset is shuffled before splitting the dataset.')
-    parser.add_argument("-clr", "--cyclical_lr", action="store_true", default=False,
-                        help='when this flag is used cyclical learning rate will be use other stochastic weight '
-                             'average is implored for training.')
-    parser.add_argument("--drop_last", action='store_true', default=False,
-                        help='selecting this flag causes the last column in the dataset to be dropped.')
-    parser.add_argument("--pin_memory", type=bool, default=True,
-                        help='selecting this flag causes the numpy to tensor conversion to be less efficient.')
 
     if len(sys.argv) < 6:
         print('less than 7 command line arguments')
