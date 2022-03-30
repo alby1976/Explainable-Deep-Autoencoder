@@ -224,8 +224,7 @@ if __name__ == '__main__':
     >> > group.add_argument('--foo', help='foo help')
     >> > group.add_argument('bar', help='bar help')
     >> > parser.print_help()
-    usage: PROG[--foo
-    FOO] bar
+    usage: PROG[--foo FOO] bar
 
     group:
         bar    bar  help
