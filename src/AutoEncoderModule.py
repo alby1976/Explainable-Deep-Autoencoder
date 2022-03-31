@@ -26,20 +26,20 @@ from CommonTools import get_dict_values_1d, get_dict_values_2d, DataNormalizatio
 
 
 class GPDataSet(Dataset):
-    def __init__(self, GP_list):
+    def __init__(self, gp_list):
         # 'Initialization'
-        self.GP_list = GP_list
+        self.GP_list = gp_list
 
     def __len__(self):
         # 'Denotes the total number of samples'
-        return len(self.GP_list)
+        return len(self.gp_list)
 
     def __getitem__(self, index):
         # 'Generates one sample of x'
         # Load x and get label
-        X = self.GP_list[index]
-        X = np.array(X)
-        return X
+        x = self.GP_list[index]
+        x = np.array(x)
+        return x
 
 
 class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
@@ -87,8 +87,7 @@ class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
         return self.le.inverse_transform(item)
 
     def split_dataset(self, x, y, val_split: float, test_split: float, random_state: int,
-                      fold: bool) -> \
-            Tuple[Any, Any, Any, Any, Any, Any]:
+                      fold: bool) -> Tuple[Any, Any, Any, Any, Any, Any]:
         holding_split: float = val_split + test_split
         x_train, x_holding, y_train, y_holding = train_test_split(x, y, test_size=holding_split,
                                                                   random_state=random_state, stratify=y)
@@ -223,6 +222,11 @@ class AutoGenoShallow(pl.LightningModule):
         self.hparams.batch_size = batch_size
         self.min_lr = self.learning_rate / 6.0
         self.save_hyperparameters()
+
+        #  save gene names and column mask
+        name: Path = transformed_data.parent
+        name = name.joinpath(f'{data.stem}_gene_name.csv')
+        self.dataset.dm.save_column_mask(name, self.column_names)
 
         # def the encoder function
         self.encoder = nn.Sequential(

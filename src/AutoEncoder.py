@@ -123,10 +123,6 @@ def main(args):
             output = output.detach().cpu().numpy()
             np.savetxt(fname=args.save_dir.joinpath(f"{args.name}-output.csv"), X=output, fmt='%f', delimiter=',')
 
-        name: Path = args.transformed_data.parent
-        name = name.joinpath(f'{args.data.stem}_gene_name.csv')
-        model.dataset.dm.save_column_mask(name, model.column_names)
-
 
 if __name__ == '__main__':
     if torch.cuda.is_available():
