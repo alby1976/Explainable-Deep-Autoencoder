@@ -52,6 +52,9 @@ class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
         self.dm = DataNormalization()
         self.le = preprocessing.LabelEncoder()
 
+        print(f"unique: {np.unique(y)} size: {np.unique(y).size}", file=sys.stderr, flush=True)
+        sys.exit(-1)
+
         result = self.split_dataset(x.to_numpy(), self.le.fit_transform(y=y.to_numpy()), val_split, test_split,
                                     random_state, fold)
         dataset = result[0]
@@ -90,8 +93,7 @@ class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
     def split_dataset(self, x, y, val_split: float, test_split: float, random_state: int,
                       fold: bool) -> Tuple[Any, Any, Any, Any, Any, Any]:
         holding_split: float = val_split + test_split
-        print(f"unique: {np.unique(y)} size: {np.unique(y).size}", file=sys.stderr, flush=True)
-        sys.exit(-1)
+
         if (np.unique(y)).size > 1:
             x_train, x_holding, y_train, y_holding = train_test_split(x, y, test_size=holding_split,
                                                                       random_state=random_state, stratify=y)
