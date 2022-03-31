@@ -53,7 +53,6 @@ class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
         self.le = preprocessing.LabelEncoder()
 
         print(f"unique: {np.unique(y)} size: {np.unique(y).size}", file=sys.stderr, flush=True)
-        sys.exit(-1)
 
         result = self.split_dataset(x.to_numpy(), self.le.fit_transform(y=y.to_numpy()), val_split, test_split,
                                     random_state, fold)
