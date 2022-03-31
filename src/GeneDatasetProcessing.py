@@ -210,8 +210,7 @@ if __name__ == '__main__':
 
     subparser = parser.add_subparsers()
     slurm = subparser.add_parser(name="slurm")
-    slurm.add_argument("id", type=int, required=True, help=
-                       )
+    slurm.add_argument("id", type=int, required=True, help="slurm job id")
     slurm.add_argument('--slurm', action='store_true' default=False, help="whethere the system supoorts ")
     parser.add_subparsers()
     print('less than 7 command line arguments')
