@@ -119,7 +119,7 @@ def main(args):
         trainer.fit(model=model)
         output = trainer.predict(model=model, ckpt_path="best")
         if output is not None:
-            output = torch.concat([output[i] for i in range(len(output))])
+            output = torch.cat([output[i] for i in range(len(output))])
             output = output.detach().cpu().numpy()
             np.savetxt(fname=args.save_dir.joinpath(f"{args.name}-output.csv"), X=output, fmt='%f', delimiter=',')
 
