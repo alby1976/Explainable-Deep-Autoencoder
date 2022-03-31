@@ -61,7 +61,8 @@ class DataNormalization:
 
     def save_column_mask(self, file: Path, column_name=None, version: int = 104):
         gene_names = get_gene_names(ensembl_release=version, gene_list=column_name)
-        df = pd.DataFrame(data=dict(zip(gene_names, self.column_mask)))
+        data = self.column_mask[np.newaxis, :]
+        df = pd.DataFrame(data=data, columns=gene_names)
         df.to_csv(file)
 
 
