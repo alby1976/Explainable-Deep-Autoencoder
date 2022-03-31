@@ -12,35 +12,11 @@ import numpy as np
 import pandas as pd
 from pyensembl import EnsemblRelease
 
-from CommonTools import create_dir
+from CommonTools import create_dir, get_gene_ids, get_gene_names
 
 
 def get_gene_ids_from_string(ensembl_release: int, genes: str) -> np.ndarray:
     return get_gene_ids(ensembl_release=ensembl_release, gene_list=np.array(genes.split(';')))
-
-
-def get_gene_ids(ensembl_release: int, gene_list: np.ndarray) -> np.ndarray:
-    gene_data = EnsemblRelease(release=ensembl_release, species='human', server='ftp://ftp.ensembl.org/')
-    gene_data.download()
-    gene_data.index()
-    ids = []
-    for gene in gene_list:
-        try:
-            ids.append((gene_data.gene_ids_of_gene_name(gene_name=gene)[0]).replace('\'', ''))
-        except ValueError:
-            ids.append(gene)
-    return np.array(ids)
-
-
-def get_gene_names(ensembl_release: int, gene_list: np.ndarray) -> np.ndarray:
-    gene_data = EnsemblRelease(release=ensembl_release, species='human', server='ftp://ftp.ensembl.org/')
-    names = []
-    for gene in gene_list:
-        try:
-            names.append((gene_data.gene_name_of_gene_id(gene)).replace('\'', ''))
-        except ValueError:
-            names.append(gene)
-    return np.array(names)
 
 
 def create_sbatch_files(job_file, base_name, path_to_save_filtered_data, qc_file_gene_id, save_dir, base_bar_path,
@@ -203,6 +179,7 @@ if __name__ == '__main__':
                         help='base dir to save cancer dataset and corresponding genes that exists in know pathway '
                              'e.g. ./x/filter')
     # TODO flesh out group and subparser
+    """
     >> > subparsers = parser.add_subparsers(help='sub-command help')
     >> >
     >> >  # create the parser for the "a" command
@@ -229,8 +206,13 @@ if __name__ == '__main__':
     group:
         bar    bar  help
         --foo  FOO  foo  help
+    """
 
-    parser.add_argument_group()
+    subparser = parser.add_subparsers()
+    slurm = subparser.add_parser(name="slurm")
+    slurm.add_argument("id", type=int, required=True, help=
+                       )
+    slurm.add_argument('--slurm', action='store_true' default=False, help="whethere the system supoorts ")
     parser.add_subparsers()
     print('less than 7 command line arguments')
     print('python GeneSelectionPathway.py ensemble_version dir_original_data '

@@ -4,32 +4,35 @@ from pathlib import Path
 from typing import Tuple, Union, Iterable, Dict, Any, List, Optional
 
 import numpy as np
+import pandas as pd
 import torch
 from numpy import ndarray
 from pandas import DataFrame, Series
+from pyensembl import EnsemblRelease
 from scipy.stats import levene, anderson, ks_2samp
 from torch import device, Tensor
 
 
 class DataNormalization:
-    def __init__(self):
+    def __init__(self, column_mask=None):
         from sklearn.preprocessing import MinMaxScaler
 
         super().__init__()
         self.scaler = MinMaxScaler()
         self.med_fold_change = None
-        self.column_mask: ndarray = np.asarray([])
+        self.column_mask: Union[ndarray, None] = column_mask
         self.column_names = None
 
-    def fit(self, x, fold:bool, column_names: Union[ndarray, None] = None):
+    def fit(self, x, fold: bool, column_names: Union[ndarray, None] = None):
         # the x is log2 transformed and then change to fold change relative to the row's median
         # Those columns whose column modian fold change relative to median is > 0 is keep
         # This module uses MaxABsScaler to scale the x
 
         tmp: Union[ndarray, None] = None
         median: Union[ndarray, None] = None
-        # find column mask
-        self.column_mask: ndarray = np.median(x, axis=0) > 1
+        # find column mask is not defined
+        if self.column_mask is None:
+            self.column_mask = np.median(x, axis=0) > 1
 
         # apply column mask
         tmp, _ = get_transformed_data(x[:, self.column_mask], fold=fold)
@@ -42,7 +45,7 @@ class DataNormalization:
 
         self.scaler = self.scaler.fit(X=tmp)
 
-    def transform(self, x: Any, fold:bool):
+    def transform(self, x: Any, fold: bool):
         # calculate fold change relative to the median after applying column mask
         tmp, _ = get_transformed_data(x[:, self.column_mask], fold=fold)
         # tmp, median = get_transformed_data(x, fold=True)
@@ -55,6 +58,11 @@ class DataNormalization:
             return self.scaler.transform(X=tmp)
         else:
             return DataFrame(self.scaler.transform(X=tmp), columns=self.column_names)
+
+    def save_column_mask(self, file: Path, column_name=None, version: int = 104):
+        gene_names = get_gene_names(ensembl_release=version, gene_list=column_name)
+        df = pd.DataFrame(data=self.column_mask, columns=gene_names)
+        df.to_csv(file)
 
 
 # common functions
@@ -191,23 +199,31 @@ def med_var(data, axis=0):
     return tmp
 
 
-def float_or_none(value: str) -> Optional[float]:
-    """
-    float_or_none.
+def get_gene_ids(ensembl_release: int, gene_list: np.ndarray) -> np.ndarray:
+    gene_data = EnsemblRelease(release=ensembl_release, species='human', server='ftp://ftp.ensembl.org/')
+    gene_data.download()
+    gene_data.index()
+    ids = []
+    for gene in gene_list:
+        try:
+            ids.append((gene_data.gene_ids_of_gene_name(gene_name=gene)[0]).replace('\'', ''))
+        except ValueError:
+            ids.append(gene)
+    return np.array(ids)
 
-    Examples:
-        >>> import argparse
-        >>> parser = argparse.ArgumentParser()
-        >>> _ = parser.add_argument('--foo', type=float_or_none)
-        >>> parser.parse_args(['--foo', '4.5'])
-        Namespace(foo=4.5)
-        >>> parser.parse_args(['--foo', 'none'])
-        Namespace(foo=None)
-        >>> parser.parse_args(['--foo', 'null'])
-        Namespace(foo=None)
-        >>> parser.parse_args(['--foo', 'nil'])
-        Namespace(foo=None)
-    """
+
+def get_gene_names(ensembl_release: int, gene_list: np.ndarray) -> np.ndarray:
+    gene_data = EnsemblRelease(release=ensembl_release, species='human', server='ftp://ftp.ensembl.org/')
+    names = []
+    for gene in gene_list:
+        try:
+            names.append((gene_data.gene_name_of_gene_id(gene)).replace('\'', ''))
+        except ValueError:
+            names.append(gene)
+    return np.array(names)
+
+
+def float_or_none(value: str) -> Optional[float]:
     if value.strip().lower() in ("none", "null", "nil"):
         return None
     return float(value)
