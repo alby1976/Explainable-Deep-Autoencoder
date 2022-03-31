@@ -1,7 +1,6 @@
 # Filters Dataset by KEGG Pathway and uses PyEnsembl to get EnsemblID
 import argparse
 import concurrent.futures
-import distutils.util
 import os
 import subprocess
 import sys
@@ -10,7 +9,6 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from pyensembl import EnsemblRelease
 
 from CommonTools import create_dir, get_gene_ids, get_gene_names
 
@@ -111,7 +109,7 @@ def merge_gene(slurm: bool, ensembl_version: int, geno: pd.DataFrame, filename: 
     qc_file_gene_name = filtered_data_dir.joinpath(f'{base_name}_gene_name_QC.csv')
     names = get_gene_names(ensembl_release=ensembl_version, gene_list=np.array(input_data.columns))
     input_data.rename(dict(zip(np.array(input_data.columns), names)), axis='columns', inplace=True)
-    get_filtered_data(input_data, qc_file_gene_name)
+    # get_filtered_data(input_data, qc_file_gene_name)
     base_bar_path: Path = save_dir.joinpath('shap/bar')
     base_scatter_path: Path = save_dir.joinpath('shap/scatter')
     base_model_path: Path = save_dir.joinpath('shap/model')
@@ -173,92 +171,29 @@ if __name__ == '__main__':
     parser.add_argument("-sd", "--save_dir", type=Path,
                         default=Path(__file__).absolute().parent.parent.joinpath("AE"),
                         help='base dir to saved AE models e.g. ./AE')
-    parser.add_argument("-pd", "--pathway_dir", type=Path, required=True,
+    parser.add_argument("-p", "--pathway_location", type=Path, required=True,
                         help='pathway filename or directory e.g. data/pathway or data/pathway.csv')
     parser.add_argument("-fd", "--filter_dir", type=Path, required=True,
                         help='base dir to save cancer dataset and corresponding genes that exists in know pathway '
                              'e.g. ./x/filter')
-    # TODO flesh out group and subparser
-    """
-    >> > subparsers = parser.add_subparsers(help='sub-command help')
-    >> >
-    >> >  # create the parser for the "a" command
-    >> > parser_a = subparsers.add_parser('a', help='a help')
-    >> > parser_a.add_argument('bar', type=int, help='bar help')
-    >> >
-    >> >  # create the parser for the "b" command
-    >> > parser_b = subparsers.add_parser('b', help='b help')
-    >> > parser_b.add_argument('--baz', choices='XYZ', help='baz help')
-    >> >
-    >> >  # parse some argument lists
-    >> > parser.parse_args(['a', '12'])
-    Namespace(bar=12, foo=False)
-    >> > parser.parse_args(['--foo', 'b', '--baz', 'Z'])
-    Namespace(baz='Z', foo=True)
-
-    >> > parser = argparse.ArgumentParser(prog='PROG', add_help=False)
-    >> > group = parser.add_argument_group('group')
-    >> > group.add_argument('--foo', help='foo help')
-    >> > group.add_argument('bar', help='bar help')
-    >> > parser.print_help()
-    usage: PROG[--foo FOO] bar
-
-    group:
-        bar    bar  help
-        --foo  FOO  foo  help
-    """
-
-    subparser = parser.add_subparsers()
-    slurm = subparser.add_parser(name="slurm")
-    slurm.add_argument("id", type=int, required=True, help="slurm job id")
-    slurm.add_argument('--slurm', action='store_true' default=False, help="whethere the system supoorts ")
-    parser.add_subparsers()
-    print('less than 7 command line arguments')
-    print('python GeneSelectionPathway.py ensemble_version dir_original_data '
-          'filename_pathway_data dir_filtered_data dir_AE_model session_id')
-    print('\tensembl_version - Ensembl Release version e.g. 104')
-    print('\tdir_original_data - path to original x e.g. ./x/input/ or ./data_example.csv')
-    print('\tfilename_pathway_data - filename of pathway x e.g. ./x/pathway.csv')
-    print('\tdir_filtered_data - base dir to saved filtered original x e.g. ./x/filter')
-    print('\tdir_AE_model - base dir to saved AE models e.g. .x/filter/AE')
-    print('\tslurm - where to run program on slurm')
-    print('\tsession_id - slurm job id')
-    parser.add_argument("-n", "--name", type=str, default='AE_Geno',
-                        help='model name e.g. AE_Geno')
-    parser.add_argument("-sd", "--save_dir", type=Path,
-                        default=Path(__file__).absolute().parent.parent.joinpath("AE"),
-                        help='base dir to saved AE models e.g. ./AE')
-    parser.add_argument("-cr", "--ratio", type=int, default=8,
-                        help='compression ratio for smallest layer NB: ideally a number that is power of 2')
-    parser.add_argument("-lr", "--learning_rate", type=float, default=0.0001,
-                        help='the base learning rate for training e.g 0.0001')
-    parser.add_argument("--fold", type=bool, default=False,
-                        help='selecting this flag causes the x to be transformed to change fold relative to '
-                             'row median. default is False')
-
-    if len(sys.argv) < 6:
-        print('less than 7 command line arguments')
-        print('python GeneSelectionPathway.py ensemble_version dir_original_data '
-              'filename_pathway_data dir_filtered_data dir_AE_model session_id')
-        print('\tensembl_version - Ensembl Release version e.g. 104')
-        print('\tdir_original_data - path to original x e.g. ./x/input/ or ./data_example.csv')
-        print('\tfilename_pathway_data - filename of pathway x e.g. ./x/pathway.csv')
-        print('\tdir_filtered_data - base dir to saved filtered original x e.g. ./x/filter')
-        print('\tdir_AE_model - base dir to saved AE models e.g. .x/filter/AE')
-        print('\tslurm - where to run program on slurm')
-        print('\tsession_id - slurm job id')
+    parser.add_argument("--slurm", action="store_true", default=False,
+                        help='when this flag the program is called from slurm')
+    parser.add_argument("--slurm_id", type=int, help="slurm job id")
+    parser.print_usage()
+    print(parser.parse_args())
+    args = parser.parse_args()
+    if args.slurm and args.slurm_id is None:
+        print('slurm was select but slurm id was given.')
         sys.exit(-1)
 
     # x setup
-    tmp = distutils.util.strtobool(sys.argv[6])
-    print(f'slurm: {sys.argv[6]} {bool(tmp)}')
-    if bool(tmp):
-        os.environ['PYENSEMBL_CACHE_DIR'] = '/scratch/' + sys.argv[7]
-    if Path(sys.argv[2]).is_file():
-        process_pathways(slurm=bool(tmp), ensembl_version=int(sys.argv[1]), filename=Path(sys.argv[2]),
-                         pathways=get_pathways_gene_names(ensembl_version=int(sys.argv[1]),
-                                                          pathway_data=Path(sys.argv[3])),
-                         base_to_save_filtered_data=Path(sys.argv[4]), dir_to_model=Path(sys.argv[5]))
+    if args.slurm:
+        os.environ['PYENSEMBL_CACHE_DIR'] = '/scratch/' + args.slurm_id
+    if args.data.is_file():
+        process_pathways(slurm=args.slurm, ensembl_version=args.ensembl_version, filename=args.data,
+                         pathways=get_pathways_gene_names(ensembl_version=args.ensembl_version,
+                                                          pathway_data=args.pathway_location),
+                         base_to_save_filtered_data=args.filtered_dir, dir_to_model=args.save_dir)
     else:
-        main(bool(tmp), int(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3]), Path(sys.argv[4]),
-             Path(sys.argv[5]))
+        main(args.slurm, args.ensembl_version, args.data, args.pathway_location, args.filter_dir,
+             args.save_dir)

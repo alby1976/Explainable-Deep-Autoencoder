@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import List, Union
 
 import numpy as np
-import pandas as pd
 import pytorch_lightning as pl
 import torch
 import wandb
@@ -123,6 +122,10 @@ def main(args):
             output = torch.concat([output[i] for i in range(len(output))])
             output = output.detach().cpu().numpy()
             np.savetxt(fname=args.save_dir.joinpath(f"{args.name}-output.csv"), X=output, fmt='%f', delimiter=',')
+
+        name: Path = args.transformed_data.parent
+        name = name.joinpath(f'{args.data.stem}_gene_name.csv')
+        model.dataset.dm.save_column_mask(name, model.column_names)
 
 
 if __name__ == '__main__':

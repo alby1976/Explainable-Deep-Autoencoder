@@ -2,7 +2,6 @@
 import argparse
 import gc
 import math
-import sys
 from pathlib import Path
 from typing import Any, Union, Dict, Optional, Tuple
 
@@ -13,6 +12,7 @@ import pl_bolts.datamodules
 import pytorch_lightning as pl
 import torch
 import torchmetrics as tm
+from numpy import ndarray
 from pandas import DataFrame, Series
 from pytorch_lightning.utilities.types import EVAL_DATALOADERS, TRAIN_DATALOADERS
 from sklearn.model_selection import train_test_split
@@ -192,6 +192,7 @@ class AutoGenoShallow(pl.LightningModule):
 
         # get normalized x quality control
         x, y = get_data(geno=pd.read_csv(data, index_col=0), filter_str=filter_str, path_to_save_qc=transformed_data)
+        self.column_names: ndarray = x.columns.values
         self.dataset = GPDataModule(
             x, y, val_split, test_split, num_workers, random_state, fold, shuffle, batch_size, pin_memory, drop_last
         )
