@@ -89,8 +89,13 @@ class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
     def split_dataset(self, x, y, val_split: float, test_split: float, random_state: int,
                       fold: bool) -> Tuple[Any, Any, Any, Any, Any, Any]:
         holding_split: float = val_split + test_split
-        x_train, x_holding, y_train, y_holding = train_test_split(x, y, test_size=holding_split,
-                                                                  random_state=random_state, stratify=y)
+        if len(np.unique(y)) > 1:
+            x_train, x_holding, y_train, y_holding = train_test_split(x, y, test_size=holding_split,
+                                                                      random_state=random_state, stratify=y)
+        else:
+            x_train, x_holding, y_train, y_holding = train_test_split(x, y, test_size=holding_split,
+                                                                      random_state=random_state)
+
         self.dm.fit(x=x_train, fold=fold)
         if holding_split == val_split:
             return (
