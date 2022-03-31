@@ -216,10 +216,16 @@ def get_gene_ids(ensembl_release: int, gene_list: np.ndarray) -> np.ndarray:
 def get_gene_names(ensembl_release: int, gene_list: np.ndarray) -> np.ndarray:
     gene_data = EnsemblRelease(release=ensembl_release, species='human', server='ftp://ftp.ensembl.org/')
     names = []
+    tmp: str
+
     for gene in gene_list:
-        result = (gene_data.gene_name_of_gene_id(gene)).replace('\'', '')
-        if len(result) > 0:
-            names.append(result)
+        try:
+            tmp = gene_data.gene_name_of_gene_id(gene).replace('\'', '')
+        except ValueError:
+            tmp = ""
+
+        if len(tmp) > 0:
+            names.append(tmp)
         else:
             names.append(gene)
     return np.array(names)
