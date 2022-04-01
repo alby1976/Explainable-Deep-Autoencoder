@@ -228,9 +228,8 @@ class AutoGenoShallow(pl.LightningModule):
         self.model_name = name
 
         # Hyper-parameters
-        self.learning_rate = learning_rate
+        self.lr = learning_rate
         self.hparams.batch_size = batch_size
-        self.min_lr = self.learning_rate / 6.0
         self.save_hyperparameters()
 
         #  save gene names and column mask
@@ -381,18 +380,18 @@ class AutoGenoShallow(pl.LightningModule):
 
     # configures the optimizers through learning rate
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
+        optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
         scheduler: Any
         if self.cyclical:
             it_per_epoch = math.ceil(len(self.train_dataloader()) / self.hparams.batch_size)
             print(f'it_per_epoch: {it_per_epoch}')
-            scheduler = torch.optim.lr_scheduler.CyclicLR(optimizer, base_lr=self.min_lr,
+            scheduler = torch.optim.lr_scheduler.CyclicLR(optimizer, base_lr=self.lr / 6.0,
                                                           mode='exp_range',
                                                           cycle_momentum=False,
                                                           step_size_up=4 * it_per_epoch,
-                                                          max_lr=self.learning_rate)
+                                                          max_lr=self.lr)
         else:
-            scheduler = SWALR(optimizer, swa_lr=self.learning_rate, anneal_epochs=10, anneal_strategy="cos")
+            scheduler = SWALR(optimizer, swa_lr=self.lr, anneal_epochs=10, anneal_strategy="cos")
 
         return {"optimizer": optimizer, "lr_scheduler": scheduler}
 

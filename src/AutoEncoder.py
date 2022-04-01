@@ -15,7 +15,7 @@ import wandb
 from pytorch_lightning import seed_everything, Trainer
 from pytorch_lightning.callbacks import ModelSummary, StochasticWeightAveraging, LearningRateMonitor, ModelCheckpoint
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
-from pytorch_lightning.loggers import CSVLogger, WandbLogger
+from pytorch_lightning.loggers import WandbLogger
 
 from AutoEncoderModule import AutoGenoShallow
 from CommonTools import create_dir, float_or_none
@@ -82,6 +82,7 @@ def main(args):
                                                     # amp_backend="apex",
                                                     # amp_level="O2",
                                                     precision=16,
+                                                    auto_lr_find=args.tune,
                                                     # auto_scale_batch_size='binsearch',
                                                     enable_progress_bar=False)
         else:
@@ -92,6 +93,7 @@ def main(args):
                                                     logger=wandb_logger,
                                                     deterministic=True,
                                                     callbacks=callbacks,
+                                                    auto_lr_find=args.tune,
                                                     # auto_scale_batch_size='binsearch',
                                                     enable_progress_bar=False)
 
@@ -100,13 +102,10 @@ def main(args):
             print(f'...Finding ideal batch size....')
             print(f'starting batch size: {model.hparams.batch_size}')
             trainer.tuner.scale_batch_size(model=model, init_val=model.hparams.batch_size, mode='binsearch')
-            torch.cuda.empty_cache()
 
             print('...Finding ideal learning rate....')
-            model.learning_rate = trainer.tuner.lr_find(model).suggestion()
-            model.min_lr = model.learning_rate / 6.0
-            print(f'min lr: {model.min_lr} max lr: {model.learning_rate}')
-            torch.cuda.empty_cache()
+            trainer.tune(model)
+            print(f'min lr: {model.lr / 6.0} max lr: {model.lr}')
 
         # train & validate model
         print(f'...Training and Validating model...')
