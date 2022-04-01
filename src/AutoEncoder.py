@@ -43,16 +43,12 @@ def main(args):
         seed_everything(args.random_state)
         trainer: Trainer
         log_dir = path_to_save_ae.joinpath('log')
-        wandb_dir = path_to_save_ae.joinpath('log/wandb')
         ckpt_dir = path_to_save_ae.joinpath('ckpt')
         create_dir(log_dir)
-        create_dir(wandb_dir)
         create_dir(ckpt_dir)
-        csv_logger = CSVLogger(save_dir=str(log_dir), name=args.name)
 
         learning_rate_monitor = LearningRateMonitor(logging_interval='epoch')
-        wandb_logger = WandbLogger(name=args.name, save_dir=str(wandb_dir), log_model=True)
-        # wandb.config.update(args)  # adds all of the arguments as config variables
+        wandb_logger = WandbLogger(name=args.name, log_model=True)
 
         ckpt: ModelCheckpoint = ModelCheckpoint(dirpath=ckpt_dir,
                                                 filename=args.name + '-{epoch}-{testing_loss:.6f}',
@@ -71,7 +67,6 @@ def main(args):
         if args.cyclical_lr:
             callbacks = [stop_loss, ModelSummary(max_depth=2), learning_rate_monitor, ckpt]
         else:
-            swa = True
             swa_module: StochasticWeightAveraging = StochasticWeightAveraging(device=_DEVICE)
             callbacks = [stop_loss, ModelSummary(max_depth=2), learning_rate_monitor, ckpt, swa_module]
 
@@ -79,11 +74,10 @@ def main(args):
             trainer = pl.Trainer.from_argparse_args(args, max_epochs=-1,
                                                     default_root_dir=str(ckpt_dir),
                                                     log_every_n_steps=1,
-                                                    logger=[csv_logger, wandb_logger],
+                                                    logger=wandb_logger,
                                                     deterministic=True,
                                                     gpus=1,
                                                     auto_select_gpus=True,
-                                                    stochastic_weight_avg=swa,
                                                     callbacks=callbacks,
                                                     # amp_backend="apex",
                                                     # amp_level="O2",
@@ -95,9 +89,8 @@ def main(args):
                                                     max_epochs=-1,
                                                     default_root_dir=str(ckpt_dir),
                                                     log_every_n_steps=1,
-                                                    logger=[csv_logger, wandb_logger],
+                                                    logger=wandb_logger,
                                                     deterministic=True,
-                                                    stochastic_weight_avg=swa,
                                                     callbacks=callbacks,
                                                     # auto_scale_batch_size='binsearch',
                                                     enable_progress_bar=False)
