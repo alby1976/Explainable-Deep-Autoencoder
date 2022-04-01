@@ -47,7 +47,7 @@ def main(args):
         create_dir(log_dir)
         create_dir(ckpt_dir)
 
-        learning_rate_monitor = LearningRateMonitor(logging_interval='epoch')
+        learning_rate_monitor = LearningRateMonitor(logging_interval='step', log_momentum=True)
         wandb_logger = WandbLogger(name=args.name, log_model=True)
 
         ckpt: ModelCheckpoint = ModelCheckpoint(dirpath=ckpt_dir,
