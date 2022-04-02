@@ -63,7 +63,6 @@ def main(args):
 
         callbacks: List[
             Union[EarlyStopping, ModelSummary, LearningRateMonitor, StochasticWeightAveraging, ModelCheckpoint]]
-        swa: bool = False
         if args.cyclical_lr:
             callbacks = [stop_loss, ModelSummary(max_depth=2), learning_rate_monitor, ckpt]
         else:
@@ -112,7 +111,8 @@ def main(args):
             output = torch.cat([output[i] for i in range(len(output))])
             output = output.detach().cpu().numpy()
             np.savetxt(fname=args.save_dir.joinpath(f"{args.name}-output.csv"), X=output, fmt='%f', delimiter=',')
-            wandb_logger.log_text(key="output", dataframe=pd.DataFrame(output))
+            tbl = wandb.Table(dataframe=pd.DataFrame(output), dtype=float)
+            wandb.log({"AE_out": tbl})
 
 
 if __name__ == '__main__':
