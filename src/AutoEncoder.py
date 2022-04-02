@@ -38,7 +38,7 @@ def main(args):
                                 args.transformed_data, args.batch_size, args.val_split, args.test_split,
                                 args.filter_str,
                                 args.num_workers, args.random_state, args.fold, args.shuffle, args.drop_last,
-                                args.pin_memory)
+                                args.pin_memory, args.verbose)
 
         seed_everything(args.random_state)
         trainer: Trainer

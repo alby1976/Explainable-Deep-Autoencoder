@@ -29,7 +29,7 @@ from CommonTools import get_dict_values_1d, get_dict_values_2d, DataNormalizatio
 class GPDataSet(Dataset):
     def __init__(self, gp_list):
         # 'Initialization'
-        self.GP_list = gp_list
+        self.gp_list = gp_list
 
     def __len__(self):
         # 'Denotes the total number of samples'
@@ -38,7 +38,7 @@ class GPDataSet(Dataset):
     def __getitem__(self, index):
         # 'Generates one sample of x'
         # Load x and get label
-        x = self.GP_list[index]
+        x = self.gp_list[index]
         x = np.array(x)
         return x
 
@@ -190,7 +190,7 @@ class AutoGenoShallow(pl.LightningModule):
                  data: Path, transformed_data: Path,
                  batch_size: int, val_split: float, test_split: float,
                  filter_str: str, num_workers: int, random_state: int, fold: bool,
-                 shuffle: bool, drop_last: bool, pin_memory: bool):
+                 shuffle: bool, drop_last: bool, pin_memory: bool, verbose: bool):
         super().__init__()  # I guess this inherits __init__ from super class
         # self.testing_dataset = None
         # self.train_dataset = None
@@ -198,6 +198,7 @@ class AutoGenoShallow(pl.LightningModule):
         # self.input_list = None
 
         self.cyclical = cyclical_lr
+        self.verbose = verbose
 
         # get normalized x quality control
         x, y = get_data(geno=pd.read_csv(data, index_col=0), filter_str=filter_str, path_to_save_qc=transformed_data)
@@ -329,7 +330,6 @@ class AutoGenoShallow(pl.LightningModule):
         # np.savetxt(fname=coder_file, X=coder_np, fmt='%f', delimiter=',')
 
         # logging metrics into log file
-        self.log('learning_rate', lr_scheduler.get_last_lr()[0])
         self.log('loss', torch.sum(losses))
         self.log('r2score', self.training_r2score_node.compute())
 
@@ -389,7 +389,8 @@ class AutoGenoShallow(pl.LightningModule):
                                                           mode='exp_range',
                                                           cycle_momentum=False,
                                                           step_size_up=4 * it_per_epoch,
-                                                          max_lr=self.lr)
+                                                          max_lr=self.lr,
+                                                          verbose=self.verbose)
         else:
             scheduler = SWALR(optimizer, swa_lr=self.lr, anneal_epochs=10, anneal_strategy="cos")
 
