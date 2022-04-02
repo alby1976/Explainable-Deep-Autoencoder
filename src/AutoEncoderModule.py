@@ -387,7 +387,7 @@ class AutoGenoShallow(pl.LightningModule):
             print(f'it_per_epoch: {it_per_epoch}')
             scheduler = torch.optim.lr_scheduler.CyclicLR(optimizer, base_lr=self.lr / 6.0,
                                                           mode='exp_range',
-                                                          cycle_momentum=False,
+                                                          cycle_momentum=True,
                                                           step_size_up=4 * it_per_epoch,
                                                           max_lr=self.lr,
                                                           verbose=self.verbose)
