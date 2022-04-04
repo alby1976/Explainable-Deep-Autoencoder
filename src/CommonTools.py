@@ -152,8 +152,8 @@ def create_dir(directory: Path):
     directory.mkdir(parents=True, exist_ok=True)
 
 
-def get_data() -> Tuple(DataFrame, Series):
-    pass
+#def get_data() -> Tuple(DataFrame, Series):
+#    pass
 
 
 @dispatch(str, Path, str)
