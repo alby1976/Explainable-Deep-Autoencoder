@@ -1,9 +1,11 @@
 ## Use Python to run Deep Autoencoder (feature selection)
 ## path - is a string to desired path location.
+from typing import Union
 
 import pandas as pd
 import numpy as np
 import torch
+from numpy import ndarray
 from torchvision import transforms
 from torch import nn
 import torch.nn.functional as F
@@ -124,7 +126,7 @@ for epoch in range(num_epochs):
             loss.backward()
             optimizer.step()
         # ===========log============
-        coder_np = np.array(output_coder_list)
+        coder_np: Union[int, ndarray] = np.array(output_coder_list)
         temp = round(smallest_layer / 100)
         coder_file = save_dir + model_name + str(epoch) + '.csv'
         np.savetxt(fname=coder_file, X=coder_np, fmt='%f', delimiter=',')
