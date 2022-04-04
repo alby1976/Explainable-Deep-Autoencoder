@@ -1,4 +1,5 @@
 # Use Python to plot SHAP figure (include both bar chart and scatter chart) and generate gene module based on SHAP value
+import argparse
 import sys
 from pathlib import Path
 from typing import Any
@@ -94,3 +95,44 @@ if __name__ == '__main__':
 
         main(Path(sys.argv[1]), Path(sys.argv[2]), get_last_model(Path(sys.argv[3])),
              sys.argv[4], sys.argv[5], sys.argv[6])
+
+        parser = argparse.ArgumentParser(description="calculates the shapey values for the AE model's output")
+        parser.add_argument("-name", "--gene_name", type=Path,
+                            help='path to input data with gene name as column headers e.g. ./gene_name_QC')
+        parser.add_argument("-id", "--gene_id", type=Path, required=True,
+                            help='path to input data with gene id as column headers e.g. ./gene_id_QC')
+        parser.add_argument("--model", type=Path, required=True,
+                            help='path to AutoEncoder results.  e.g. ./AE_199.csv')
+        parser.add_argument("-b", "--save_bar", type=Path,
+                            default=Path(__file__).absolute().parent.parent.joinpath("shap/bar"),
+                            help='base dir to saved AE models e.g. ./shap/bar')
+        parser.add_argument("-data", type=Path,
+                            default=Path(__file__).absolute().parent.parent.joinpath("data_example.csv"),
+                            help='original datafile e.g. ./data_example.csv')
+        parser.add_argument("-td", "--transformed_data", type=Path,
+                            default=Path(__file__).absolute().parent.parent.joinpath("data_QC.csv"),
+                            help='filename of original x after quality control e.g. ./data_QC.csv')
+        parser.add_argument("--fold", type=bool, default=False,
+                            help='selecting this flag causes the x to be transformed to change fold relative to '
+                                 'row median. default is False')
+        parser.add_argument("-bs", "--batch_size", type=int, default=64, help='the size of each batch e.g. 64')
+        parser.add_argument("-vs", "--val_split", type=float, default=0.1,
+                            help='validation set split ratio. default is 0.1')
+        parser.add_argument("-ts", "--test_split", type=float, default=0.0,
+                            help='test set split ratio. default is 0.0')
+        parser.add_argument("-w", "--num_workers", type=int, default=0,
+                            help='number of processors used to load x. ie worker = 4 * # of GPU. default is 0')
+        parser.add_argument("-f", "--filter_str", nargs="*",
+                            help='filter string(s) to select which rows are processed. default: \'\'')
+        parser.add_argument("-rs", "--random_state", type=int, default=42,
+                            help='sets a seed to the random generator, so that your train-val-test splits are '
+                                 'always deterministic. default is 42')
+        parser.add_argument("-s", "--shuffle", action='store_true', default=False,
+                            help='when this flag is used the dataset is shuffled before splitting the dataset.')
+        parser.add_argument("-clr", "--cyclical_lr", action="store_true", default=False,
+                            help='when this flag is used cyclical learning rate will be use other stochastic weight '
+                                 'average is implored for training.')
+        parser.add_argument("--drop_last", action='store_true', default=False,
+                            help='selecting this flag causes the last column in the dataset to be dropped.')
+        parser.add_argument("--pin_memory", type=bool, default=True,
+                            help='selecting this flag causes the numpy to tensor conversion to be less efficient.')

@@ -152,7 +152,10 @@ def create_dir(directory: Path):
 
 
 def get_data(geno: DataFrame, path_to_save_qc: Path, filter_str: str) -> Tuple[DataFrame, Series]:
+    create_dir(path_to_save_qc.parent)
     geno = filter_data(geno, filter_str)
+    geno.to_csv(path_to_save_qc)
+
     phen = None
     try:
         phen = geno.phen
