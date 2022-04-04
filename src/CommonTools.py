@@ -6,6 +6,7 @@ from typing import Tuple, Union, Iterable, Dict, Any, List, Optional
 import numpy as np
 import pandas as pd
 import torch
+from multipledispatch import dispatch
 from numpy import ndarray
 from pandas import DataFrame, Series
 from pyensembl import EnsemblRelease
@@ -151,21 +152,17 @@ def create_dir(directory: Path):
     directory.mkdir(parents=True, exist_ok=True)
 
 
-def get_data(geno: DataFrame, path_to_save_qc: Path, filter_str: str) -> Tuple[DataFrame, Series]:
-    create_dir(path_to_save_qc.parent)
+def get_data() -> Tuple(DataFrame, Series):
+    pass
+
+
+@dispatch(str, Path, str)
+def get_data(data: str, path_to_save_qc: Path, filter_str: str) -> Tuple[DataFrame, Series]:
+    geno = pd.read_csv(data, index_col=0)
     geno = filter_data(geno, filter_str)
-    geno.to_csv(path_to_save_qc)
-
-    phen = None
-    try:
-        phen = geno.phen
-        geno.drop(columns='phen', inplace=True)
-    except KeyError:
-        pass
-
     create_dir(path_to_save_qc.parent)
     geno.to_csv(path_to_save_qc)
-    return geno, phen
+
 
 
 def get_transformed_data(data, fold=False, median=None, col_names=None) -> Tuple[Union[ndarray, DataFrame], ndarray]:
@@ -191,10 +188,12 @@ def get_fold_change(x, median) -> Tuple[ndarray, ndarray]:
 
 
 def filter_data(data: DataFrame, filter_str):
-    try:
-        return data[data.phen.isin(filter_str)]
-    except AttributeError:
-        return data
+    if filter_str is not None:
+        try:
+            return data[data.phen.isin(filter_str)]
+        except AttributeError:
+            pass
+    return data
 
 
 def med_var(data, axis=0):

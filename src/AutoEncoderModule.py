@@ -201,7 +201,7 @@ class AutoGenoShallow(pl.LightningModule):
         self.verbose = verbose
 
         # get normalized x quality control
-        x, y = get_data(geno=pd.read_csv(data, index_col=0), filter_str=filter_str, path_to_save_qc=transformed_data)
+        x, y = get_data(data=data, filter_str=filter_str, path_to_save_qc=transformed_data)
         self.column_names: ndarray = x.columns.values
         self.dataset = GPDataModule(
             x, y, val_split, test_split, num_workers, random_state, fold, shuffle, batch_size, pin_memory, drop_last

@@ -1,6 +1,5 @@
 # Use Python to plot SHAP figure (include both bar chart and scatter chart) and generate gene module based on SHAP value
 import argparse
-import sys
 from pathlib import Path
 from typing import Any
 
@@ -11,7 +10,8 @@ import shap
 from pandas import DataFrame
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
-from CommonTools import create_dir, DataNormalization
+
+from CommonTools import create_dir
 
 
 def get_last_model(directory: Path):
@@ -22,12 +22,14 @@ def get_last_model(directory: Path):
 
 
 def main(model_name, gene_name, gene_id, ae_result, save_bar, save_scatter, gene_model, fold, test_split, random_state,
-         shuffle)
+         shuffle):
     # TODO need to refactor this method to incorporate the changes in x normalization
     create_dir(Path(save_bar).parent)
     create_dir(Path(save_scatter).parent)
     create_dir(Path(gene_model).parent)
-    gene: DataFrame = pd.read_csv(gene_name, index_col=0)
+    gene: get_gene_name_data(gene_name, )
+
+    DataFrame = pd.read_csv(gene_name, index_col=0)
     gene = get_normalized_data(gene)
     hidden_vars: DataFrame = pd.read_csv(ae_result, header=None)
     column_num: int = len(hidden_vars.columns)
@@ -80,11 +82,6 @@ def main(model_name, gene_name, gene_id, ae_result, save_bar, save_scatter, gene
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="calculates the shapey values for the AE model's output")
 
-
-    
-    def main(model_name, gene_name, gene_id, ae_out, save_bar, save_scatter, gene_model, fold, test_split, random_state, shuffle)
-
-
     parser.add_argument("--model_name", type=str, help='AE model name')
     parser.add_argument("-name", "--gene_name", type=Path,
                         help='path to input data with gene name as column headers e.g. ./gene_name_QC')
@@ -92,6 +89,8 @@ if __name__ == '__main__':
                         help='path to input data with gene id as column headers e.g. ./gene_id_QC')
     parser.add_argument("--ae_result", type=Path, required=True,
                         help='path to AutoEncoder results.  e.g. ./AE_199.csv')
+    parser.add_argument("--column_mask", type=Path, required=True,
+                        help='path to column mask data.')
     parser.add_argument("-b", "--save_bar", type=Path,
                         default=Path(__file__).absolute().parent.parent.joinpath("shap/bar"),
                         help='base dir to saved AE models e.g. ./shap/bar')
@@ -114,5 +113,5 @@ if __name__ == '__main__':
     parser.add_argument("-s", "--shuffle", action='store_true', default=False,
                         help='when this flag is used the dataset is shuffled before splitting the dataset.')
 
-    args: argparse.Namespace = parser.parse_args() 
-    main(args.model_name, )
+    args: argparse.Namespace = parser.parse_args()
+    main(args)
