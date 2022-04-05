@@ -86,9 +86,10 @@ def main(model_name, gene_name, gene_id, ae_result, col_mask, save_bar, save_sca
         gene_module = gene_module[::-1]
         gene_model: DataFrame = pd.DataFrame(gene_module)
         gene_model = gene_model.head(top_num)
-        print(f'gene_model: {gene_model}')
-        sys.exit(-1)
         mask = gene_model[[1]] != -np.inf
+        print(f'\ngene_model:\n{gene_model}\n')
+        print(f'\nmask:\n{mask}\n')
+        sys.exit(-1)
         gene_model = gene_model[mask.all(axis=1)]
         if len(gene_model.index) > (1 / 4) * top_num:
             print(f'{gene_model}({i}).csv')
