@@ -1,7 +1,7 @@
 # Use Python to plot SHAP figure (include both bar chart and scatter chart) and generate gene module based on SHAP value
 import argparse
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Optional, Dict
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -138,6 +138,6 @@ if __name__ == '__main__':
     parser.add_argument("-s", "--shuffle", action='store_true', default=False,
                         help='when this flag is used the dataset is shuffled before splitting the dataset.')
 
-    args: argparse.Namespace = parser.parse_args()
+    args: Dict[str, Any] = vars(parser.parse_args())
     print(f"args:\n{args}")
     main(**args)
