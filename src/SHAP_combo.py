@@ -37,7 +37,7 @@ def main(model_name, gene_name, gene_id, ae_result, col_mask, save_bar, save_sca
     geno_id, phen = get_phen(get_data(gene_id))
 
     if gene_name is None:
-        gene, phen = convert_gene_id_to_name(geno_id, mask.columns.values)
+        gene, phen = convert_gene_id_to_name(geno_id, mask.columns.to_numpy())
     else:
         gene, phen = get_phen(get_data(gene_name))
 
