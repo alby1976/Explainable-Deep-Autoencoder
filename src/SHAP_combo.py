@@ -33,10 +33,10 @@ def main(model_name, gene_name, gene_id, ae_result, col_mask, save_bar, save_sca
     phen: Optional[pd.DataFrame] = None
 
     mask: pd.DataFrame = get_data(col_mask)
-    geno_id, _ = get_phen(get_data(gene_id))
+    geno_id, phen = get_phen(get_data(gene_id))
 
     if gene_name is None:
-        gene, phen = get_gene_name_and_phen(geno_id, mask.columns.values)
+        gene, phen = convert_gene_id_to_name(geno_id, mask.columns.values)
     else:
         gene, phen = get_phen(get_data(gene_name))
 
