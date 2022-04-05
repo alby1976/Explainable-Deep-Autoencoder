@@ -152,17 +152,50 @@ def create_dir(directory: Path):
     directory.mkdir(parents=True, exist_ok=True)
 
 
-#def get_data() -> Tuple(DataFrame, Series):
-#    pass
+# returns the data file
+@dispatch(Path)
+def get_data(data: Path) -> DataFrame:
+    if not data.is_file():
+        print(f'{data} does not exists.')
+        sys.exit(-1)
+
+    return pd.read_csv(data, index_col=0)
 
 
-@dispatch(str, Path, str)
-def get_data(data: str, path_to_save_qc: Path, filter_str: str) -> Tuple[DataFrame, Series]:
+# returns the data file along with col_mask
+@dispatch(Path, Path)
+def get_data(data: Path, col_mask_file: Path) -> Tuple[DataFrame, ndarray]:
+    geno: DataFrame
+    col_mask = get_data(col_mask_file)
+
+    if data is None:
+        pass
+    else:
+        geno = get_data(data)
+
+    return geno, col_mask.to_numpy()
+
+
+# returns the data that have been filtered allow with phenotypes
+@dispatch(Path, Path, str)
+def get_data(data: Path, path_to_save_qc: Path, filter_str: str) -> Tuple[DataFrame, Series]:
     geno = pd.read_csv(data, index_col=0)
     geno = filter_data(geno, filter_str)
     create_dir(path_to_save_qc.parent)
     geno.to_csv(path_to_save_qc)
 
+    return get_phen(geno)
+
+
+def get_phen(geno: DataFrame) -> Tuple[DataFrame, Union[Series, None]]:
+    phen = None
+    try:
+        phen = geno.phen
+        geno.drop(columns='phen', inplace=True)
+    except KeyError:
+        pass
+
+    return geno, phen
 
 
 def get_transformed_data(data, fold=False, median=None, col_names=None) -> Tuple[Union[ndarray, DataFrame], ndarray]:
