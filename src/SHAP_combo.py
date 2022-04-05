@@ -29,9 +29,9 @@ def main(model_name, gene_name, gene_id, ae_result, col_mask, save_bar, save_sca
     create_dir(Path(save_bar).parent)
     create_dir(Path(save_scatter).parent)
     create_dir(Path(gene_model).parent)
-    gene: Optional[pd.DataFrame] = None
-    geno_id: Optional[pd.DataFrame] = None
-    phen: Optional[pd.DataFrame] = None
+    gene: Optional[DataFrame] = None
+    geno_id: DataFrame = None
+    phen: Optional[DataFrame] = None
 
     mask: pd.DataFrame = get_data(col_mask)
     geno_id, phen = get_phen(get_data(gene_id))
@@ -46,7 +46,7 @@ def main(model_name, gene_name, gene_id, ae_result, col_mask, save_bar, save_sca
     sample_num: int = len(gene.index)
     top_rate: float = 1 / 20  # top rate of gene columns
     top_num: int = int(top_rate * len(gene.columns))
-    geno_id: ndarray = np.array(gene_id.columns)
+    ids: ndarray = geno_id.columns.to_numpy()
     unique, unique_count = np.unique(phen, return_counts=True)
     dm = DataNormalization(column_mask=mask.to_numpy())
 
@@ -81,10 +81,10 @@ def main(model_name, gene_name, gene_id, ae_result, col_mask, save_bar, save_sca
         # **generate gene model
         shap_values_mean = np.sum(abs(shap_values), axis=0) / sample_num
         shap_values_ln = np.log(shap_values_mean)  # *calculate ln^|shap_values_mean|
-        gene_module = np.stack((geno_id, shap_values_ln), axis=0)
+        gene_module = np.stack((ids, shap_values_ln), axis=0)
         gene_module = gene_module.T
         gene_module = gene_module[np.argsort(gene_module[:, 1])]
-        gene_module = gene_module[::-1]
+        gene_module = gene_module[::-1]  # [starting index: stopping index: stepcount]
         gene_model: DataFrame = pd.DataFrame(gene_module)
         gene_model = gene_model.head(top_num)
         mask = gene_model[[1]] != -np.inf
