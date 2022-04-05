@@ -116,7 +116,7 @@ if __name__ == '__main__':
                         help='path to input data with gene id as column headers e.g. ./gene_id_QC')
     parser.add_argument("--ae_result", type=Path, required=True,
                         help='path to AutoEncoder results.  e.g. ./AE_199.csv')
-    parser.add_argument("--column_mask", type=Path, required=True,
+    parser.add_argument("--col_mask", type=Path, required=True,
                         help='path to column mask data.')
     parser.add_argument("-b", "--save_bar", type=Path,
                         default=Path(__file__).absolute().parent.parent.joinpath("shap/bar"),
