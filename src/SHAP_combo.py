@@ -89,7 +89,7 @@ def main(model_name, gene_name, gene_id, ae_result, col_mask, save_bar, save_sca
         print(f'gene_model: {gene_model}')
         sys.exit(-1)
         mask = gene_model[[1]] != -np.inf
-        gene_model = gene_model[.all(axis=1)]
+        gene_model = gene_model[mask.all(axis=1)]
         if len(gene_model.index) > (1 / 4) * top_num:
             print(f'{gene_model}({i}).csv')
             gene_model.to_csv(f'{gene_model}({i}).csv', header=True, index=False, sep='\t')
@@ -131,8 +131,6 @@ if __name__ == '__main__':
                              'row median. default is False')
     parser.add_argument("-ts", "--test_split", type=float, default=0.2,
                         help='test set split ratio. default is 0.2')
-    parser.add_argument("-w", "--num_workers", type=int, default=0,
-                        help='number of processors used to load x. ie worker = 4 * # of GPU. default is 0')
     parser.add_argument("-rs", "--random_state", type=int, default=42,
                         help='sets a seed to the random generator, so that your train-val-test splits are '
                              'always deterministic. default is 42')
