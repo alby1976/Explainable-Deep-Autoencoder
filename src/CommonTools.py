@@ -159,7 +159,7 @@ def get_data(data: Path, index_col: Any = 0, header: Optional[str] = "infer") ->
 
 
 # returns the data file
-def covert_gene_id_to_name(geno_id: DataFrame, col_name: ndarray) -> DataFrame:
+def convert_gene_id_to_name(geno_id: DataFrame, col_name: ndarray) -> DataFrame:
     geno_id.rename(columns=dict(zip(geno_id.columns, col_name)), inplace=True)
     return geno_id
 

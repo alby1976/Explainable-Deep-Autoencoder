@@ -12,7 +12,8 @@ from pandas import DataFrame
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
 
-from CommonTools import create_dir, get_gene_name_and_phen, get_phen, get_data, DataNormalization
+from CommonTools import create_dir, get_phen, get_data, DataNormalization, \
+    convert_gene_id_to_name
 
 
 def get_last_model(directory: Path):
