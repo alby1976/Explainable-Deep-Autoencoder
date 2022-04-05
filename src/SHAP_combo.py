@@ -140,4 +140,4 @@ if __name__ == '__main__':
 
     args: argparse.Namespace = parser.parse_args()
     print(f"args:\n{args}")
-    main(args)
+    main(**args)
