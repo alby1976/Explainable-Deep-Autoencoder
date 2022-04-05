@@ -235,7 +235,7 @@ class AutoGenoShallow(pl.LightningModule):
 
         #  save gene names and column mask
         name: Path = transformed_data.parent
-        name = name.joinpath(f'{data.stem}_gene_name.csv')
+        name = name.joinpath(f'{data.stem}_column_mask.csv')
         self.dataset.dm.save_column_mask(name, self.column_names)
 
         # def the encoder function
