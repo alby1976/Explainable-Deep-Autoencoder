@@ -6,7 +6,6 @@ from typing import Tuple, Union, Iterable, Dict, Any, List, Optional
 import numpy as np
 import pandas as pd
 import torch
-from multipledispatch import dispatch
 from numpy import ndarray
 from pandas import DataFrame, Series
 from pyensembl import EnsemblRelease
@@ -29,8 +28,6 @@ class DataNormalization:
         # Those columns whose column modian fold change relative to median is > 0 is keep
         # This module uses MaxABsScaler to scale the x
 
-        tmp: Union[ndarray, None] = None
-        median: Union[ndarray, None] = None
         # find column mask is not defined
         if self.column_mask is None:
             self.column_mask = np.median(x, axis=0) > 1
@@ -161,21 +158,15 @@ def get_data(data: Path) -> DataFrame:
     return pd.read_csv(data, index_col=0)
 
 
-# returns the data file along with col_mask
-def get_data_col_mask(data: Path, col_mask_file: Path) -> Tuple[DataFrame, ndarray]:
-    geno: DataFrame
-    col_mask = get_data(col_mask_file)
-
-    if data is None:
-        pass
-    else:
-        geno = get_data(data)
-
-    return geno, col_mask.to_numpy()
+# returns the data file
+def convert_gene_id_to_name(gene_id: Path, col_mask: ndarray) -> Tuple[DataFrame, ndarray]:
+    geno, phen = get_phen(get_data(gene_id))
+    geno.rename(columns=dict(zip(geno.columns, col_mask)), inplace=True)
+    return geno, phen.to_numpy()
 
 
 # returns the data that have been filtered allow with phenotypes
-def get_data_phen(data: Path, filter_str: str, path_to_save_qc: Path) -> Tuple[DataFrame, Series]:
+def get_data_phen(data: Path, filter_str: str, path_to_save_qc: Path) -> Tuple[DataFrame, Optional[Series]]:
     geno = get_data(data)
     geno = filter_data(geno, filter_str)
     create_dir(path_to_save_qc.parent)
