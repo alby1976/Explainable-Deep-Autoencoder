@@ -153,7 +153,6 @@ def create_dir(directory: Path):
 
 
 # returns the data file
-@dispatch(data=Path)
 def get_data(data: Path) -> DataFrame:
     if not data.is_file():
         print(f'{data} does not exists.')
@@ -163,7 +162,6 @@ def get_data(data: Path) -> DataFrame:
 
 
 # returns the data file along with col_mask
-@dispatch(data=Path, col_mask_file=Path)
 def get_data_col_mask(data: Path, col_mask_file: Path) -> Tuple[DataFrame, ndarray]:
     geno: DataFrame
     col_mask = get_data(col_mask_file)
@@ -177,7 +175,6 @@ def get_data_col_mask(data: Path, col_mask_file: Path) -> Tuple[DataFrame, ndarr
 
 
 # returns the data that have been filtered allow with phenotypes
-@dispatch(data=Path, filter_str=str, path_to_save_qc=Path)
 def get_data_phen(data: Path, filter_str: str, path_to_save_qc: Path) -> Tuple[DataFrame, Series]:
     geno = get_data(data)
     geno = filter_data(geno, filter_str)
