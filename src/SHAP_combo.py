@@ -139,4 +139,5 @@ if __name__ == '__main__':
                         help='when this flag is used the dataset is shuffled before splitting the dataset.')
 
     args: argparse.Namespace = parser.parse_args()
+    print(f"args:\n{args}")
     main(args)
