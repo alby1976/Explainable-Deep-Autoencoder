@@ -43,7 +43,7 @@ class DataNormalization:
 
         self.scaler = self.scaler.fit(X=tmp)
 
-    def transform(self, x: Any, fold: bool):
+    def transform(self, x: Any, fold: bool) -> Union[Any, DataFrame]:
         # calculate fold change relative to the median after applying column mask
         tmp, _ = get_transformed_data(x[:, self.column_mask], fold=fold)
         # tmp, median = get_transformed_data(x, fold=True)
@@ -150,19 +150,19 @@ def create_dir(directory: Path):
 
 
 # returns the data file
-def get_data(data: Path) -> DataFrame:
+def get_data(data: Path, index_col: Any = 0, header: Optional[str] = "infer") -> DataFrame:
     if not data.is_file():
         print(f'{data} does not exists.')
         sys.exit(-1)
 
-    return pd.read_csv(data, index_col=0)
+    return pd.read_csv(data, index_col=index_col, header=header)
 
 
 # returns the data file
-def convert_gene_id_to_name(gene_id: Path, col_mask: ndarray) -> Tuple[DataFrame, ndarray]:
-    geno, phen = get_phen(get_data(gene_id))
-    geno.rename(columns=dict(zip(geno.columns, col_mask)), inplace=True)
-    return geno, phen.to_numpy()
+def get_gene_name_and_phen(geno_id: DataFrame, col_name: ndarray) -> Tuple[DataFrame, ndarray]:
+    geno_id, phen = get_phen(geno_id)
+    geno_id.rename(columns=dict(zip(geno_id.columns, col_name)), inplace=True)
+    return geno_id, phen.to_numpy()
 
 
 # returns the data that have been filtered allow with phenotypes
@@ -175,7 +175,7 @@ def get_data_phen(data: Path, filter_str: str, path_to_save_qc: Path) -> Tuple[D
     return get_phen(geno)
 
 
-def get_phen(geno: DataFrame) -> Tuple[DataFrame, Union[Series, None]]:
+def get_phen(geno: DataFrame) -> Tuple[DataFrame, Optional[Series]]:
     phen = None
     try:
         phen = geno.phen

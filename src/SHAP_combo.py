@@ -1,17 +1,18 @@
 # Use Python to plot SHAP figure (include both bar chart and scatter chart) and generate gene module based on SHAP value
 import argparse
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import shap
+from numpy import ndarray
 from pandas import DataFrame
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
 
-from CommonTools import create_dir
+from CommonTools import create_dir, get_gene_name_and_phen, get_phen, get_data, DataNormalization
 
 
 def get_last_model(directory: Path):
@@ -21,49 +22,74 @@ def get_last_model(directory: Path):
     return file_path
 
 
-def main(model_name, gene_name, gene_id, ae_result, save_bar, save_scatter, gene_model, fold, test_split, random_state,
-         shuffle):
+def main(model_name, gene_name, gene_id, ae_result, col_mask, save_bar, save_scatter, gene_model, fold, test_split,
+         random_state, shuffle):
     # TODO need to refactor this method to incorporate the changes in x normalization
     create_dir(Path(save_bar).parent)
     create_dir(Path(save_scatter).parent)
     create_dir(Path(gene_model).parent)
-    gene: get_gene_name_data(gene_name, )
+    gene: Optional[pd.DataFrame] = None
+    geno_id: Optional[pd.DataFrame] = None
+    phen: Optional[pd.DataFrame] = None
 
-    DataFrame = pd.read_csv(gene_name, index_col=0)
-    gene = get_normalized_data(gene)
-    hidden_vars: DataFrame = pd.read_csv(ae_result, header=None)
+    mask: pd.DataFrame = get_data(col_mask)
+    geno_id, _ = get_phen(get_data(gene_id))
+
+    if gene_name is None:
+        gene, phen = get_gene_name_and_phen(geno_id, mask.columns.values)
+    else:
+        gene, phen = get_phen(get_data(gene_name))
+
+    hidden_vars: DataFrame = get_data(ae_result, index_col=None, header=None)
     column_num: int = len(hidden_vars.columns)
     sample_num: int = len(gene.index)
     top_rate: float = 1 / 20  # top rate of gene columns
     top_num: int = int(top_rate * len(gene.columns))
-    gene_id: DataFrame = pd.read_csv(gene_id, index_col=0, header=None)
-    gene_id: np.ndarray = np.array(gene_id.columns)
+    geno_id: ndarray = np.array(gene_id.columns)
+    unique, unique_count = np.unique(phen, return_counts=True)
+    dm = DataNormalization(column_mask=mask.to_numpy())
 
     for i in range(column_num):
         x_train: Any
         x_test: Any
         y_train: Any
         y_test: Any
-        x_train, x_test, y_train, y_test = train_test_split(gene,
-                                                            hidden_vars[i],
-                                                            test_size=0.2,
-                                                            random_state=42)
+        if phen is not None and unique.size > 1 and np.min(unique_count) > 1:
+            x_train, x_test, y_train, y_test, phen_train, phen_test = train_test_split(gene,
+                                                                                       hidden_vars[i],
+                                                                                       phen,
+                                                                                       test_size=test_split,
+                                                                                       shuffle=shuffle,
+                                                                                       stratify=phen,
+                                                                                       random_state=random_state)
+        else:
+            x_train, x_test, y_train, y_test, = train_test_split(gene,
+                                                                 hidden_vars[i],
+                                                                 test_size=test_split,
+                                                                 shuffle=shuffle,
+                                                                 stratify=phen,
+                                                                 random_state=random_state)
+
         my_model: RandomForestRegressor = RandomForestRegressor(bootstrap=True, oob_score=False, max_depth=20,
-                                                                random_state=42, n_estimators=100)
-        my_model.fit(x_train, y_train)
+                                                                random_state=random_state, n_estimators=100)
+        dm.fit(x_train, fold)
+        my_model.fit(dm.transform(x_train, fold), y_train)
         explainer = shap.TreeExplainer(my_model)
         # **explainer = shap.KernelExplainer(my_model.predict, x = x_test.iloc[0:10])
-        shap_values = explainer.shap_values(x_test)
+        shap_values = explainer.shap_values(dm.transform(x_test, fold))
         # **generate gene model
         shap_values_mean = np.sum(abs(shap_values), axis=0) / sample_num
         shap_values_ln = np.log(shap_values_mean)  # *calculate ln^|shap_values_mean|
-        gene_module = np.stack((gene_id, shap_values_ln), axis=0)
+        gene_module = np.stack((geno_id, shap_values_ln), axis=0)
         gene_module = gene_module.T
         gene_module = gene_module[np.argsort(gene_module[:, 1])]
         gene_module = gene_module[::-1]
         gene_model: DataFrame = pd.DataFrame(gene_module)
         gene_model = gene_model.head(top_num)
-        gene_model = gene_model[(gene_model[[1]] != -np.inf).all(axis=1)]
+        print(f'gene_model: {gene_model}')
+        sys.exit(-1)
+        mask = gene_model[[1]] != -np.inf
+        gene_model = gene_model[.all(axis=1)]
         if len(gene_model.index) > (1 / 4) * top_num:
             print(f'{gene_model}({i}).csv')
             gene_model.to_csv(f'{gene_model}({i}).csv', header=True, index=False, sep='\t')
