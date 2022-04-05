@@ -177,8 +177,8 @@ def get_data(data: Path, col_mask_file: Path) -> Tuple[DataFrame, ndarray]:
 
 
 # returns the data that have been filtered allow with phenotypes
-@dispatch(Path, Path, str)
-def get_data(data: Path, path_to_save_qc: Path, filter_str: str) -> Tuple[DataFrame, Series]:
+@dispatch(Path, str, Path)
+def get_data(data: Path, filter_str: str, path_to_save_qc: Path) -> Tuple[DataFrame, Series]:
     geno = pd.read_csv(data, index_col=0)
     geno = filter_data(geno, filter_str)
     create_dir(path_to_save_qc.parent)
