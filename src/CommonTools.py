@@ -20,7 +20,7 @@ class DataNormalization:
         super().__init__()
         self.scaler = MinMaxScaler()
         self.med_fold_change = None
-        self.column_mask: Union[ndarray, None] = column_mask
+        self.column_mask: Optional[ndarray] = column_mask
         self.column_names = None
 
     def fit(self, x, fold: bool, column_names: Union[ndarray, None] = None):
@@ -160,10 +160,9 @@ def get_data(data: Path, index_col: Any = 0, header: Optional[str] = "infer") ->
 
 
 # returns the data file
-def get_gene_name_and_phen(geno_id: DataFrame, col_name: ndarray) -> Tuple[DataFrame, ndarray]:
-    geno_id, phen = get_phen(geno_id)
+def convert_gene_id_to_name(geno_id: DataFrame, col_name: ndarray) -> DataFrame:
     geno_id.rename(columns=dict(zip(geno_id.columns, col_name)), inplace=True)
-    return geno_id, phen.to_numpy()
+    return geno_id
 
 
 # returns the data that have been filtered allow with phenotypes

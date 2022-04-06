@@ -1,7 +1,7 @@
 # Use Python to plot SHAP figure (include both bar chart and scatter chart) and generate gene module based on SHAP value
 import argparse
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Optional, Dict
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -12,7 +12,8 @@ from pandas import DataFrame
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
 
-from CommonTools import create_dir, get_gene_name_and_phen, get_phen, get_data, DataNormalization
+from CommonTools import create_dir, get_phen, get_data, DataNormalization, \
+    convert_gene_id_to_name
 
 
 def get_last_model(directory: Path):
@@ -28,15 +29,15 @@ def main(model_name, gene_name, gene_id, ae_result, col_mask, save_bar, save_sca
     create_dir(Path(save_bar).parent)
     create_dir(Path(save_scatter).parent)
     create_dir(Path(gene_model).parent)
-    gene: Optional[pd.DataFrame] = None
-    geno_id: Optional[pd.DataFrame] = None
-    phen: Optional[pd.DataFrame] = None
+    gene: Optional[DataFrame] = None
+    geno_id: DataFrame = None
+    phen: Optional[DataFrame] = None
 
     mask: pd.DataFrame = get_data(col_mask)
-    geno_id, _ = get_phen(get_data(gene_id))
+    geno_id, phen = get_phen(get_data(gene_id))
 
     if gene_name is None:
-        gene, phen = get_gene_name_and_phen(geno_id, mask.columns.values)
+        gene = convert_gene_id_to_name(geno_id, mask.columns.to_numpy())
     else:
         gene, phen = get_phen(get_data(gene_name))
 
@@ -45,8 +46,9 @@ def main(model_name, gene_name, gene_id, ae_result, col_mask, save_bar, save_sca
     sample_num: int = len(gene.index)
     top_rate: float = 1 / 20  # top rate of gene columns
     top_num: int = int(top_rate * len(gene.columns))
-    geno_id: ndarray = np.array(gene_id.columns)
+    ids: ndarray = geno_id.columns.to_numpy()
     unique, unique_count = np.unique(phen, return_counts=True)
+    print(f"\ndf mask:\n{mask}\nnp mask:\n{mask.to_numpy()}\n")
     dm = DataNormalization(column_mask=mask.to_numpy())
 
     for i in range(column_num):
@@ -54,10 +56,12 @@ def main(model_name, gene_name, gene_id, ae_result, col_mask, save_bar, save_sca
         x_test: Any
         y_train: Any
         y_test: Any
+        phen_train: Any
+        phen_test: Any
         if phen is not None and unique.size > 1 and np.min(unique_count) > 1:
-            x_train, x_test, y_train, y_test, phen_train, phen_test = train_test_split(gene,
+            x_train, x_test, y_train, y_test, phen_train, phen_test = train_test_split(gene.to_numpy(),
                                                                                        hidden_vars[i],
-                                                                                       phen,
+                                                                                       phen.to_numpy(),
                                                                                        test_size=test_split,
                                                                                        shuffle=shuffle,
                                                                                        stratify=phen,
@@ -72,6 +76,7 @@ def main(model_name, gene_name, gene_id, ae_result, col_mask, save_bar, save_sca
 
         my_model: RandomForestRegressor = RandomForestRegressor(bootstrap=True, oob_score=False, max_depth=20,
                                                                 random_state=random_state, n_estimators=100)
+        print(f"\nx_train: {x_train.shape} y_train: {y_train.shape} phen_train: {phen_train.shape}")
         dm.fit(x_train, fold)
         my_model.fit(dm.transform(x_train, fold), y_train)
         explainer = shap.TreeExplainer(my_model)
@@ -80,16 +85,17 @@ def main(model_name, gene_name, gene_id, ae_result, col_mask, save_bar, save_sca
         # **generate gene model
         shap_values_mean = np.sum(abs(shap_values), axis=0) / sample_num
         shap_values_ln = np.log(shap_values_mean)  # *calculate ln^|shap_values_mean|
-        gene_module = np.stack((geno_id, shap_values_ln), axis=0)
+        gene_module = np.stack((ids, shap_values_ln), axis=0)
         gene_module = gene_module.T
         gene_module = gene_module[np.argsort(gene_module[:, 1])]
-        gene_module = gene_module[::-1]
+        gene_module = gene_module[::-1]  # [starting index: stopping index: stepcount]
         gene_model: DataFrame = pd.DataFrame(gene_module)
         gene_model = gene_model.head(top_num)
-        print(f'gene_model:\n{gene_model}')
-        sys.exit(-1)
         mask = gene_model[[1]] != -np.inf
-        gene_model = gene_model[.all(axis=1)]
+        print(f'\ngene_model:\n{gene_model}\n')
+        print(f'\nmask:\n{mask}\n')
+        sys.exit(-1)
+        gene_model = gene_model[mask.all(axis=1)]
         if len(gene_model.index) > (1 / 4) * top_num:
             print(f'{gene_model}({i}).csv')
             gene_model.to_csv(f'{gene_model}({i}).csv', header=True, index=False, sep='\t')
@@ -115,7 +121,7 @@ if __name__ == '__main__':
                         help='path to input data with gene id as column headers e.g. ./gene_id_QC')
     parser.add_argument("--ae_result", type=Path, required=True,
                         help='path to AutoEncoder results.  e.g. ./AE_199.csv')
-    parser.add_argument("--column_mask", type=Path, required=True,
+    parser.add_argument("--col_mask", type=Path, required=True,
                         help='path to column mask data.')
     parser.add_argument("-b", "--save_bar", type=Path,
                         default=Path(__file__).absolute().parent.parent.joinpath("shap/bar"),
@@ -131,13 +137,12 @@ if __name__ == '__main__':
                              'row median. default is False')
     parser.add_argument("-ts", "--test_split", type=float, default=0.2,
                         help='test set split ratio. default is 0.2')
-    parser.add_argument("-w", "--num_workers", type=int, default=0,
-                        help='number of processors used to load x. ie worker = 4 * # of GPU. default is 0')
     parser.add_argument("-rs", "--random_state", type=int, default=42,
                         help='sets a seed to the random generator, so that your train-val-test splits are '
                              'always deterministic. default is 42')
     parser.add_argument("-s", "--shuffle", action='store_true', default=False,
                         help='when this flag is used the dataset is shuffled before splitting the dataset.')
 
-    args: argparse.Namespace = parser.parse_args()
-    main(args)
+    args: Dict[str, Any] = vars(parser.parse_args())
+    print(f"args:\n{args}")
+    main(**args)
