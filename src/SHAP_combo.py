@@ -56,6 +56,8 @@ def main(model_name, gene_name, gene_id, ae_result, col_mask, save_bar, save_sca
         x_test: Any
         y_train: Any
         y_test: Any
+        phen_train: Any
+        phen_test: Any
         if phen is not None and unique.size > 1 and np.min(unique_count) > 1:
             x_train, x_test, y_train, y_test, phen_train, phen_test = train_test_split(gene,
                                                                                        hidden_vars[i],
@@ -74,6 +76,7 @@ def main(model_name, gene_name, gene_id, ae_result, col_mask, save_bar, save_sca
 
         my_model: RandomForestRegressor = RandomForestRegressor(bootstrap=True, oob_score=False, max_depth=20,
                                                                 random_state=random_state, n_estimators=100)
+        print(f"\nx_train: {x_train.shape} y_train: {y_train.shape} phen_train: {phen_train.shap}")
         dm.fit(x_train, fold)
         my_model.fit(dm.transform(x_train, fold), y_train)
         explainer = shap.TreeExplainer(my_model)
