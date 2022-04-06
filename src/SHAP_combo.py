@@ -59,9 +59,9 @@ def main(model_name, gene_name, gene_id, ae_result, col_mask, save_bar, save_sca
         phen_train: Any
         phen_test: Any
         if phen is not None and unique.size > 1 and np.min(unique_count) > 1:
-            x_train, x_test, y_train, y_test, phen_train, phen_test = train_test_split(gene,
+            x_train, x_test, y_train, y_test, phen_train, phen_test = train_test_split(gene.to_numpy(),
                                                                                        hidden_vars[i],
-                                                                                       phen,
+                                                                                       phen.to_numpy(),
                                                                                        test_size=test_split,
                                                                                        shuffle=shuffle,
                                                                                        stratify=phen,
