@@ -90,7 +90,7 @@ def main(model_name, gene_name, gene_id, ae_result, col_mask, save_bar, save_sca
             shap_values = explainer.shap_values(dm.transform(x_test, fold))
             # **generate gene model
             shap_values_mean = np.sum(abs(shap_values), axis=0) / sample_num
-            shap_values_ln = np.log(shap_values_mean)  # *calculate ln^|shap_values_mean|
+            shap_values_ln = np.log(shap_values_mean, where=shap_values_mean > 0)  # *calculate ln^|shap_values_mean|
             gene_module: Union[ndarray, DataFrame] = np.stack((ids, shap_values_ln), axis=0)
             gene_module = gene_module.T
             gene_module = gene_module[np.argsort(gene_module[:, 1])]
