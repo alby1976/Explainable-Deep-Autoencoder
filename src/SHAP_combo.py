@@ -87,7 +87,8 @@ def main(model_name, gene_name, gene_id, ae_result, col_mask, save_bar, save_sca
             my_model.fit(dm.transform(x_train, fold), y_train)
             explainer = shap.TreeExplainer(my_model)
             # **explainer = shap.KernelExplainer(my_model.predict, x = x_test.iloc[0:10])
-            shap_values = explainer.shap_values(dm.transform(x_test, fold))
+            x_test = dm.transform(x_test, fold)
+            shap_values = explainer.shap_values(x_test)
             # **generate gene model
             shap_values_mean = np.sum(abs(shap_values), axis=0) / sample_num
             shap_values_ln = np.log(shap_values_mean, where=shap_values_mean > 0)  # *calculate ln^|shap_values_mean|
