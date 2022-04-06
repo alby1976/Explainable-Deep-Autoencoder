@@ -91,11 +91,11 @@ def main(model_name, gene_name, gene_id, ae_result, col_mask, save_bar, save_sca
         gene_module = gene_module[::-1]  # [starting index: stopping index: stepcount]
         gene_model: DataFrame = pd.DataFrame(gene_module)
         gene_model = gene_model.head(top_num)
-        mask = gene_model[[1]] != -np.inf
+        masking = gene_model[[1]] != -np.inf
         print(f'\ngene_model:\n{gene_model}\n')
-        print(f'\nmask:\n{mask}\n')
+        print(f'\nmask:\n{masking}\n')
         sys.exit(-1)
-        gene_model = gene_model[mask.all(axis=1)]
+        gene_model = gene_model[masking.all(axis=1)]
         if len(gene_model.index) > (1 / 4) * top_num:
             print(f'{gene_model}({i}).csv')
             gene_model.to_csv(f'{gene_model}({i}).csv', header=True, index=False, sep='\t')
