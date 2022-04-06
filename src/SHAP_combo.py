@@ -1,6 +1,7 @@
 # Use Python to plot SHAP figure (include both bar chart and scatter chart) and generate gene module based on SHAP value
 import argparse
 import platform
+import sys
 from pathlib import Path
 from typing import Any, Dict, Union
 
@@ -106,7 +107,7 @@ def main(model_name, gene_name, gene_id, ae_result, col_mask, save_bar, save_sca
                 tbl = wandb.Table(dataframe=gene_module)
                 wandb.log({f"{model_name}({i})": tbl})
             # generate bar chart
-            print(f"shap_values: {np.asarray(shap_values).shape} x_test: {x_test.shape}")
+            print(f"shap_values: {np.asarray(shap_values).shape} x_test: {x_test.shape}", file=sys.stderr, flush=True)
             shap.summary_plot(shap_values, x_test, plot_type='bar', plot_size=(15, 10))
             print(f'{save_bar}({i}).png')
             plt.savefig(f'{save_bar}({i}).png', dpi=100, format='png')
