@@ -76,7 +76,7 @@ def main(model_name, gene_name, gene_id, ae_result, col_mask, save_bar, save_sca
 
         my_model: RandomForestRegressor = RandomForestRegressor(bootstrap=True, oob_score=False, max_depth=20,
                                                                 random_state=random_state, n_estimators=100)
-        print(f"\nx_train: {x_train.shape} y_train: {y_train.shape} phen_train: {phen_train.shap}")
+        print(f"\nx_train: {x_train.shape} y_train: {y_train.shape} phen_train: {phen_train.shape}")
         dm.fit(x_train, fold)
         my_model.fit(dm.transform(x_train, fold), y_train)
         explainer = shap.TreeExplainer(my_model)
