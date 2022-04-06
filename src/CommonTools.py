@@ -23,7 +23,7 @@ class DataNormalization:
         self.column_mask: Optional[ndarray] = column_mask
         self.column_names = None
 
-    def fit(self, x, fold: bool, column_names: Union[ndarray, None] = None):
+    def fit(self, x, fold: bool, column_names: Optional[ndarray] = None):
         # the x is log2 transformed and then change to fold change relative to the row's median
         # Those columns whose column modian fold change relative to median is > 0 is keep
         # This module uses MaxABsScaler to scale the x
@@ -33,6 +33,7 @@ class DataNormalization:
             self.column_mask = np.median(x, axis=0) > 1
 
         # apply column mask
+        print(f"x: {x.shape} column_mask {self.column_mask.shape}")
         tmp, _ = get_transformed_data(x[:, self.column_mask], fold=fold)
         # tmp, _ = get_fold_change(tmp[:, self.column_mask], median=median)
         if column_names is not None:
