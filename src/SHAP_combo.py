@@ -103,7 +103,7 @@ def main(model_name, gene_name, gene_id, ae_result, col_mask, save_bar, save_sca
             if len(gene_module.index) > (1 / 4) * top_num:
                 print(f'{gene_model}({i}).csv')
                 gene_module.to_csv(f'{gene_model}({i}).csv', header=True, index=False, sep='\t')
-                tbl = wandb.Table(dataframe=gene_module, dtype=float)
+                tbl = wandb.Table(dataframe=gene_module)
                 wandb.log({f"{model_name}({i})": tbl})
             # generate bar chart
             shap.summary_plot(shap_values, x_test, plot_type='bar', plot_size=(15, 10))
