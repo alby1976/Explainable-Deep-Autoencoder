@@ -30,8 +30,8 @@ def main(model_name, gene_name, gene_id, ae_result, col_mask, save_bar, save_sca
     create_dir(Path(save_scatter).parent)
     create_dir(Path(gene_model).parent)
     gene: Optional[DataFrame] = None
-    geno_id: DataFrame = None
     phen: Optional[DataFrame] = None
+    geno_id: DataFrame
 
     mask: pd.DataFrame = get_data(col_mask)
     geno_id, phen = get_phen(get_data(gene_id))
