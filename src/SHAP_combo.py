@@ -49,7 +49,7 @@ def main(model_name, gene_name, gene_id, ae_result, col_mask, save_bar, save_sca
     ids: ndarray = geno_id.columns.to_numpy()
     unique, unique_count = np.unique(phen, return_counts=True)
     print(f"\ndf mask:\n{mask}\nnp mask:\n{mask.to_numpy()}\n")
-    dm = DataNormalization(column_mask=mask.to_numpy())
+    dm = DataNormalization(column_mask=mask.values)
 
     for i in range(column_num):
         x_train: Any
