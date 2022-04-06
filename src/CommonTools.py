@@ -45,6 +45,7 @@ class DataNormalization:
 
     def transform(self, x: Any, fold: bool) -> Union[Any, DataFrame]:
         # calculate fold change relative to the median after applying column mask
+        print(f"x: {x.shape} column_mask: {self.column_mask.shape}")
         tmp, _ = get_transformed_data(x[:, self.column_mask], fold=fold)
         # tmp, median = get_transformed_data(x, fold=True)
         # tmp, _ = get_fold_change(tmp[:, self.column_mask], median=median)

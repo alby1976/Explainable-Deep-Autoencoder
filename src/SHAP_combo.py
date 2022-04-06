@@ -86,7 +86,7 @@ def main(model_name, gene_name, gene_id, ae_result, col_mask, save_bar, save_sca
         gene_module = gene_module[::-1]
         gene_model: DataFrame = pd.DataFrame(gene_module)
         gene_model = gene_model.head(top_num)
-        print(f'gene_model: {gene_model}')
+        print(f'gene_model:\n{gene_model}')
         sys.exit(-1)
         mask = gene_model[[1]] != -np.inf
         gene_model = gene_model[.all(axis=1)]
