@@ -79,7 +79,6 @@ def predict_shap_values(i, phen, unique, unique_count, gene, hidden_vars, test_s
         tbl = wandb.Table(dataframe=gene_module)
         wandb.log({f"{model_name}({i})": tbl})
     # generate bar chart
-    print(f"shap_values: {np.asarray(shap_values).shape} x_test: {x_test.shape}", file=sys.stderr, flush=True)
     shap.summary_plot(shap_values, x_test, plot_type='bar', plot_size=(15, 10))
     print(f'{save_bar}({i}).png')
     plt.savefig(f'{save_bar}({i}).png', dpi=100, format='png')
