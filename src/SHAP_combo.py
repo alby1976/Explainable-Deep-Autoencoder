@@ -74,7 +74,7 @@ def predict_shap_values(i, phen, unique, unique_count, gene, hidden_vars, test_s
     masking: Union[ndarray, bool] = gene_module[[1]] != -np.inf
     gene_module = gene_module[masking.all(axis=1)]
     if len(gene_module.index) > (1 / 4) * top_num:
-        print(f'{gene_model}({i}).csv', file=sys.stderr)
+        print(f'{gene_model}({i}).csv')
         gene_module.to_csv(f'{gene_model}({i}).csv', header=True, index=False, sep='\t')
         tbl = wandb.Table(dataframe=gene_module)
         wandb.log({f"{model_name}({i})": tbl})
