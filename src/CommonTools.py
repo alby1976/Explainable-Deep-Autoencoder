@@ -14,16 +14,16 @@ from torch import device, Tensor
 
 
 class DataNormalization:
-    def __init__(self, column_mask=None):
+    def __init__(self, column_mask: Optional[ndarray] = None, column_names: Optional[ndarray] = None):
         from sklearn.preprocessing import MinMaxScaler
 
         super().__init__()
         self.scaler = MinMaxScaler()
         self.med_fold_change = None
         self.column_mask: Optional[ndarray] = column_mask
-        self.column_names = None
+        self.column_names = column_names
 
-    def fit(self, x, fold: bool, column_names: Optional[ndarray] = None):
+    def fit(self, x, fold: bool):
         # the x is log2 transformed and then change to fold change relative to the row's median
         # Those columns whose column modian fold change relative to median is > 0 is keep
         # This module uses MaxABsScaler to scale the x
@@ -36,8 +36,8 @@ class DataNormalization:
         print(f"x: {x.shape} column_mask {self.column_mask.shape}")
         tmp, _ = get_transformed_data(x[:, self.column_mask], fold=fold)
         # tmp, _ = get_fold_change(tmp[:, self.column_mask], median=median)
-        if column_names is not None:
-            self.column_names = column_names[self.column_mask]
+        if self.column_names is not None:
+            self.column_names = self.column_names[self.column_mask]
 
         print(f'\ntmp: {tmp.shape} mask: {self.column_mask.shape}', file=sys.stderr)
         # fit the x

@@ -26,6 +26,73 @@ def get_last_model(directory: Path):
     return file_path
 
 
+def predict_shap_values(i, phen, unique, unique_count, gene, hidden_vars, test_split, shuffle, random_state,
+                        num_workers, dm, fold, sample_num, ids, top_num, gene_model, model_name, save_bar,
+                        save_scatter):
+    x_train: Any
+    x_test: Any
+    y_train: Any
+    y_test: Any
+    phen_train: Any = None
+    phen_test: Any
+    if phen is not None and unique.size > 1 and np.min(unique_count) > 1:
+        x_train, x_test, y_train, y_test, phen_train, phen_test = train_test_split(gene.to_numpy(),
+                                                                                   hidden_vars,
+                                                                                   phen.to_numpy(),
+                                                                                   test_size=test_split,
+                                                                                   stratify=phen,
+                                                                                   random_state=random_state)
+    else:
+        x_train, x_test, y_train, y_test, = train_test_split(gene,
+                                                             hidden_vars,
+                                                             test_size=test_split,
+                                                             shuffle=shuffle,
+                                                             stratify=phen,
+                                                             random_state=random_state)
+
+    my_model: RandomForestRegressor = RandomForestRegressor(bootstrap=True, oob_score=False, max_depth=20,
+                                                            random_state=random_state, n_estimators=100,
+                                                            n_jobs=num_workers)
+    print(f"\nx_train: {x_train.shape} y_train: {y_train.shape} phen_train: {phen_train.shape}")
+    dm.fit(x_train, fold)
+    my_model.fit(dm.transform(x_train, fold), y_train)
+    explainer = shap.TreeExplainer(my_model)
+    # **explainer = shap.KernelExplainer(my_model.predict, x = x_test.iloc[0:10])
+    x_test = dm.transform(x_test, fold)
+    shap_values = explainer.shap_values(x_test)
+    # **generate gene model
+    shap_values_mean = np.sum(abs(shap_values), axis=0) / sample_num
+    shap_values_ln = np.log(shap_values_mean)  # *calculate ln^|shap_values_mean|
+    gene_module: Union[ndarray, DataFrame] = np.stack((ids, shap_values_ln), axis=0)
+    gene_module = gene_module.T
+    gene_module = gene_module[np.argsort(gene_module[:, 1])]
+    gene_module = gene_module[::-1]  # [starting index: stopping index: stepcount]
+    gene_module = pd.DataFrame(gene_module)
+    gene_module = gene_module.head(top_num)
+    masking: Union[ndarray, bool] = gene_module[[1]] != -np.inf
+    gene_module = gene_module[masking.all(axis=1)]
+    if len(gene_module.index) > (1 / 4) * top_num:
+        print(f'{gene_model}({i}).csv', file=sys.stderr)
+        gene_module.to_csv(f'{gene_model}({i}).csv', header=True, index=False, sep='\t')
+        tbl = wandb.Table(dataframe=gene_module)
+        wandb.log({f"{model_name}({i})": tbl})
+    # generate bar chart
+    print(f"shap_values: {np.asarray(shap_values).shape} x_test: {x_test.shape}", file=sys.stderr, flush=True)
+    shap.summary_plot(shap_values, x_test, plot_type='bar', plot_size=(15, 10))
+    print(f'{save_bar}({i}).png')
+    plt.savefig(f'{save_bar}({i}).png', dpi=100, format='png')
+    plt.close()
+    tmp = f"{model_name}-bar-({i})"
+    wandb.log({tmp: wandb.Image(f"{save_bar}({i}).png")})
+    # generate scatter chart
+    shap.summary_plot(shap_values, x_test, plot_size=(15, 10))
+    print(f'{save_scatter}({i}).png')
+    plt.savefig(f'{save_scatter}({i}).png', dpi=100, format='png')
+    plt.close()
+    tmp = f"{model_name}-scatter-({i})"
+    wandb.log({tmp: wandb.Image(f"{save_scatter}({i}).png")})
+
+
 def main(model_name, gene_name, gene_id, ae_result, col_mask, save_bar, save_scatter, gene_model, num_workers, fold,
          test_split, random_state, shuffle):
     with wandb.init(name=model_name, project="XAE4Exp"):
@@ -54,80 +121,21 @@ def main(model_name, gene_name, gene_id, ae_result, col_mask, save_bar, save_sca
         ids: ndarray = geno_id.columns.to_numpy()[mask.values.flatten()]
         unique, unique_count = np.unique(phen, return_counts=True)
         print(f"\ndf mask:\n{mask}\nnp mask:\n{mask.to_numpy()}\n")
-        dm = DataNormalization(column_mask=mask.values.flatten())
+        dm = DataNormalization(column_mask=mask.values.flatten(), column_names=gene.columns.to_numpy())
 
         for i in range(column_num):
-            x_train: Any
-            x_test: Any
-            y_train: Any
-            y_test: Any
-            phen_train: Any = None
-            phen_test: Any
-            if phen is not None and unique.size > 1 and np.min(unique_count) > 1:
-                x_train, x_test, y_train, y_test, phen_train, phen_test = train_test_split(gene.to_numpy(),
-                                                                                           hidden_vars[i],
-                                                                                           phen.to_numpy(),
-                                                                                           test_size=test_split,
-                                                                                           shuffle=shuffle,
-                                                                                           stratify=phen,
-                                                                                           random_state=random_state)
-            else:
-                x_train, x_test, y_train, y_test, = train_test_split(gene,
-                                                                     hidden_vars[i],
-                                                                     test_size=test_split,
-                                                                     shuffle=shuffle,
-                                                                     stratify=phen,
-                                                                     random_state=random_state)
+            print(f'**** Processing {i+1} out of {column_num} columns ****')
+            predict_shap_values(i, phen, unique, unique_count, gene, hidden_vars[i], test_split, shuffle, random_state,
+                                num_workers, dm, fold, sample_num, ids, top_num, gene_model, model_name, save_bar,
+                                save_scatter)
 
-            my_model: RandomForestRegressor = RandomForestRegressor(bootstrap=True, oob_score=False, max_depth=20,
-                                                                    random_state=random_state, n_estimators=100,
-                                                                    n_jobs=num_workers)
-            print(f"\nx_train: {x_train.shape} y_train: {y_train.shape} phen_train: {phen_train.shape}")
-            dm.fit(x_train, fold)
-            my_model.fit(dm.transform(x_train, fold), y_train)
-            explainer = shap.TreeExplainer(my_model)
-            # **explainer = shap.KernelExplainer(my_model.predict, x = x_test.iloc[0:10])
-            x_test = dm.transform(x_test, fold)
-            shap_values = explainer.shap_values(x_test)
-            # **generate gene model
-            shap_values_mean = np.sum(abs(shap_values), axis=0) / sample_num
-            shap_values_ln = np.log(shap_values_mean, where=shap_values_mean > 0)  # *calculate ln^|shap_values_mean|
-            gene_module: Union[ndarray, DataFrame] = np.stack((ids, shap_values_ln), axis=0)
-            gene_module = gene_module.T
-            gene_module = gene_module[np.argsort(gene_module[:, 1])]
-            gene_module = gene_module[::-1]  # [starting index: stopping index: stepcount]
-            gene_module = pd.DataFrame(gene_module)
-            gene_module = gene_module.head(top_num)
-            masking: Union[ndarray, bool] = gene_module[[1]] != -np.inf
-            print(f'\ngene_model:\n{gene_module}\n')
-            print(f'\nmask:\n{masking}\n')
-            gene_module = gene_module[masking.all(axis=1)]
-            if len(gene_module.index) > (1 / 4) * top_num:
-                print(f'{gene_model}({i}).csv')
-                gene_module.to_csv(f'{gene_model}({i}).csv', header=True, index=False, sep='\t')
-                tbl = wandb.Table(dataframe=gene_module)
-                wandb.log({f"{model_name}({i})": tbl})
-            # generate bar chart
-            print(f"shap_values: {np.asarray(shap_values).shape} x_test: {x_test.shape}", file=sys.stderr, flush=True)
-            shap.summary_plot(shap_values, x_test, plot_type='bar', plot_size=(15, 10))
-            print(f'{save_bar}({i}).png')
-            plt.savefig(f'{save_bar}({i}).png', dpi=100, format='png')
-            plt.close()
-            tmp = f"{model_name}-bar-({i})"
-            wandb.log({tmp: wandb.Image(f"{save_bar}({i}).png")})
-            # generate scatter chart
-            shap.summary_plot(shap_values, x_test, plot_size=(15, 10))
-            print(f'{save_scatter}({i}).png')
-            plt.savefig(f'{save_scatter}({i}).png', dpi=100, format='png')
-            plt.close()
-            tmp = f"{model_name}-scatter-({i})"
-            wandb.log({tmp: wandb.Image(f"{save_scatter}({i}).png")})
+        wandb.finish
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="calculates the shapey values for the AE model's output")
 
-    parser.add_argument("--model_name", type=str, help='AE model name')
+    parser.add_argument("--model_name", type=str, required=True, help='AE model name')
     parser.add_argument("-name", "--gene_name", type=Path,
                         help='path to input data with gene name as column headers e.g. ./gene_name_QC')
     parser.add_argument("-id", "--gene_id", type=Path, required=True,
