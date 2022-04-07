@@ -27,7 +27,7 @@ def get_last_model(directory: Path):
     return file_path
 
 
-@numba.jit(nopython=True)
+# @numba.jit(nopython=True)
 def predict_shap_values(i, phen, unique, unique_count, gene, hidden_vars, test_split, shuffle, random_state,
                         num_workers, dm, fold, sample_num, ids, top_num, gene_model, model_name, save_bar,
                         save_scatter):
@@ -131,7 +131,7 @@ def main(model_name, gene_name, gene_id, ae_result, col_mask, save_bar, save_sca
                                 num_workers, dm, fold, sample_num, ids, top_num, gene_model, model_name, save_bar,
                                 save_scatter)
 
-        wandb.finish
+        wandb.finish()
 
 
 if __name__ == '__main__':
