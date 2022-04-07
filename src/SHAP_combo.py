@@ -1,6 +1,7 @@
 # Use Python to plot SHAP figure (include both bar chart and scatter chart) and generate gene module based on SHAP value
 import argparse
 import platform
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any, Dict, Union
 
@@ -25,9 +26,10 @@ def get_last_model(directory: Path):
     return file_path
 
 
-def predict_shap_values(i, phen, unique, unique_count, gene, hidden_vars, test_split, shuffle, random_state,
+def predict_shap_values(phen, unique, unique_count, gene, hidden_vars, test_split, shuffle, random_state,
                         num_workers, dm, fold, sample_num, ids, top_num, gene_model, model_name, save_bar,
-                        save_scatter):
+                        save_scatter, column_num, i):
+    print(f'**** Processing {i + 1} out of {column_num} columns ****')
     x_train: Any
     x_test: Any
     y_train: Any
@@ -36,14 +38,14 @@ def predict_shap_values(i, phen, unique, unique_count, gene, hidden_vars, test_s
     phen_test: Any
     if phen is not None and unique.size > 1 and np.min(unique_count) > 1:
         x_train, x_test, y_train, y_test, phen_train, phen_test = train_test_split(gene.to_numpy(),
-                                                                                   hidden_vars,
+                                                                                   hidden_vars[i],
                                                                                    phen.to_numpy(),
                                                                                    test_size=test_split,
                                                                                    stratify=phen,
                                                                                    random_state=random_state)
     else:
         x_train, x_test, y_train, y_test, = train_test_split(gene,
-                                                             hidden_vars,
+                                                             hidden_vars[i],
                                                              test_size=test_split,
                                                              shuffle=shuffle,
                                                              stratify=phen,
@@ -121,50 +123,49 @@ def main(model_name, gene_name, gene_id, ae_result, col_mask, save_bar, save_sca
         print(f"\ndf mask:\n{mask}\nnp mask:\n{mask.to_numpy()}\n")
         dm = DataNormalization(column_mask=mask.values.flatten(), column_names=gene.columns.to_numpy())
 
-        for i in range(column_num):
-            print(f'**** Processing {i + 1} out of {column_num} columns ****')
-            predict_shap_values(i, phen, unique, unique_count, gene, hidden_vars[i], test_split, shuffle, random_state,
-                                num_workers, dm, fold, sample_num, ids, top_num, gene_model, model_name, save_bar,
-                                save_scatter)
+        with ThreadPoolExecutor(max_workers=num_workers * 2) as exe:
+            exe.map(
+                lambda x: predict_shap_values(phen, unique, unique_count, gene, hidden_vars, test_split, shuffle,
+                                              random_state, num_workers, dm, fold, sample_num, ids, top_num, gene_model,
+                                              model_name, save_bar, save_scatter, column_num, x), range(column_num))
 
-        wandb.finish()
+            wandb.finish()
 
+    if __name__ == '__main__':
+        parser = argparse.ArgumentParser(description="calculates the shapey values for the AE model's output")
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="calculates the shapey values for the AE model's output")
+        parser.add_argument("--model_name", type=str, required=True, help='AE model name')
+        parser.add_argument("-name", "--gene_name", type=Path,
+                            help='path to input data with gene name as column headers e.g. ./gene_name_QC')
+        parser.add_argument("-id", "--gene_id", type=Path, required=True,
+                            help='path to input data with gene id as column headers e.g. ./gene_id_QC')
+        parser.add_argument("--ae_result", type=Path, required=True,
+                            help='path to AutoEncoder results.  e.g. ./AE_199.csv')
+        parser.add_argument("--col_mask", type=Path, required=True,
+                            help='path to column mask data.')
+        parser.add_argument("-b", "--save_bar", type=Path,
+                            default=Path(__file__).absolute().parent.parent.joinpath("shap/bar"),
+                            help='base dir to saved AE models e.g. ./shap/bar')
+        parser.add_argument("--save_scatter", type=Path,
+                            default=Path(__file__).absolute().parent.parent.joinpath("shap/scatter"),
+                            help='path to save SHAP scatter chart e.g. ./shap/scatter')
+        parser.add_argument("-m", "--gene_model", type=Path,
+                            default=Path(__file__).absolute().parent.parent.joinpath("shap/bar"),
+                            help='path to save gene module e.g. ./shap/gene_model')
+        parser.add_argument("-w", "--num_workers", type=int,
+                            help='number of processors used to run in parallel. -1 mean using all processor available '
+                                 'default is None')
+        parser.add_argument("--fold", type=bool, default=False,
+                            help='selecting this flag causes the x to be transformed to change fold relative to '
+                                 'row median. default is False')
+        parser.add_argument("-ts", "--test_split", type=float, default=0.2,
+                            help='test set split ratio. default is 0.2')
+        parser.add_argument("-rs", "--random_state", type=int, default=42,
+                            help='sets a seed to the random generator, so that your train-val-test splits are '
+                                 'always deterministic. default is 42')
+        parser.add_argument("-s", "--shuffle", action='store_true', default=False,
+                            help='when this flag is used the dataset is shuffled before splitting the dataset.')
 
-    parser.add_argument("--model_name", type=str, required=True, help='AE model name')
-    parser.add_argument("-name", "--gene_name", type=Path,
-                        help='path to input data with gene name as column headers e.g. ./gene_name_QC')
-    parser.add_argument("-id", "--gene_id", type=Path, required=True,
-                        help='path to input data with gene id as column headers e.g. ./gene_id_QC')
-    parser.add_argument("--ae_result", type=Path, required=True,
-                        help='path to AutoEncoder results.  e.g. ./AE_199.csv')
-    parser.add_argument("--col_mask", type=Path, required=True,
-                        help='path to column mask data.')
-    parser.add_argument("-b", "--save_bar", type=Path,
-                        default=Path(__file__).absolute().parent.parent.joinpath("shap/bar"),
-                        help='base dir to saved AE models e.g. ./shap/bar')
-    parser.add_argument("--save_scatter", type=Path,
-                        default=Path(__file__).absolute().parent.parent.joinpath("shap/scatter"),
-                        help='path to save SHAP scatter chart e.g. ./shap/scatter')
-    parser.add_argument("-m", "--gene_model", type=Path,
-                        default=Path(__file__).absolute().parent.parent.joinpath("shap/bar"),
-                        help='path to save gene module e.g. ./shap/gene_model')
-    parser.add_argument("-w", "--num_workers", type=int,
-                        help='number of processors used to run in parallel. -1 mean using all processor available '
-                             'default is None')
-    parser.add_argument("--fold", type=bool, default=False,
-                        help='selecting this flag causes the x to be transformed to change fold relative to '
-                             'row median. default is False')
-    parser.add_argument("-ts", "--test_split", type=float, default=0.2,
-                        help='test set split ratio. default is 0.2')
-    parser.add_argument("-rs", "--random_state", type=int, default=42,
-                        help='sets a seed to the random generator, so that your train-val-test splits are '
-                             'always deterministic. default is 42')
-    parser.add_argument("-s", "--shuffle", action='store_true', default=False,
-                        help='when this flag is used the dataset is shuffled before splitting the dataset.')
-
-    args: Dict[str, Any] = vars(parser.parse_args())
-    print(f"args:\n{args}")
-    main(**args)
+        args: Dict[str, Any] = vars(parser.parse_args())
+        print(f"args:\n{args}")
+        main(**args)
