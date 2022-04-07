@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any, Dict, Union
 
 import matplotlib.pyplot as plt
+import numba
 import numpy as np
 import pandas as pd
 import shap
@@ -26,6 +27,7 @@ def get_last_model(directory: Path):
     return file_path
 
 
+@numba.jit(nopython=True)
 def predict_shap_values(i, phen, unique, unique_count, gene, hidden_vars, test_split, shuffle, random_state,
                         num_workers, dm, fold, sample_num, ids, top_num, gene_model, model_name, save_bar,
                         save_scatter):
