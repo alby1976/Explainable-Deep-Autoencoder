@@ -1,12 +1,10 @@
 # Use Python to plot SHAP figure (include both bar chart and scatter chart) and generate gene module based on SHAP value
 import argparse
 import platform
-import sys
 from pathlib import Path
 from typing import Any, Dict, Union
 
 import matplotlib.pyplot as plt
-import numba
 import numpy as np
 import pandas as pd
 import shap
@@ -27,7 +25,6 @@ def get_last_model(directory: Path):
     return file_path
 
 
-@numba.jit(nopython=True)
 def predict_shap_values(i, phen, unique, unique_count, gene, hidden_vars, test_split, shuffle, random_state,
                         num_workers, dm, fold, sample_num, ids, top_num, gene_model, model_name, save_bar,
                         save_scatter):
@@ -125,7 +122,7 @@ def main(model_name, gene_name, gene_id, ae_result, col_mask, save_bar, save_sca
         dm = DataNormalization(column_mask=mask.values.flatten(), column_names=gene.columns.to_numpy())
 
         for i in range(column_num):
-            print(f'**** Processing {i+1} out of {column_num} columns ****')
+            print(f'**** Processing {i + 1} out of {column_num} columns ****')
             predict_shap_values(i, phen, unique, unique_count, gene, hidden_vars[i], test_split, shuffle, random_state,
                                 num_workers, dm, fold, sample_num, ids, top_num, gene_model, model_name, save_bar,
                                 save_scatter)
