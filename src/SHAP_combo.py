@@ -3,12 +3,13 @@ import argparse
 import platform
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import Any, Dict, Union
+from typing import Any, Dict, Union, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import shap
+import sklearn
 import wandb
 from numpy import ndarray
 from pandas import DataFrame
@@ -28,7 +29,7 @@ def get_last_model(directory: Path):
 
 def predict_shap_values(phen, unique, unique_count, gene, hidden_vars, test_split, shuffle, random_state,
                         num_workers, dm, fold, sample_num, ids, top_num, gene_model, model_name, save_bar,
-                        save_scatter, column_num, i):
+                        save_scatter, column_num, i) -> Tuple[int, float]:
     print(f'**** Processing {i + 1} out of {column_num} columns ****')
     x_train: Any
     x_test: Any
@@ -57,6 +58,8 @@ def predict_shap_values(phen, unique, unique_count, gene, hidden_vars, test_spli
     print(f"\nx_train: {x_train.shape} y_train: {y_train.shape} phen_train: {phen_train.shape}")
     dm.fit(x_train, fold)
     my_model.fit(dm.transform(x_train, fold), y_train)
+    y_pred = my_model.predict(x_test)
+    r2: float = sklearn.metrics.r2_score(y_true=y_test, y_pred=y_pred)
     explainer = shap.TreeExplainer(my_model)
     # **explainer = shap.KernelExplainer(my_model.predict, x = x_test.iloc[0:10])
     x_test = dm.transform(x_test, fold)
@@ -92,6 +95,8 @@ def predict_shap_values(phen, unique, unique_count, gene, hidden_vars, test_spli
     tmp = f"{model_name}-scatter-({i})"
     wandb.log({tmp: wandb.Image(f"{save_scatter}({i}).png")})
 
+    return i, r2
+
 
 def main(model_name, gene_name, gene_id, ae_result, col_mask, save_bar, save_scatter, gene_model, num_workers, fold,
          test_split, random_state, shuffle):
@@ -123,12 +128,18 @@ def main(model_name, gene_name, gene_id, ae_result, col_mask, save_bar, save_sca
         print(f"\ndf mask:\n{mask}\nnp mask:\n{mask.to_numpy()}\n")
         dm = DataNormalization(column_mask=mask.values.flatten(), column_names=gene.columns.to_numpy())
 
+        result = []
         with ThreadPoolExecutor(max_workers=num_workers * 2) as exe:
             params = ((phen, unique, unique_count, gene, hidden_vars[i], test_split, shuffle,
                        random_state, num_workers, dm, fold, sample_num, ids, top_num, gene_model,
                        model_name, save_bar, save_scatter, column_num, i), for i in range(column_num))
-            exe.map(lambda p: predict_shap_values(*p), params)
+            result.append(exe.map(lambda p: predict_shap_values(*p), params))
 
+        r2_scores = pd.Dataframe(result, columns=['node', 'R^2'])
+        r2_scores.to_csv(f'{gene_model}-r2.csv', header=True, index=False)
+        tmp = f"{model_name}-r2)"
+        tbl = wandb.Table(dataframe=r2_scores)
+        wandb.log({tmp: tbl})
         wandb.finish()
 
 
