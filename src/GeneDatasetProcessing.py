@@ -109,6 +109,7 @@ def merge_gene(slurm: bool, ensembl_version: int, geno: pd.DataFrame, filename: 
     qc_file_gene_name = filtered_data_dir.joinpath(f'{base_name}_gene_name_QC.csv')
     names = get_gene_names(ensembl_release=ensembl_version, gene_list=np.array(input_data.columns))
     input_data.rename(dict(zip(np.array(input_data.columns), names)), axis='columns', inplace=True)
+    input_data['phen'] = geno.phen
     # get_filtered_data(input_data, qc_file_gene_name)
     base_bar_path: Path = save_dir.joinpath('shap/bar')
     base_scatter_path: Path = save_dir.joinpath('shap/scatter')
@@ -128,10 +129,16 @@ def merge_gene(slurm: bool, ensembl_version: int, geno: pd.DataFrame, filename: 
 def process_pathways(slurm: bool, ensembl_version: int, filename: Path, pathways: pd.DataFrame,
                      base_to_save_filtered_data: Path, dir_to_model: Path):
     geno: pd.DataFrame = pd.read_csv(filename, index_col=0)  # original x
+    result = []
     with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
-        executor.map(lambda x, y: merge_gene(slurm, ensembl_version, geno, filename, pathways,
-                                             base_to_save_filtered_data, dir_to_model, index=x, gene_set=y),
-                     enumerate(pathways.All_Genes))
+        result.append(executor.map(lambda x, y: merge_gene(slurm, ensembl_version, geno, filename, pathways,
+                                                           base_to_save_filtered_data, dir_to_model, index=x,
+                                                           gene_set=y),
+                                   enumerate(pathways.All_Genes)))
+
+    data = pd.DataFrame(result, columns=['Pathway #', '# of Genes in common with Cancer of Interest'])
+    name = filename.stem.join('-common.csv')
+    data.to_csv(name)
 
 
 def get_pathways_gene_names(ensembl_version: int, pathway_data: Path) -> pd.DataFrame:

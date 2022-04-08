@@ -38,7 +38,7 @@ def main(args):
                                 args.transformed_data, args.batch_size, args.val_split, args.test_split,
                                 args.filter_str,
                                 args.num_workers, args.random_state, args.fold, args.shuffle, args.drop_last,
-                                args.pin_memory, args.verbose)
+                                args.pin_memory, args.verbose, args.ensembl_version)
 
         seed_everything(args.random_state)
         trainer: Trainer
@@ -163,6 +163,7 @@ if __name__ == '__main__':
                              "i.e. pytorch_lightning.trainer.Trainer.params.check_val_every_n_epoch=2 and patience is 3"
                              "then at least 6 training of no improvement before training will stop.")
     parser.add_argument("-v", "--verbose", action="store_true", default=False, help="verbosity mode")
+    parser.add_argument("--ensembl_version", type=int, default=104, help='Ensembl Release version e.g. 104')
 
     # add model specific args
     parser = AutoGenoShallow.add_model_specific_args(parser)
