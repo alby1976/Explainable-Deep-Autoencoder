@@ -168,7 +168,7 @@ if __name__ == '__main__':
     parser: ArgumentParser = argparse.ArgumentParser(description='Combining genes found in the cancer dataset with '
                                                                  'genes that exists in known pathway as input to the '
                                                                  'AE model.')
-    parser.add_argument("--ensembl_version", type=int, default=105, help='Ensembl Release version e.g. 104')
+    parser.add_argument("--ensembl_version", type=int, default=104, help='Ensembl Release version e.g. 104')
     parser.add_argument("--data", type=Path,
                         default=Path(__file__).absolute().parent.parent.joinpath("data_example.csv"),
                         help='original datafile e.g. ./data_example.csv')

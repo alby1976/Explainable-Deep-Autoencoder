@@ -163,7 +163,7 @@ if __name__ == '__main__':
                              "i.e. pytorch_lightning.trainer.Trainer.params.check_val_every_n_epoch=2 and patience is 3"
                              "then at least 6 training of no improvement before training will stop.")
     parser.add_argument("-v", "--verbose", action="store_true", default=False, help="verbosity mode")
-    parser.add_argument("--ensembl_version", type=int, default=105, help='Ensembl Release version e.g. 104')
+    parser.add_argument("--ensembl_version", type=int, default=104, help='Ensembl Release version e.g. 104')
 
     # add model specific args
     parser = AutoGenoShallow.add_model_specific_args(parser)
