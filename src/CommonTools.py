@@ -59,7 +59,7 @@ class DataNormalization:
         else:
             return DataFrame(self.scaler.transform(X=tmp), columns=self.column_names)
 
-    def save_column_mask(self, file: Path, column_name=None, version: int = 104):
+    def save_column_mask(self, file: Path, column_name=None, version: int = 105):
         gene_names = get_gene_names(ensembl_release=version, gene_list=column_name)
         data = self.column_mask[np.newaxis, :]
         df = pd.DataFrame(data=data, columns=gene_names)

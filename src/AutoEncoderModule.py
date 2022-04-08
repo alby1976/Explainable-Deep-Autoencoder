@@ -189,7 +189,7 @@ class AutoGenoShallow(pl.LightningModule):
                  data: Path, transformed_data: Path,
                  batch_size: int, val_split: float, test_split: float,
                  filter_str: str, num_workers: int, random_state: int, fold: bool,
-                 shuffle: bool, drop_last: bool, pin_memory: bool, verbose: bool):
+                 shuffle: bool, drop_last: bool, pin_memory: bool, verbose: bool, version):
         super().__init__()  # I guess this inherits __init__ from super class
         # self.testing_dataset = None
         # self.train_dataset = None
@@ -306,11 +306,6 @@ class AutoGenoShallow(pl.LightningModule):
     def training_epoch_end(self, training_step_outputs):
         # scheduler: CyclicLR = self.lr_schedulers()
         epoch = self.current_epoch
-        lr_scheduler: Any
-        try:
-            lr_scheduler = self.lr_schedulers()[0]
-        except TypeError:
-            lr_scheduler = self.lr_schedulers()
 
         # extracting training batch x
         losses: Tensor = get_dict_values_1d('loss', training_step_outputs)
@@ -373,7 +368,7 @@ class AutoGenoShallow(pl.LightningModule):
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: Optional[int] = None) -> Any:
         x = batch[0]
-        output, _ = self.forward(x)
+        _, output = self.forward(x)
 
         return output
 
