@@ -22,7 +22,7 @@ from torch.optim.swa_utils import SWALR
 from torch.utils.data import DataLoader, TensorDataset, Dataset
 
 # custom modules
-from CommonTools import get_dict_values_1d, get_dict_values_2d, DataNormalization, get_data_phen
+from CommonTools import get_dict_values_1d, DataNormalization, get_data_phen
 
 
 class GPDataSet(Dataset):
@@ -293,14 +293,14 @@ class AutoGenoShallow(pl.LightningModule):
     # define training step
     def training_step(self, batch, batch_idx) -> Dict[str, Tensor]:
         output: Tensor
-        coder: Tensor
         x: Tensor = batch[0]
-        output, coder = self.forward(x)
+        output, _ = self.forward(x)
         self.training_r2score_node.update(preds=output, target=x)
         loss: Tensor = f.mse_loss(input=output, target=x)
         # return {'model': coder, 'loss': loss, 'r2_node': r2_node, 'input': x, 'output': output}
         # return {'model': coder.detach(), 'loss': loss, "input": x, "'output": output.detach()}
-        return {'model': coder.detach(), 'loss': loss}
+        # return {'model': coder.detach(), 'loss': loss}
+        return {'loss': loss}
 
     # end of training epoch
     def training_epoch_end(self, training_step_outputs):
@@ -309,16 +309,16 @@ class AutoGenoShallow(pl.LightningModule):
 
         # extracting training batch x
         losses: Tensor = get_dict_values_1d('loss', training_step_outputs)
-        coder: Tensor = get_dict_values_2d('model', training_step_outputs)
+        # coder: Tensor = get_dict_values_2d('model', training_step_outputs)
         # target: Tensor = get_dict_values_2d('input', training_step_outputs)
         # output: Tensor = get_dict_values_2d('output', training_step_outputs)
 
         # ===========save model============
-        from datetime import datetime
-        now = datetime.now()
-        dt_string = now.strftime("%d-%m-%Y %H:%M:%S")
-        coder_file = self.save_dir.joinpath(f"{self.model_name}-{epoch}={dt_string}.pt")
-        torch.save(coder, coder_file)
+        # from datetime import datetime
+        # now = datetime.now()
+        # dt_string = now.strftime("%d-%m-%Y %H:%M:%S")
+        # coder_file = self.save_dir.joinpath(f"{self.model_name}-{epoch}={dt_string}.pt")
+        # torch.save(coder, coder_file)
         # print(f'\n*** save_dir: {self.save_dir} coder_file: {coder_file} ***\n')
         # save_tensor(x=coder, file=coder_file)
         # np.savetxt(fname=coder_file, X=coder_np, fmt='%f', delimiter=',')
@@ -329,8 +329,8 @@ class AutoGenoShallow(pl.LightningModule):
 
         # clean up
         del losses
-        del coder
-        del coder_file
+        # del coder
+        # del coder_file
         self.training_r2score_node.reset()
         gc.collect()
         if torch.cuda.is_available():
