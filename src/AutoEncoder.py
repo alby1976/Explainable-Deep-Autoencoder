@@ -101,6 +101,8 @@ def main(args):
             print(f'...Finding ideal batch size & learning rate....')
             print(f'starting batch size: {model.hparams.batch_size}')
             trainer.tuner.scale_batch_size(model=model, init_val=model.hparams.batch_size, mode='binsearch')
+            if model.lr > 0.001:
+                model.lr = 0.001
             print(f'min lr: {model.lr / 6.0} max lr: {model.lr}')
 
         # train & validate model
