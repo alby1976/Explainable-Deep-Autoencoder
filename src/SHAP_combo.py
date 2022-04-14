@@ -133,7 +133,7 @@ def main(model_name, gene_name, gene_id, ae_result, col_mask, save_bar, save_sca
             params = ((phen, unique, unique_count, gene, hidden_vars[i], test_split, shuffle,
                        random_state, num_workers, dm, fold, sample_num, ids, top_num, gene_model,
                        model_name, save_bar, save_scatter, column_num, i) for i in range(column_num))
-            for r in (exe.map(lambda p: predict_shap_values(*p), params))
+            for r in (exe.map(lambda p: predict_shap_values(*p), params)):
                 result.append(r)
 
         r2_scores = pd.Dataframe(result, columns=['node', 'R^2'])
