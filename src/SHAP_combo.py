@@ -129,11 +129,12 @@ def main(model_name, gene_name, gene_id, ae_result, col_mask, save_bar, save_sca
         dm = DataNormalization(column_mask=mask.values.flatten(), column_names=gene.columns.to_numpy())
 
         result = []
-        with ThreadPoolExecutor(max_workers=num_workers * 2) as exe:
+        with ThreadPoolExecutor(max_workers=num_workers) as exe:
             params = ((phen, unique, unique_count, gene, hidden_vars[i], test_split, shuffle,
                        random_state, num_workers, dm, fold, sample_num, ids, top_num, gene_model,
-                       model_name, save_bar, save_scatter, column_num, i), for i in range(column_num))
-            result.append(exe.map(lambda p: predict_shap_values(*p), params))
+                       model_name, save_bar, save_scatter, column_num, i) for i in range(column_num))
+            for r in (exe.map(lambda p: predict_shap_values(*p), params))
+                result.append(r)
 
         r2_scores = pd.Dataframe(result, columns=['node', 'R^2'])
         r2_scores.to_csv(f'{gene_model}-r2.csv', header=True, index=False)
