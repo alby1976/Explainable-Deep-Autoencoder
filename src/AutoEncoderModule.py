@@ -12,6 +12,8 @@ import pl_bolts.datamodules
 import pytorch_lightning as pl
 import torch
 import torchmetrics as tm
+# custom modules
+from CommonTools import get_dict_values_1d, DataNormalization, get_data_phen
 from numpy import ndarray
 from pandas import DataFrame, Series
 from pytorch_lightning.utilities.types import EVAL_DATALOADERS, TRAIN_DATALOADERS
@@ -20,9 +22,6 @@ from torch import nn, Tensor
 from torch.nn import functional as f
 from torch.optim.swa_utils import SWALR
 from torch.utils.data import DataLoader, TensorDataset, Dataset
-
-# custom modules
-from CommonTools import get_dict_values_1d, DataNormalization, get_data_phen
 
 
 class GPDataSet(Dataset):
@@ -185,7 +184,7 @@ class AutoGenoShallow(pl.LightningModule):
     testing_dataset: Union[TensorDataset, None]
     train_dataset: Union[TensorDataset, None]
 
-    def __init__(self, save_dir: Path, name: str, ratio: int, cyclical_lr: bool, learning_rate: float,
+    def __init__(self, pathways: bool, save_dir: Path, name: str, ratio: int, cyclical_lr: bool, learning_rate: float,
                  data: Path, transformed_data: Path,
                  batch_size: int, val_split: float, test_split: float,
                  filter_str: str, num_workers: int, random_state: int, fold: bool,
@@ -208,16 +207,16 @@ class AutoGenoShallow(pl.LightningModule):
         # self.geno: ndarray = get_filtered_data(pd.read_csv(path_to_data, index_col=0), path_to_save_qc).to_numpy()
         self.input_features = self.dataset.size
         self.output_features = self.input_features
-        self.smallest_layer = math.ceil(self.input_features / ratio)
-
-        print(f'{self.dataset.size} input_features: {self.input_features} smallest_layer: {self.smallest_layer} ')
-        '''
-        if tmp < 5:
-            self.smallest_layer = 5 if tmp < 5 else tmp
+        if pathways:
+            tmp = math.ceil(self.dataset.size / ratio)
+            self.smallest_layer = tmp if tmp > 5 else 5
+            self.hidden_layer = 2 * self.smallest_layer
         else:
-            self.smallest_layer = tmp
-        '''
-        self.hidden_layer = 2 * self.smallest_layer
+            self.hidden_layer = 4096
+            self.smallest_layer = 512
+
+        print(f"input_features: {self.input_features} hidden_features: {self.hidden_layer} "
+              f"smallest_layer: {self.smallest_layer}")
 
         self.training_r2score_node = tm.R2Score(num_outputs=self.input_features,
                                                 multioutput='variance_weighted', compute_on_step=False)
@@ -239,9 +238,9 @@ class AutoGenoShallow(pl.LightningModule):
 
         # def the encoder function
         self.encoder = nn.Sequential(
-            nn.Linear(self.input_features, 4096),
+            nn.Linear(self.input_features, self.hidden_layer),
             nn.ReLU(True),
-            nn.Linear(4096, 512),
+            nn.Linear(self.hidden_layer, self.smallest_layer),
             nn.ReLU(True),
         )
         '''
@@ -253,18 +252,12 @@ class AutoGenoShallow(pl.LightningModule):
             nn.Linear(1024, 512),
             nn.ReLU(True),
         )
-        self.encoder = nn.Sequential(
-            nn.Linear(self.input_features, self.hidden_layer),
-            nn.ReLU(True),
-            nn.Linear(self.hidden_layer, self.smallest_layer),
-            nn.ReLU(True),
-        )
         '''
         # def the decoder function
         self.decoder = nn.Sequential(
-            nn.Linear(512, 4096),
+            nn.Linear(self.smallest_layer, self.hidden_layer),
             nn.ReLU(True),
-            nn.Linear(4096, self.output_features),
+            nn.Linear(self.hidden_layer, self.output_features),
             nn.Sigmoid()
         )
         '''
@@ -274,12 +267,6 @@ class AutoGenoShallow(pl.LightningModule):
             nn.Linear(1024, 4096),
             nn.ReLU(True),
             nn.Linear(4096, self.output_features),
-            nn.Sigmoid()
-        )
-        self.decoder = nn.Sequential(
-            nn.Linear(self.smallest_layer, self.hidden_layer),
-            nn.ReLU(True),
-            nn.Linear(self.hidden_layer, self.output_features),
             nn.Sigmoid()
         )
         '''
@@ -461,9 +448,11 @@ class AutoGenoShallow(pl.LightningModule):
         parser.add_argument("-clr", "--cyclical_lr", action="store_true", default=False,
                             help='when this flag is used cyclical learning rate will be use other stochastic weight '
                                  'average is implored for training.')
-        parser.add_argument("--drop_last", action='store_true', default=False,
+        parser.add_argument("--drop_last", action="store_true", default=False,
                             help='selecting this flag causes the last column in the dataset to be dropped.')
-        parser.add_argument("--pin_memory", type=bool, default=True,
+        parser.add_argument("--pin_memory_no", action="store_false", default=True,
                             help='selecting this flag causes the numpy to tensor conversion to be less efficient.')
+        parser.add_argument("-p", "--pathways", action="store_true", default=False,
+                            help='selecting this flag causes the model architecture be based on less input features.')
 
         return parent_parser

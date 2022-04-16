@@ -34,11 +34,11 @@ def main(args):
         # instantiate model
         path_to_save_ae = Path(args.save_dir)
         create_dir(path_to_save_ae)
-        model = AutoGenoShallow(args.save_dir, args.name, args.ratio, args.cyclical_lr, args.learning_rate, args.data,
+        model = AutoGenoShallow(args.pathways, args.save_dir, args.name, args.ratio, args.cyclical_lr, args.learning_rate, args.data,
                                 args.transformed_data, args.batch_size, args.val_split, args.test_split,
                                 args.filter_str,
                                 args.num_workers, args.random_state, args.fold, args.shuffle, args.drop_last,
-                                args.pin_memory, args.verbose, args.ensembl_version)
+                                args.pin_memory_no, args.verbose, args.ensembl_version)
 
         seed_everything(args.random_state)
         trainer: Trainer
