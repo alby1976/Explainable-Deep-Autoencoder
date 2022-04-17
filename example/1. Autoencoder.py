@@ -1,9 +1,11 @@
 ## Use Python to run Deep Autoencoder (feature selection)
 ## path - is a string to desired path location.
+from typing import Union
 
 import pandas as pd
 import numpy as np
 import torch
+from numpy import ndarray
 from torchvision import transforms
 from torch import nn
 import torch.nn.functional as F
@@ -14,16 +16,16 @@ import pickle
 import os
 import time
 
-PATH_TO_DATA = 'data_example.csv'      #path to original data 
+PATH_TO_DATA = 'data_example.csv'      #path to original x
 PATH_TO_SAVE_AE = '/example/'      #path to save AutoEncoder results
-PATH_TO_SAVE_QC = 'data_example_QC.csv'       #path to save original data after quality control
+PATH_TO_SAVE_QC = 'data_example_QC.csv'       #path to save original x after quality control
 
 model_name = 'AE_Geno'
 save_dir = PATH_TO_SAVE_AE
 if not os.path.exists(save_dir):
     os.mkdir(save_dir)
 
-geno = pd.read_csv(PATH_TO_DATA,index_col=0) #data quality control
+geno = pd.read_csv(PATH_TO_DATA,index_col=0) #x quality control
 geno_var = geno.var()
 geno.drop(geno_var[geno_var < 1].index.values, axis=1, inplace=True)
 geno.to_csv(PATH_TO_SAVE_QC)
@@ -44,8 +46,8 @@ class GPDataSet(Dataset):
         return len(self.GP_list)
 
     def __getitem__(self, index):
-        # 'Generates one sample of data'
-        # Load data and get label
+        # 'Generates one sample of x'
+        # Load x and get label
         X = self.GP_list[index]
         X = np.array(X)
         return X
@@ -124,7 +126,7 @@ for epoch in range(num_epochs):
             loss.backward()
             optimizer.step()
         # ===========log============
-        coder_np = np.array(output_coder_list)
+        coder_np: Union[int, ndarray] = np.array(output_coder_list)
         temp = round(smallest_layer / 100)
         coder_file = save_dir + model_name + str(epoch) + '.csv'
         np.savetxt(fname=coder_file, X=coder_np, fmt='%f', delimiter=',')

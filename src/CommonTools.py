@@ -1,103 +1,97 @@
+import sys
 from itertools import islice
 from pathlib import Path
-from typing import Tuple, Union, Iterable, Dict, Any, List, Mapping
+from typing import Tuple, Union, Iterable, Dict, Any, List, Optional
 
 import numpy as np
+import pandas as pd
 import torch
 from numpy import ndarray
 from pandas import DataFrame, Series
-from scipy.stats import anderson_ksamp, levene, anderson, ks_2samp, epps_singleton_2samp
+from pyensembl import EnsemblRelease
+from scipy.stats import levene, anderson, ks_2samp
 from torch import device, Tensor
-from torchmetrics import Metric
-
-"""
-@dispatch(ndarray, ndarray, object)
-def r2_value(y_true: ndarray, y_pred: ndarray, axis: object = None) -> object:
-    y_ave = y_true.mean(axis=axis)
-    # sse = np.sum(np.power(y_pred - y_ave, 2), axis=axis)
-    ssr = np.sum(np.power(y_true - y_pred, 2), axis=axis)
-    sst = np.sum(np.power(y_true - y_ave, 2), axis=axis)
-    '''
-    print(f'y_true: {y_true.shape}')
-    print(f'y_ave: {y_ave.shape}\n{y_ave}\nssr: {ssr.shape}\n{ssr}\nsst: {sst.shape}\n{sst}\nssr/sst:{ssr/sst}\n'
-          f'1 - (ssr/sst):\n{1 - (ssr/sst)}\n1 - np.divide(ssr, sst):\n{1 - np.divide(ssr, sst)}')
-    '''
-    return 1 - np.divide(ssr, sst)
-"""
 
 
-def r2_value(y_true: Tensor, y_pred: Tensor, dim: int = 0) -> object:
-    y_ave = torch.mean(y_true, dim=dim)
-    # sse = torch.sum(torch.pow(y_pred - y_ave, 2), dim=dim)
-    ssr = torch.sum(torch.pow(y_true - y_pred, 2), dim=dim)
-    sst = torch.sum(torch.pow(y_true - y_ave, 2), dim=dim)
-    '''
-    print(f'y_true: {y_true.size()}')
-    print(f'y_ave: {y_ave.size()}\n{y_ave}\nssr: {ssr.size()}\n{ssr}\nsst: {sst.size()}\n{sst}\nssr/sst:{ssr/sst}\n'
-          f'1 - (ssr/sst):\n{1 - (ssr / sst)}\n')
-    '''
-    return 1 - (ssr / sst)
+class DataNormalization:
+    def __init__(self, column_mask: Optional[ndarray] = None, column_names: Optional[ndarray] = None):
+        from sklearn.preprocessing import MinMaxScaler
+
+        super().__init__()
+        self.scaler = MinMaxScaler()
+        self.med_fold_change = None
+        self.column_mask: Optional[ndarray] = column_mask
+        self.column_names = column_names
+
+    def fit(self, x, fold: bool):
+        # the x is log2 transformed and then change to fold change relative to the row's median
+        # Those columns whose column modian fold change relative to median is > 0 is keep
+        # This module uses MaxABsScaler to scale the x
+
+        # find column mask is not defined
+        if self.column_mask is None:
+            self.column_mask = np.median(x, axis=0) > 1
+
+        # apply column mask
+        print(f"x: {x.shape} column_mask {self.column_mask.shape}")
+        tmp, _ = get_transformed_data(x[:, self.column_mask], fold=fold)
+        # tmp, _ = get_fold_change(tmp[:, self.column_mask], median=median)
+        if self.column_names is not None:
+            self.column_names = self.column_names[self.column_mask]
+
+        print(f'\ntmp: {tmp.shape} mask: {self.column_mask.shape}', file=sys.stderr)
+        # fit the x
+
+        self.scaler = self.scaler.fit(X=tmp)
+
+    def transform(self, x: Any, fold: bool) -> Union[Any, DataFrame]:
+        # calculate fold change relative to the median after applying column mask
+        print(f"x: {x.shape} column_mask: {self.column_mask.shape}")
+        tmp, _ = get_transformed_data(x[:, self.column_mask], fold=fold)
+        # tmp, median = get_transformed_data(x, fold=True)
+        # tmp, _ = get_fold_change(tmp[:, self.column_mask], median=median)
+        print(f'\ntmp: {tmp.shape} mask: {self.column_mask.shape}', file=sys.stderr)
+        # print(f'\ntmp: {tmp.shape} median: {median.shape}', file=sys.stderr)
+
+        # Using MinMaxScaler() transform the x to be between (0..1)
+        if self.column_names is None:
+            return self.scaler.transform(X=tmp)
+        else:
+            return DataFrame(self.scaler.transform(X=tmp), columns=self.column_names)
+
+    def save_column_mask(self, file: Path, column_name=None, version: int = 104):
+        gene_names = get_gene_names(ensembl_release=version, gene_list=column_name)
+        data = self.column_mask[np.newaxis, :]
+        df = pd.DataFrame(data=data, columns=gene_names)
+        df.to_csv(file)
 
 
-def r2_value_weighted(y_true: Tensor, y_pred: Tensor, dim: int = 0) -> Union[Metric, Tensor, int, float,
-                                                                             Mapping[str, Union[Metric, Tensor, int,
-                                                                                                float]]]:
-    y_ave = torch.mean(y_true, dim=dim)
-    sst = torch.sum(torch.pow(y_true - y_ave, 2), dim=dim)
-    sst_sum = torch.sum(sst)
-    raw = r2_value(y_true=y_true, y_pred=y_pred, dim=dim)
-    # print(f'r2_value_weighted: {torch.nansum(sst / sst_sum * raw)}')
-    return torch.sum(sst / sst_sum * raw)
-
-
-def get_data(geno: DataFrame, path_to_save_qc: Path) -> DataFrame:
-    return get_normalized_data(get_filtered_data(geno, path_to_save_qc))
-
-
-def get_filtered_data(geno: DataFrame, path_to_save_qc: Path) -> DataFrame:
-    try:
-        geno.drop(columns='phen', inplace=True)
-    except KeyError:
-        pass
-    geno_var: Union[Series, int] = geno.var()
-    geno_var = geno_var[geno_var < 1]
-    tmp = geno_var.index.values
-    geno.drop(tmp, axis=1, inplace=True)
-    create_dir(path_to_save_qc.parent)
-    geno.to_csv(path_to_save_qc)
-    return geno
-
-
-# merge list to single dict
-def merge_list_dict(lists) -> Dict[Any, Any]:
-    result = {}
-    for tmp in lists:
-        result = {**result, **tmp}
-
-    return result
-
-
-def convert_to_tensor(x: Union[Tensor, ndarray]) -> Tensor:
-    if type(x) == Tensor:
-        return x
-    else:
-        return torch.from_numpy(x).type(torch.FloatTensor)
+# common functions
+def get_device() -> device:
+    return torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
 # get dictionary values in a Tensor for a particular key in a list of dictionary
-def get_dict_values_1d(key: str, lists: List[Dict[str, Any]], dim: int = 0) -> Tensor:
-    return torch.stack([convert_to_tensor(item[key]) for item in lists], dim=dim)
+def get_dict_values_1d(key: str, lists: List[Dict[str, Tensor]], dim: int = 0) -> Tensor:
+    return torch.stack([item[key] for item in lists], dim=dim)
 
 
-def get_dict_values_2d(key: str, lists: List[Dict[str, Any]], dim: int = 0) -> Tensor:
-    return torch.cat([convert_to_tensor(item[key]) for item in lists], dim=dim)
+def get_dict_values_2d(key: str, lists: List[Dict[str, Tensor]], dim: int = 0) -> Tensor:
+    return torch.cat([item[key] for item in lists], dim=dim)
 
 
 def data_parametric(*samples) -> bool:
     # print(f'samples: {type(samples)}\n\n{samples}\n\n')
-    result1, _, _ = same_distribution_test(*samples)
-    result2, _, _ = normality_test(samples[0])
-    result3, _, _ = equality_of_variance_test(*samples)
+    result1: bool = False
+    result2: bool = False
+    result3: bool = False
+    if len(samples) > 1:
+        result1, _, _ = same_distribution_test(*samples)
+        result2, _, _ = normality_test(samples[0])
+        result3, _, _ = equality_of_variance_test(*samples)
+    else:
+        pass  # TODO need to define
+
     return result1 and result2 and result3
 
 
@@ -136,18 +130,20 @@ def equality_of_variance_test(*samples: Tuple[ndarray, ...]) -> Tuple[bool, floa
         return True, stat, p_value
 
 
-def get_normalized_data(data: DataFrame) -> DataFrame:
-    from sklearn.preprocessing import MinMaxScaler
-
-    # log2(TPM+0.25) transformation (0.25 to prevent negative inf)
-    modified = DataFrame(data=np.log2(data + 0.25), columns=data.columns)
-
-    med_exp = np.median(modified.values[:, 1:], axis=1)
-    for i in range(modified.shape[0]):
-        modified.iloc[i, 1:] = modified.values[i, 1:] - med_exp[i]  # fold change respect to median
-
-    scaler = MinMaxScaler()
-    return DataFrame(data=scaler.fit_transform(modified), columns=modified.columns)
+"""
+@dispatch(ndarray, ndarray, object)
+def r2_value(y_true: ndarray, y_pred: ndarray, axis: object = None) -> object:
+    y_ave = y_true.mean(axis=axis)
+    # sse = np.sum(np.power(y_pred - y_ave, 2), axis=axis)
+    ssr = np.sum(np.power(y_true - y_pred, 2), axis=axis)
+    sst = np.sum(np.power(y_true - y_ave, 2), axis=axis)
+    '''
+    print(f'y_true: {y_true.shape}')
+    print(f'y_ave: {y_ave.shape}\n{y_ave}\nssr: {ssr.shape}\n{ssr}\nsst: {sst.shape}\n{sst}\nssr/sst:{ssr/sst}\n'
+          f'1 - (ssr/sst):\n{1 - (ssr/sst)}\n1 - np.divide(ssr, sst):\n{1 - np.divide(ssr, sst)}')
+    '''
+    return 1 - np.divide(ssr, sst)
+"""
 
 
 def create_dir(directory: Path):
@@ -155,5 +151,111 @@ def create_dir(directory: Path):
     directory.mkdir(parents=True, exist_ok=True)
 
 
-def get_device() -> device:
-    return torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+# returns the data file
+def get_data(data: Path, index_col: Any = 0, header: Optional[str] = "infer") -> DataFrame:
+    if not data.is_file():
+        print(f'{data} does not exists.')
+        sys.exit(-1)
+
+    return pd.read_csv(data, index_col=index_col, header=header)
+
+
+# returns the data file
+def convert_gene_id_to_name(geno_id: DataFrame, col_name: ndarray) -> DataFrame:
+    geno_id.rename(columns=dict(zip(geno_id.columns, col_name)), inplace=True)
+    return geno_id
+
+
+# returns the data that have been filtered allow with phenotypes
+def get_data_phen(data: Path, filter_str: str, path_to_save_qc: Path) -> Tuple[DataFrame, Optional[Series]]:
+    geno = get_data(data)
+    geno = filter_data(geno, filter_str)
+    create_dir(path_to_save_qc.parent)
+    geno.to_csv(path_to_save_qc)
+
+    return get_phen(geno)
+
+
+def get_phen(geno: DataFrame) -> Tuple[DataFrame, Optional[Series]]:
+    phen = None
+    try:
+        phen = geno.phen
+        geno.drop(columns='phen', inplace=True)
+    except KeyError:
+        pass
+
+    return geno, phen
+
+
+def get_transformed_data(data, fold=False, median=None, col_names=None) -> Tuple[Union[ndarray, DataFrame], ndarray]:
+    # filter out outliers
+
+    # log2(TPM+0.25) transformation (0.25 to prevent negative inf)
+    modified = np.log2(data + 0.25)
+    med_exp: ndarray = np.asarray([])
+
+    if fold:
+        modified, med_exp = get_fold_change(modified, median)
+
+    if col_names is not None:
+        return DataFrame(data=modified, columns=col_names), med_exp
+
+    return modified, med_exp
+
+
+def get_fold_change(x, median) -> Tuple[ndarray, ndarray]:
+    med_exp = np.median(x, axis=1) if median is None else median
+    # fold change respect to  row median
+    return np.asarray([x[i, :] - med_exp[i] for i in range(x.shape[0])]), med_exp
+
+
+def filter_data(data: DataFrame, filter_str):
+    if filter_str is not None:
+        try:
+            return data[data.phen.isin(filter_str)]
+        except AttributeError:
+            pass
+    return data
+
+
+def med_var(data, axis=0):
+    med = np.median(data, axis=axis)
+    tmp = np.median(np.power(data - med, 2), axis=axis)
+    return tmp
+
+
+def get_gene_ids(ensembl_release: int, gene_list: np.ndarray) -> np.ndarray:
+    gene_data = EnsemblRelease(release=ensembl_release, species='human', server='ftp://ftp.ensembl.org/')
+    gene_data.download()
+    gene_data.index()
+    ids = []
+    for gene in gene_list:
+        try:
+            ids.append((gene_data.gene_ids_of_gene_name(gene_name=gene)[0]).replace('\'', ''))
+        except ValueError:
+            ids.append(gene)
+    return np.array(ids)
+
+
+def get_gene_names(ensembl_release: int, gene_list: np.ndarray) -> np.ndarray:
+    gene_data = EnsemblRelease(release=ensembl_release, species='human', server='ftp://ftp.ensembl.org/')
+    names = []
+    tmp: str
+
+    for gene in gene_list:
+        try:
+            tmp = gene_data.gene_name_of_gene_id(gene).replace('\'', '')
+        except ValueError:
+            tmp = ""
+
+        if len(tmp) > 0:
+            names.append(tmp)
+        else:
+            names.append(gene)
+    return np.array(names)
+
+
+def float_or_none(value: str) -> Optional[float]:
+    if value.strip().lower() in ("none", "null", "nil"):
+        return None
+    return float(value)

@@ -11,7 +11,7 @@ scipy~=1.8.0
 torchmetrics~=0.7.2
 # R package required:
 # WebGestaltR==0.4.4
-# data.table==1.14.2
+# x.table==1.14.2
 # biomaRt==2.50.0
 torch
 pytorch
