@@ -357,6 +357,9 @@ class AutoGenoShallow(pl.LightningModule):
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
 
+    # define testing step
+
+    # define prediction step
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: Optional[int] = None) -> Any:
         x = batch[0]
         _, output = self.forward(x)

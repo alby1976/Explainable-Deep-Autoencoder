@@ -116,6 +116,8 @@ def main(args):
             tbl = wandb.Table(dataframe=pd.DataFrame(output), dtype=float)
             wandb.log({"AE_out": tbl})
 
+        test_output = trainer.test(test_dataloaders=)
+
 
 if __name__ == '__main__':
     if torch.cuda.is_available():
