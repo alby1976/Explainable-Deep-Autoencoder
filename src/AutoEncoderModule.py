@@ -12,8 +12,6 @@ import pl_bolts.datamodules
 import pytorch_lightning as pl
 import torch
 import torchmetrics as tm
-# custom modules
-from CommonTools import get_dict_values_1d, DataNormalization, get_data_phen
 from numpy import ndarray
 from pandas import DataFrame, Series
 from pytorch_lightning.utilities.types import EVAL_DATALOADERS, TRAIN_DATALOADERS
@@ -22,6 +20,9 @@ from torch import nn, Tensor
 from torch.nn import functional as f
 from torch.optim.swa_utils import SWALR
 from torch.utils.data import DataLoader, TensorDataset, Dataset
+
+# custom modules
+from CommonTools import get_dict_values_1d, DataNormalization, get_data_phen
 
 
 class GPDataSet(Dataset):
@@ -188,7 +189,7 @@ class AutoGenoShallow(pl.LightningModule):
                  data: Path, transformed_data: Path,
                  batch_size: int, val_split: float, test_split: float,
                  filter_str: str, num_workers: int, random_state: int, fold: bool,
-                 shuffle: bool, drop_last: bool, pin_memory: bool, verbose: bool, version):
+                 shuffle: bool, drop_last: bool, pin_memory: bool, verbose: bool):
         super().__init__()  # I guess this inherits __init__ from super class
         # self.testing_dataset = None
         # self.train_dataset = None
@@ -222,6 +223,7 @@ class AutoGenoShallow(pl.LightningModule):
                                                 multioutput='variance_weighted', compute_on_step=False)
         self.testing_r2score_node = tm.R2Score(num_outputs=self.input_features,
                                                multioutput='variance_weighted', compute_on_step=False)
+        self.hidden_r2score = tm.R2Score(compute_on_step=False)
 
         self.save_dir = save_dir
         self.model_name = name
@@ -238,11 +240,9 @@ class AutoGenoShallow(pl.LightningModule):
 
         # def the encoder function
         self.encoder = nn.Sequential(
-            nn.Linear(self.input_features, 4096),
+            nn.Linear(self.input_features, self.hidden_layer),
             nn.ReLU(True),
-            nn.Linear(4096, 1024),
-            nn.ReLU(True),
-            nn.Linear(1024, 512),
+            nn.Linear(self.hidden_layer, self.smallest_layer),
             nn.ReLU(True),
         )
         '''
@@ -257,11 +257,9 @@ class AutoGenoShallow(pl.LightningModule):
         '''
         # def the decoder function
         self.decoder = nn.Sequential(
-            nn.Linear(512, 1024),
+            nn.Linear(self.smallest_layer, self.hidden_layer),
             nn.ReLU(True),
-            nn.Linear(1024, 4096),
-            nn.ReLU(True),
-            nn.Linear(4096, self.output_features),
+            nn.Linear(self.hidden_layer, self.output_features),
             nn.Sigmoid()
         )
         '''
@@ -296,7 +294,6 @@ class AutoGenoShallow(pl.LightningModule):
     # end of training epoch
     def training_epoch_end(self, training_step_outputs):
         # scheduler: CyclicLR = self.lr_schedulers()
-        epoch = self.current_epoch
 
         # extracting training batch x
         losses: Tensor = get_dict_values_1d('loss', training_step_outputs)
@@ -358,6 +355,11 @@ class AutoGenoShallow(pl.LightningModule):
             torch.cuda.empty_cache()
 
     # define testing step
+    def test_step(self, batch: Any, batch_idx: int):
+        inputs, hidden = batch
+        x_pred, hidden_pred = self.forward(inputs)
+        self.hidden_r2score.update(preds=hidden_pred, target=hidden)
+        self.log("hidden r2:", self.hidden_r2score, on_step=False, on_epoch=True)
 
     # define prediction step
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: Optional[int] = None) -> Any:
