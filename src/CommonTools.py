@@ -71,6 +71,18 @@ def get_device() -> device:
     return torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
+def get_xy(dataloader: DataLoader) -> Tuple[Tensor, Tensor]:
+    result_x = torch.cat([x for x, _ in self.train_dataloader()], dim=0)
+    result_y = torch.cat([y for _, y in self.train_dataloader()], dim=0)
+    return result_x, result_y
+
+
+def get_test(self) -> Tuple[Tensor, Tensor]:
+    result_x = torch.cat([x for x, _ in self.test_dataloader()], dim=0)
+    result_y = torch.cat([y for _, y in self.test_dataloader()], dim=0)
+    return result_x, result_y
+
+
 # get dictionary values in a Tensor for a particular key in a list of dictionary
 def get_dict_values_1d(key: str, lists: List[Dict[str, Tensor]], dim: int = 0) -> Tensor:
     return torch.stack([item[key] for item in lists], dim=dim)
