@@ -133,8 +133,10 @@ def process_shap_values(trainer: pl.Trainer, model: AutoGenoShallow, x: ndarray,
         shap_data = ShapDataModule(x, hidden[node], labels, test_split, num_workers, random_state, shuffle, batch_size,
                                    pin_memory, drop_last)
         x_train, y_train = shap_data.get_train()
+        x_test, y_test = shap_data.get_test()
         y_pred = trainer.predict(model=model, dataloaders=shap_data.test_dataloader())
         explainer = shap.DeepExplainer(model, x_train)
+        explainer.shap_values(x_test)
         r2scores = r2scores.append((node, torchmetrics.functional.r2_score(preds=y_pred, target=y_train)))
 
     #
