@@ -6,12 +6,13 @@ import numpy as np
 import pytorch_lightning as pl
 import shap
 import torch
+import torchmetrics.functional
 from numpy import ndarray
 from pandas import Series
 from pytorch_lightning.utilities.types import EVAL_DATALOADERS, TRAIN_DATALOADERS
 from sklearn.model_selection import train_test_split
-from torch.utils.data import DataLoader, Dataset
 from torch import nn, Tensor
+from torch.utils.data import DataLoader, Dataset
 
 # custom modules
 from src.AutoEncoderModule import AutoGenoShallow
@@ -99,13 +100,15 @@ class ShapDataModule(pl.LightningDataModule):
         # Used to clean-up when the run is finished
         ...
 
-    def get_train(self) -> Tuple[ndarray, ndarray]:
-        result =  np.asarray([[x, y] for x, y in self.train_dataset])
-        return result[:, 0], result[:, 1]
+    def get_train(self) -> Tuple[Tensor, Tensor]:
+        result_x = torch.cat([x for x, _ in self.train_dataloader()], dim=0)
+        result_y = torch.cat([y for _, y in self.train_dataloader()], dim=0)
+        return result_x, result_y
 
-    def get_test(self) -> Tuple[ndarray, ndarray]:
-        result =  np.asarray([[x, y] for x, y in self.test_dataset])
-        return result[:, 0], result[:, 1]
+    def get_test(self) -> Tuple[Tensor, Tensor]:
+        result_x = torch.cat([x for x, _ in self.test_dataloader()], dim=0)
+        result_y = torch.cat([y for _, y in self.test_dataloader()], dim=0)
+        return result_x, result_y
 
     @staticmethod
     def get_x(dataloader: EVAL_DATALOADERS) -> Union[torch.Tensor, Sequence[torch.Tensor]]:
@@ -113,17 +116,26 @@ class ShapDataModule(pl.LightningDataModule):
 
     @staticmethod
     def get_y(dataloader: EVAL_DATALOADERS) -> Union[torch.Tensor, Sequence[torch.Tensor]]:
-        return torch.cat([y for y in dataloader], dim=0)
+        return torch.cat([y for x, y in dataloader], dim=0)
 
     #
     # deep_explainer =
     pass
 
 
-def process_shap_values(trainer: pl.Trainer, model: AutoGenoShallow, x, hidden, labels):
+def process_shap_values(trainer: pl.Trainer, model: AutoGenoShallow, x: ndarray, hidden: ndarray, labels: Series,
+                        test_split: float = 0.2, num_workers: int = 8, random_state: int = 42, shuffle: bool = False,
+                        batch_size: int = 64, pin_memory: bool = True, drop_last: bool = False, save_dir):
     model.decoder = nn.Identity()
 
-    explainer = shap.DeepExplainer(model, x_train)
+    r2scores = []
+    for node in range(np.size(hidden, axis=1)):
+        shap_data = ShapDataModule(x, hidden[node], labels, test_split, num_workers, random_state, shuffle, batch_size,
+                                   pin_memory, drop_last)
+        x_train, y_train = shap_data.get_train()
+        y_pred = trainer.predict(model=model, dataloaders=shap_data.test_dataloader())
+        explainer = shap.DeepExplainer(model, x_train)
+        r2scores = r2scores.append((node, torchmetrics.functional.r2_score(preds=y_pred, target=y_train)))
 
     #
     # deep_explainer =

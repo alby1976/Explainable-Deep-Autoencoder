@@ -363,10 +363,10 @@ class AutoGenoShallow(pl.LightningModule):
 
     # define prediction step
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: Optional[int] = None) -> Any:
-        x = batch[0]
-        _, output = self.forward(x)
+        x, _ = batch
+        _, hidden = self.forward(x)
 
-        return output
+        return hidden
 
     # configures the optimizers through learning rate
     def configure_optimizers(self):

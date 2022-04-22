@@ -108,12 +108,12 @@ def main(args):
         # train & validate model
         print(f'...Training and Validating model...')
         trainer.fit(model=model)
-        output = trainer.predict(model=model, ckpt_path="best")
-        if output is not None:
-            output = torch.cat([output[i] for i in range(len(output))])
-            output = output.detach().cpu().numpy()
-            np.savetxt(fname=args.save_dir.joinpath(f"{args.name}-output.csv"), X=output, fmt='%f', delimiter=',')
-            tbl = wandb.Table(dataframe=pd.DataFrame(output), dtype=float)
+        hidden_layer = trainer.predict(model=model, ckpt_path="best")
+        if hidden_layer is not None:
+            hidden_layer = torch.cat([hidden_layer[i] for i in range(len(hidden_layer))])
+            hidden_layer = hidden_layer.detach().cpu().numpy()
+            np.savetxt(fname=args.save_dir.joinpath(f"{args.name}-output.csv"), X=hidden_layer, fmt='%f', delimiter=',')
+            tbl = wandb.Table(dataframe=pd.DataFrame(hidden_layer), dtype=float)
             wandb.log({"AE_out": tbl})
 
         test_output = trainer.test(test_dataloaders=)
