@@ -1,0 +1,32 @@
+```{r setup & libraries}
+# load and install corresponding librarys
+if (!requireNamespace("BiocManager", quietly = TRUE))
+install.packages("BiocManager", ask = FALSE)
+BiocManager::install("KEGGREST", ask = FALSE)
+BiocManager::install("EnrichmentBrowser", ask = FALSE)
+library("KEGGREST")
+library("EnrichmentBrowser")
+
+db <- "kegg"
+org <- "hsa"
+kegg_db <- "pathway" # KEGG database anme ie. pathway, brite, module, orthology, genome, genes
+# list can be found at (https://www.kegg.jp/kegg/docs/keggapi.html Table 1)
+```
+```{r check and obtain a list of entry identifiers}
+# step2: check and obtain a list of entry identifiers (in this case: hsa) and associated definition for a given database or a given set of database entries.
+human <- keggList(database = kegg_db, organism = org)
+
+```
+
+```{r get known pathways}
+# step 3: download the pathways of that organism
+hsapathways <- downloadPathways(org)
+```
+```{r retrieve KEGG pathways}
+# step 4: retrieve gene sets for an organism from databases such as GO and KEGG:
+#library("EnrichmentBrowser")
+idType <- "ENSEMBL"
+hsa <- getGenesets(org = org, db = db, gene.id.type = idType, cache = TRUE, return.type=)
+```
+#step5: Parse and write the gene sets to a flat text file in GMT format for other pathway enrichment analysis programs (e.g., GSEA):
+writeGMT(sar, gmt.file = "20210106_kegg_sar_gmt")
