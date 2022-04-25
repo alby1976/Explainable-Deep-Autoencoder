@@ -26,7 +26,16 @@ hsapathways <- downloadPathways(org)
 # step 4: retrieve gene sets for an organism from databases such as GO and KEGG:
 #library("EnrichmentBrowser")
 idType <- "ENSEMBL"
-hsa <- getGenesets(org = org, db = db, gene.id.type = idType, cache = TRUE, return.type=)
+returnType <- "list" # c("GeneSetCollection", "list")
+hsa <- getGenesets(org = org, db = db, gene.id.type = idType, cache = TRUE, return.type=returnType)
 ```
-#step5: Parse and write the gene sets to a flat text file in GMT format for other pathway enrichment analysis programs (e.g., GSEA):
-writeGMT(sar, gmt.file = "20210106_kegg_sar_gmt")
+
+```{r parse sand save finding}
+typeof(human)
+#gene_id <- unlist(hsa, use.names = TRUE)
+#gene_id_mod <- unlist(hsa, use.names = FALSE)
+#print(unlist(hsa, use.names=FALSE))
+# step5: Parse and write the gene sets to a flat text file in GMT format for other pathway enrichment analysis programs (e.g., GSEA):
+#writeGMT(hsa, gmt.file = "20220424_kegg_hsa_gmt")
+print('hello world')
+```
