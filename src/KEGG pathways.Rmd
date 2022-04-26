@@ -1,15 +1,17 @@
 ```{r setup & libraries}
 # load and install corresponding librarys
 if (!requireNamespace("BiocManager", quietly = TRUE))
-install.packages("BiocManager", ask = FALSE)
-BiocManager::install("KEGGREST", ask = FALSE)
-BiocManager::install("EnrichmentBrowser", ask = FALSE)
+  install.packages("BiocManager", INSTALL_opts = '--no-lock')
+if (!requireNamespace("MEGENA", quietly = TRUE))
+  install.packages("MEGENA")
+BiocManager::install("KEGGREST", ask = FALSE, INSTALL_opts = '--no-lock')
+BiocManager::install("EnrichmentBrowser", ask = FALSE, INSTALL_opts = '--no-lock')
 library("KEGGREST")
 library("EnrichmentBrowser")
 
 db <- "kegg"
 org <- "hsa"
-kegg_db <- "pathway" # KEGG database anme ie. pathway, brite, module, orthology, genome, genes
+kegg_db <-c("pathway", "brite") # KEGG database anme ie. pathway, brite, module, orthology, genome, genes
 # list can be found at (https://www.kegg.jp/kegg/docs/keggapi.html Table 1)
 ```
 ```{r check and obtain a list of entry identifiers}
@@ -31,11 +33,14 @@ hsa <- getGenesets(org = org, db = db, gene.id.type = idType, cache = TRUE, retu
 ```
 
 ```{r parse sand save finding}
-typeof(human)
+library("EnrichmentBrowser")
+pwy <- downloadPathways("hsa")
 #gene_id <- unlist(hsa, use.names = TRUE)
 #gene_id_mod <- unlist(hsa, use.names = FALSE)
 #print(unlist(hsa, use.names=FALSE))
 # step5: Parse and write the gene sets to a flat text file in GMT format for other pathway enrichment analysis programs (e.g., GSEA):
 #writeGMT(hsa, gmt.file = "20220424_kegg_hsa_gmt")
+# library("MEGENA")
+# output.geneSet.file(unlist(hsa, TRUE, TRUE), "kegg_hsa-2022-04-25.gmt")
 print('hello world')
 ```
