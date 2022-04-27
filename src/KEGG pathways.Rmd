@@ -8,26 +8,25 @@ if (!requireNamespace("MEGENA", quietly = TRUE))
 BiocManager::install("EnrichmentBrowser", ask = FALSE)
 library("EnrichmentBrowser")
 if (!isAvailable("KEGGREST"))
-  BiocManager::install("KEGGREST", ask = FALSE,  type = "source", checkBuilt = TRUE)
+  BiocManager::install("KEGGREST", ask = FALSE, type = "source", checkBuilt = TRUE)
 
 library("KEGGREST")
 ```
 
 ```{r parse sand save finding}
 # library("EnrichmentBrowser")
-pwy <- downloadPathways("hsa")
 
 db <- "kegg"
 org <- "hsa"
-kegg_db <-c("pathway", "brite") # KEGG database anme ie. pathway, brite, module, orthology, genome, genes
+kegg_db <- "pathway" # KEGG database anme ie. pathway, brite, module, orthology, genome, genes
 # list can be found at (https://www.kegg.jp/kegg/docs/keggapi.html Table 1)
 idType <- "ENSEMBL"
 returnType <- "GeneSetCollection" # c("GeneSetCollection", "list")
-hsa <- getGenesets(org = org, db = db, gene.id.type = idType, cache = TRUE, return.type=returnType)
+hsa <- getGenesets(org = org, db = db, gene.id.type = idType, cache = TRUE, return.type = returnType)
+pwys <- keggList(database = kegg_db, organism = org)
 ```
 ```{r test}
 print("hsa info")
-print(length(hsa))
 #print(attributes(hsa[[1]]))
 geneSet <- hsa[[1]]
 pwyinfo <- pwy[[1]]
@@ -42,15 +41,42 @@ pwyinfo <- pwy[[1]]
 # library("MEGENA")
 # output.geneSet.file(unlist(hsa, TRUE, TRUE), "kegg_hsa-2022-04-25.gmt")
 print('hello world')
-tmp <- keggGet("path:hsa00010")
+pathway.codes <- sub("path:", "", names(pwys))
+pathway.class <- sapply(pathway.codes,
+                           function(pwid) {
+                             pw <- keggGet(pwid)
+                             return(pw[[1]]$CLASS)
+                           }
+)
+pathway.name <- sapply(pathway.codes,
+                           function(pwid) {
+                             pw <- keggGet(pwid)
+                             return(pw[[1]]$NAME)
+                           }
+)
+remove(tmp)
+tmp <- keggGet("hsa00010")
 #print(kegg.path.info <- attributes(unlist(tmp)))
 print(tmp[[1]]$CLASS)
 el <- tmp[[1]]
-name <- attr(geneSet, "setName")
-ids <-attr(geneSet,"geneIds")
-print(list(name, el$CLASS, el$NAME, paste(ids, collapse = ";"), length(ids)))
+p <- pwy[[1]]
+ids <- attr(geneSet, "geneIds")
+print(list(pathway.codes[[1]], el$CLASS, el$NAME, paste(ids, collapse = ";"), length(ids)))
 ```
 
+```{r gene_id}
+pathway.codes <- sub("path:", "", names(pathways.list))
+genes.by.pathway <- sapply(pathway.codes,
+                           function(pwid) {
+                             pw <- keggGet(pwid)
+                             if (is.null(pw[[1]]$GENE)) return(NA)
+                             pw2 <- pw[[1]]$GENE[c(TRUE, FALSE)] # may need to modify this to c(FALSE, TRUE) for other organisms
+                             pw2 <- unlist(lapply(strsplit(pw2, split = ";", fixed = T), function(x)x[1]))
+                             return(pw2)
+                           }
+)
+head(genes.by.pathway)
+```
 ```{r check and obtain a list of entry identifiers}
 # step2: check and obtain a list of entry identifiers (in this case: hsa) and associated definition for a given database or a given set of database entries.
 human <- keggList(database = kegg_db, organism = org)
@@ -66,6 +92,6 @@ hsapathways <- downloadPathways(org)
 #library("EnrichmentBrowser")
 idType <- "ENSEMBL"
 returnType <- "list" # c("GeneSetCollection", "list")
-hsa <- getGenesets(org = org, db = db, gene.id.type = idType, cache = TRUE, return.type=returnType)
+hsa <- getGenesets(org = org, db = db, gene.id.type = idType, cache = TRUE, return.type = returnType)
 ```
 
