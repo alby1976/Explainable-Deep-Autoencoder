@@ -4,7 +4,8 @@ if (!requireNamespace("BiocManager", quietly = TRUE))
   install.packages("BiocManager", INSTALL_opts = '--no-lock')
 if (!requireNamespace("MEGENA", quietly = TRUE))
   install.packages("MEGENA")
-
+#if (!requireNamespace("data.table", quietly = TRUE))
+#  install.packages('data.table')
 BiocManager::install("EnrichmentBrowser", ask = FALSE)
 library("EnrichmentBrowser")
 if (!isAvailable("KEGGREST"))
@@ -13,7 +14,7 @@ if (!isAvailable("KEGGREST"))
 library("KEGGREST")
 ```
 
-```{r parse sand save finding}
+```{r query and parse }
 # library("EnrichmentBrowser")
 
 db <- "kegg"
@@ -24,44 +25,55 @@ idType <- "ENSEMBL"
 returnType <- "GeneSetCollection" # c("GeneSetCollection", "list")
 hsa <- getGenesets(org = org, db = db, gene.id.type = idType, cache = TRUE, return.type = returnType)
 pwys <- keggList(database = kegg_db, organism = org)
+
 ```
-```{r test}
-print("hsa info")
-#print(attributes(hsa[[1]]))
-geneSet <- hsa[[1]]
-pwyinfo <- pwy[[1]]
-#print(attributes(pwyinfo))
-#tmp <- hsa[[1]]$geneIds
-#print("pwy unlist")
-#gene_id <- unlist(hsa, use.names = TRUE)
-#gene_id_mod <- unlist(hsa, use.names = FALSE)
-#print(unlist(hsa, use.names=FALSE))
-# step5: Parse and write the gene sets to a flat text file in GMT format for other pathway enrichment analysis programs (e.g., GSEA):
-#writeGMT(hsa, gmt.file = "20220424_kegg_hsa_gmt")
-# library("MEGENA")
-# output.geneSet.file(unlist(hsa, TRUE, TRUE), "kegg_hsa-2022-04-25.gmt")
-print('hello world')
-pathway.codes <- sub("path:", "", names(pwys))
-pathway.class <- sapply(pathway.codes,
-                           function(pwid) {
-                             pw <- keggGet(pwid)
-                             return(pw[[1]]$CLASS)
-                           }
-)
-pathway.name <- sapply(pathway.codes,
-                           function(pwid) {
-                             pw <- keggGet(pwid)
-                             return(pw[[1]]$NAME)
-                           }
-)
-remove(tmp)
-tmp <- keggGet("hsa00010")
-#print(kegg.path.info <- attributes(unlist(tmp)))
-print(tmp[[1]]$CLASS)
-el <- tmp[[1]]
-p <- pwy[[1]]
-ids <- attr(geneSet, "geneIds")
-print(list(pathway.codes[[1]], el$CLASS, el$NAME, paste(ids, collapse = ";"), length(ids)))
+```{r create and save dataframe}
+remove(PathwayID, PathwayClass, PathwayName)
+PathwayID <- sub("path:", "", names(pwys))
+pws <- unname(sapply(PathwayID,
+                     function(pwid) return(keggGet(pwid))))
+PathwayClass <- sapply(pws,
+                       function(pw) {
+                         if (is.null(pw$CLASS)) return(NA)
+                         return(pw$CLASS)
+                       })
+
+PathwayName <- sapply(pws,
+                      function(pw) {
+                        return(pw$NAME)
+                      })
+
+All_Genes <- sapply(hsa,
+                    function(geneset) {
+                      ids <- attr(geneset, "geneIds")
+                      if (is.null(ids)) return(NA)
+                      return(paste(ids, collapse = ";"))
+                    })
+
+NumberOfGenes <- sapply(hsa,
+                        function(geneset) {
+                          ids <- attr(geneset, "geneIds")
+                          return(length(ids))
+                        })
+
+#print(c(length(PathwayID), length(PathwayClass), length(PathwayName), length(All_Genes), length(NumberOfGenes)))
+#df <- data.frame(PathwayID, unname(PathwayClass), unname(PathwayName), All_Genes, NumberOfGenes)
+#head(df)
+#write.csv(df,"pathways-27-Apr-2022-1115.csv", row.names = FALSE)
+```
+```{r playing}
+df <- data.frame("PathwayId" = PathwayID, "PathwayClass" = PathwayClass, "PathwayName" = PathwayName, "All_Genes" = All_Genes, "NumberOfGenes" = NumberOfGenes)
+head(df)
+write.csv(df,"pathways-27-Apr-2022-1115.csv", row.names = FALSE)
+test <- tmp[[1]]$CLASS
+print(test)
+test <- unname(PathwayName)
+print(str(unname(PathwayName)))
+str(PathwayClass)
+str(NumberOfGenes)
+#print(PathwayClass[1:347])
+#print(PathwayName[1:347])
+#print(PathwayName[1:347])
 ```
 
 ```{r gene_id}
