@@ -1,29 +1,47 @@
 # python system library
-from typing import Optional, Tuple, Union, Sequence, Any
-
 # 3rd party modules
-import numpy as np
-import pytorch_lightning as pl
+from pathlib import Path
+from typing import Union, List, Tuple, Any
+
 import shap
 import torch
-import torchmetrics.functional
+import wandb
+from matplotlib import pyplot as plt
 from numpy import ndarray
-from pandas import Series
-from pytorch_lightning.utilities.types import EVAL_DATALOADERS, TRAIN_DATALOADERS
-from sklearn.model_selection import train_test_split
-from torch import nn, Tensor
-from torch.utils.data import DataLoader, Dataset
+from torch import nn
 
-# custom modules
 from src.AutoEncoderModule import AutoGenoShallow
 
 
-def process_shap_values(trainer: pl.Trainer, model: AutoGenoShallow, x: ndarray, hidden: ndarray, labels: Series,
-                        test_split: float = 0.2, num_workers: int = 8, random_state: int = 42, shuffle: bool = False,
-                        batch_size: int = 64, pin_memory: bool = True, drop_last: bool = False, save_dir):
-    model.decoder = nn.Identity()
+def plot_shap_values(model_name, values, x_test, plot_type, plot_size, save_shap: Path):
+    shap.summary_plot(values, x_test, plot_type=plot_type, plot_size=plot_size)
+    print(f'{save_shap}.png')
+    plt.savefig(f'{save_shap}.png', dpi=100, format='png')
+    plt.close()
+    tmp = f"{model_name}-{plot_type}"
+    wandb.log({tmp: wandb.Image(f"{save_shap}.png")})
 
+
+def process_shap_values(model: AutoGenoShallow, model_name, save_dir: Path, save_bar: Path, save_scatter: Path):
+    shap_values: Union[
+        ndarray, List[ndarray], Tuple[List[Union[ndarray, List[ndarray]]], Any], List[Union[ndarray, List[ndarray]]]]
+
+    model.decoder = nn.Identity()
+    x_train, _ = model.dataset.train_dataset
+    x_train = torch.from_numpy(x_train)
+    x_test, _ = model.dataset.val_dataset
+    x_test = torch.from_numpy(x_test)
+
+    explainer = shap.DeepExplainer(model, x_train)
+    # TODO: need to determine out_rank if any
+    shap_values = explainer.shap_values(x_test) # shap_values contains values for all nodes
+
+    # TODO: need to manipulate data
+
+    # generate bar char
+    plot_shap_values(model_name, shap_values, x_test, "bar", (15, 10), save_bar)
+    # generate scatter chart
+    plot_shap_values(model_name, shap_values, x_test, "dot", (15, 10), save_scatter)
 
     #
     # deep_explainer =
-    pass

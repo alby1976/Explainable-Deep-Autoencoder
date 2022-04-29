@@ -17,7 +17,7 @@ from pandas import DataFrame, Series
 from pytorch_lightning.utilities.types import EVAL_DATALOADERS, TRAIN_DATALOADERS
 from sklearn.model_selection import train_test_split
 from torch import nn, Tensor
-from torch.nn import functional as f
+from torch.nn import functional as f, Sequential
 from torch.optim.swa_utils import SWALR
 from torch.utils.data import DataLoader, TensorDataset, Dataset
 
@@ -182,14 +182,12 @@ class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
 
 class AutoGenoShallow(pl.LightningModule):
     parametric: bool
-    testing_dataset: Union[TensorDataset, None]
-    train_dataset: Union[TensorDataset, None]
 
     def __init__(self, pathways: bool, save_dir: Path, name: str, ratio: int, cyclical_lr: bool, learning_rate: float,
                  data: Path, transformed_data: Path,
                  batch_size: int, val_split: float, test_split: float,
                  filter_str: str, num_workers: int, random_state: int, fold: bool,
-                 shuffle: bool, drop_last: bool, pin_memory: bool, verbose: bool):
+                 shuffle: bool, drop_last: bool, pin_memory: bool, verbose: bool, version: int):
         super().__init__()  # I guess this inherits __init__ from super class
         # self.testing_dataset = None
         # self.train_dataset = None

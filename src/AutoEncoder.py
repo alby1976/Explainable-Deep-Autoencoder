@@ -34,7 +34,8 @@ def main(args):
         # instantiate model
         path_to_save_ae = Path(args.save_dir)
         create_dir(path_to_save_ae)
-        model = AutoGenoShallow(args.pathways, args.save_dir, args.name, args.ratio, args.cyclical_lr, args.learning_rate, args.data,
+        model = AutoGenoShallow(args.pathways, args.save_dir, args.name, args.ratio, args.cyclical_lr,
+                                args.learning_rate, args.data,
                                 args.transformed_data, args.batch_size, args.val_split, args.test_split,
                                 args.filter_str,
                                 args.num_workers, args.random_state, args.fold, args.shuffle, args.drop_last,
@@ -115,8 +116,6 @@ def main(args):
             np.savetxt(fname=args.save_dir.joinpath(f"{args.name}-output.csv"), X=hidden_layer, fmt='%f', delimiter=',')
             tbl = wandb.Table(dataframe=pd.DataFrame(hidden_layer), dtype=float)
             wandb.log({"AE_out": tbl})
-
-        test_output = trainer.test(test_dataloaders=)
 
 
 if __name__ == '__main__':
