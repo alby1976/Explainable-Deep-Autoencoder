@@ -19,6 +19,7 @@ from pytorch_lightning.loggers import WandbLogger
 
 from AutoEncoderModule import AutoGenoShallow
 from CommonTools import create_dir, float_or_none
+from src.SHAP_combo import add_shap_arguments
 from src.ShapDeepExplainerModule import create_shap_values
 
 _DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -171,46 +172,22 @@ if __name__ == '__main__':
     parser.add_argument("-v", "--verbose", action="store_true", default=False, help="verbosity mode")
     parser.add_argument("--ensembl_version", type=int, default=104, help='Ensembl Release version e.g. 104')
 
+    # add model specific args
+    parser = AutoGenoShallow.add_model_specific_args(parser)
+
+    # add all the available trainer options to argparse
+    # ie: now --gpus --num_nodes ... --fast_dev_run all work in the cli
+    parser = Trainer.add_argparse_args(parser)
+
+    # add SHAP arguments
     group = parser.add_argument_group("calculates the shapey values for the AE model's output")
-    group.add_argument("--model_name", type=str, required=True, help='AE model name')
-    group.add_argument("-name", "--gene_name", type=Path,
-                       help='path to input data with gene name as column headers e.g. ./gene_name_QC')
-    group.add_argument("-id", "--gene_id", type=Path, required=True,
-                       help='path to input data with gene id as column headers e.g. ./gene_id_QC')
-    group.add_argument("--ae_result", type=Path, required=True,
-                       help='path to AutoEncoder results.  e.g. ./AE_199.csv')
-    group.add_argument("--col_mask", type=Path, required=True,
-                       help='path to column mask data.')
-    group.add_argument("-b", "--save_bar", type=Path,
-                       default=Path(__file__).absolute().parent.parent.joinpath("shap/bar"),
-                       help='base dir to saved AE models e.g. ./shap/bar')
-    group.add_argument("--save_scatter", type=Path,
-                       default=Path(__file__).absolute().parent.parent.joinpath("shap/scatter"),
-                       help='path to save SHAP scatter chart e.g. ./shap/scatter')
-    group.add_argument("-m", "--gene_model", type=Path,
-                       default=Path(__file__).absolute().parent.parent.joinpath("shap/gene_model"),
-                       help='path to save gene module e.g. ./shap/gene_model')
-    group.add_argument("-w", "--num_workers", type=int,
-                       help='number of processors used to run in parallel. -1 mean using all processor '
-                            'available default is None')
-    group.add_argument("--fold", type=bool, default=False,
-                       help='selecting this flag causes the x to be transformed to change fold relative to '
-                            'row median. default is False')
-    group.add_argument("-tf", "--top_num", type=float, default=0.2,
-                       help='test set split ratio. default is 0.2')
+    add_shap_arguments(group)
 
-# add model specific args
-parser = AutoGenoShallow.add_model_specific_args(parser)
+    # parse the command line arguments
+    arguments: Namespace = parser.parse_args()
+    print(arguments)
 
-# add all the available trainer options to argparse
-# ie: now --gpus --num_nodes ... --fast_dev_run all work in the cli
-parser = Trainer.add_argparse_args(parser)
-
-# parse the command line arguements
-arguments: Namespace = parser.parse_args()
-print(arguments)
-
-main(arguments)
+    main(arguments)
 
 '''
 if len(sys.argv) < 7:

@@ -2,9 +2,8 @@
 import argparse
 import platform
 from pathlib import Path
-from typing import Any, Dict, Union, Tuple
+from typing import Any, Dict, Tuple
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import shap
@@ -17,6 +16,7 @@ from sklearn.model_selection import train_test_split
 
 from CommonTools import create_dir, get_phen, get_data, DataNormalization, \
     convert_gene_id_to_name
+from src.ShapDeepExplainerModule import process_shap_values
 
 
 def get_last_model(directory: Path):
@@ -63,42 +63,15 @@ def predict_shap_values(phen, unique, unique_count, gene, hidden_vars, test_spli
     # **explainer = shap.KernelExplainer(my_model.predict, x = x_test.iloc[0:10])
     x_test = dm.transform(x_test, fold)
     shap_values = explainer.shap_values(x_test)
-    # **generate gene model
-    shap_values_mean = np.sum(abs(shap_values), axis=0) / sample_num
-    shap_values_ln = np.log(shap_values_mean)  # *calculate ln^|shap_values_mean|
-    gene_module: Union[ndarray, DataFrame] = np.stack((ids, shap_values_ln), axis=0)
-    gene_module = gene_module.T
-    gene_module = gene_module[np.argsort(gene_module[:, 1])]
-    gene_module = gene_module[::-1]  # [starting index: stopping index: stepcount]
-    gene_module = pd.DataFrame(gene_module)
-    gene_module = gene_module.head(top_num)
-    masking: Union[ndarray, bool] = gene_module[[1]] != -np.inf
-    gene_module = gene_module[masking.all(axis=1)]
-    if len(gene_module.index) > (1 / 4) * top_num:
-        print(f'{gene_model}({i}).csv')
-        gene_module.to_csv(f'{gene_model}({i}).csv', header=True, index=False, sep='\t')
-        tbl = wandb.Table(dataframe=gene_module)
-        wandb.log({f"{model_name}({i})": tbl})
-    # generate bar chart
-    shap.summary_plot(shap_values, x_test, plot_type='bar', plot_size=(15, 10))
-    print(f'{save_bar}({i}).png')
-    plt.savefig(f'{save_bar}({i}).png', dpi=100, format='png')
-    plt.close()
-    tmp = f"{model_name}-bar-({i})"
-    wandb.log({tmp: wandb.Image(f"{save_bar}({i}).png")})
-    # generate scatter chart
-    shap.summary_plot(shap_values, x_test, plot_size=(15, 10))
-    print(f'{save_scatter}({i}).png')
-    plt.savefig(f'{save_scatter}({i}).png', dpi=100, format='png')
-    plt.close()
-    tmp = f"{model_name}-scatter-({i})"
-    wandb.log({tmp: wandb.Image(f"{save_scatter}({i}).png")})
+    # process shap values and generate gene model
+    process_shap_values(save_bar, save_scatter, gene_model, model_name, x_test, shap_values, ids, sample_num,
+                        top_num, i)
 
     return i, r2
 
 
 def main(model_name, gene_name, gene_id, ae_result, col_mask, save_bar, save_scatter, gene_model, num_workers, fold,
-         test_split, random_state, shuffle):
+         test_split, random_state, shuffle, top_rate):
     with wandb.init(name=model_name, project="XAE4Exp"):
         # wandb configuration
         wandb.config.update = {"architecture": platform.platform(),
@@ -120,7 +93,6 @@ def main(model_name, gene_name, gene_id, ae_result, col_mask, save_bar, save_sca
         hidden_vars: DataFrame = get_data(ae_result, index_col=None, header=None)
         column_num: int = len(hidden_vars.columns)
         sample_num: int = len(gene.index)
-        top_rate: float = 1 / 20  # top rate of gene columns
         top_num: int = int(top_rate * len(gene.columns))
         ids: ndarray = geno_id.columns.to_numpy()[mask.values.flatten()]
         unique, unique_count = np.unique(phen, return_counts=True)
@@ -142,27 +114,32 @@ def main(model_name, gene_name, gene_id, ae_result, col_mask, save_bar, save_sca
     wandb.finish()
 
 
+def add_shap_arguments(parse):
+    parse.add_argument("--model_name", type=str, required=True, help='AE model name')
+    parse.add_argument("-name", "--gene_name", type=Path,
+                       help='path to input data with gene name as column headers e.g. ./gene_name_QC')
+    parse.add_argument("-id", "--gene_id", type=Path, required=True,
+                       help='path to input data with gene id as column headers e.g. ./gene_id_QC')
+    parse.add_argument("--ae_result", type=Path, required=True,
+                       help='path to AutoEncoder results.  e.g. ./AE_199.csv')
+    parse.add_argument("--col_mask", type=Path, required=True,
+                       help='path to column mask data.')
+    parse.add_argument("-b", "--save_bar", type=Path,
+                       default=Path(__file__).absolute().parent.parent.joinpath("shap/bar"),
+                       help='base dir to saved AE models e.g. ./shap/bar')
+    parse.add_argument("--save_scatter", type=Path,
+                       default=Path(__file__).absolute().parent.parent.joinpath("shap/scatter"),
+                       help='path to save SHAP scatter chart e.g. ./shap/scatter')
+    parse.add_argument("-m", "--gene_model", type=Path,
+                       default=Path(__file__).absolute().parent.parent.joinpath("shap/gene_model"),
+                       help='path to save gene module e.g. ./shap/gene_model')
+    parse.add_argument("-tr", "--top_rate", type=float, default=0.2,
+                       help='test set split ratio. default is 0.2')
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="calculates the shapey values for the AE model's output")
-
-    parser.add_argument("--model_name", type=str, required=True, help='AE model name')
-    parser.add_argument("-name", "--gene_name", type=Path,
-                        help='path to input data with gene name as column headers e.g. ./gene_name_QC')
-    parser.add_argument("-id", "--gene_id", type=Path, required=True,
-                        help='path to input data with gene id as column headers e.g. ./gene_id_QC')
-    parser.add_argument("--ae_result", type=Path, required=True,
-                        help='path to AutoEncoder results.  e.g. ./AE_199.csv')
-    parser.add_argument("--col_mask", type=Path, required=True,
-                        help='path to column mask data.')
-    parser.add_argument("-b", "--save_bar", type=Path,
-                        default=Path(__file__).absolute().parent.parent.joinpath("shap/bar"),
-                        help='base dir to saved AE models e.g. ./shap/bar')
-    parser.add_argument("--save_scatter", type=Path,
-                        default=Path(__file__).absolute().parent.parent.joinpath("shap/scatter"),
-                        help='path to save SHAP scatter chart e.g. ./shap/scatter')
-    parser.add_argument("-m", "--gene_model", type=Path,
-                        default=Path(__file__).absolute().parent.parent.joinpath("shap/gene_model"),
-                        help='path to save gene module e.g. ./shap/gene_model')
+    add_shap_arguments(parser)
     parser.add_argument("-w", "--num_workers", type=int,
                         help='number of processors used to run in parallel. -1 mean using all processor '
                              'available default is None')
@@ -179,4 +156,5 @@ if __name__ == '__main__':
 
     args: Dict[str, Any] = vars(parser.parse_args())
     print(f"args:\n{args}")
+
     main(**args)
