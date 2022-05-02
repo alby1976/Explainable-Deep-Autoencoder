@@ -4,7 +4,7 @@ import gc
 import math
 import sys
 from pathlib import Path
-from typing import Any, Union, Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 # 3rd party modules
 import numpy as np
@@ -17,9 +17,9 @@ from pandas import DataFrame, Series
 from pytorch_lightning.utilities.types import EVAL_DATALOADERS, TRAIN_DATALOADERS
 from sklearn.model_selection import train_test_split
 from torch import nn, Tensor
-from torch.nn import functional as f, Sequential
+from torch.nn import functional as f
 from torch.optim.swa_utils import SWALR
-from torch.utils.data import DataLoader, TensorDataset, Dataset
+from torch.utils.data import DataLoader, Dataset
 
 # custom modules
 from CommonTools import get_dict_values_1d, DataNormalization, get_data_phen
@@ -50,6 +50,8 @@ class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
 
         self.dm = DataNormalization()
         self.le = preprocessing.LabelEncoder()
+        self.gene_names = x.columns.to_numpy()
+        self.sample_size = len(x.index)
 
         print(f"unique: {np.unique(y)} size: {np.unique(y).size}", file=sys.stderr, flush=True)
 
@@ -183,16 +185,13 @@ class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
 class AutoGenoShallow(pl.LightningModule):
     parametric: bool
 
-    def __init__(self, pathways: bool, save_dir: Path, name: str, ratio: int, cyclical_lr: bool, learning_rate: float,
+    def __init__(self, save_dir: Path, name: str, smallest_layer: int, cyclical_lr: bool,
+                 learning_rate: float,
                  data: Path, transformed_data: Path,
                  batch_size: int, val_split: float, test_split: float,
                  filter_str: str, num_workers: int, random_state: int, fold: bool,
                  shuffle: bool, drop_last: bool, pin_memory: bool, verbose: bool, version: int):
         super().__init__()  # I guess this inherits __init__ from super class
-        # self.testing_dataset = None
-        # self.train_dataset = None
-        # self.test_input_list = None
-        # self.input_list = None
 
         self.cyclical = cyclical_lr
         self.verbose = verbose
@@ -206,13 +205,8 @@ class AutoGenoShallow(pl.LightningModule):
         # self.geno: ndarray = get_filtered_data(pd.read_csv(path_to_data, index_col=0), path_to_save_qc).to_numpy()
         self.input_features = self.dataset.size
         self.output_features = self.input_features
-        if pathways:
-            tmp = math.ceil(self.dataset.size / ratio)
-            self.smallest_layer = tmp if tmp > 5 else 5
-            self.hidden_layer = 2 * self.smallest_layer
-        else:
-            self.hidden_layer = 4096
-            self.smallest_layer = 512
+        self.smallest_layer = min([smallest_layer, len(self.dataset)])
+        self.hidden_layer = min([2 * self.smallest_layer, len(self.dataset)])
 
         print(f"input_features: {self.input_features} hidden_features: {self.hidden_layer} "
               f"smallest_layer: {self.smallest_layer}")
@@ -243,16 +237,7 @@ class AutoGenoShallow(pl.LightningModule):
             nn.Linear(self.hidden_layer, self.smallest_layer),
             nn.ReLU(True),
         )
-        '''
-        self.encoder = nn.Sequential(
-            nn.Linear(self.input_features, 4096),
-            nn.ReLU(True),
-            nn.Linear(4096, 1024),
-            nn.ReLU(True),
-            nn.Linear(1024, 512),
-            nn.ReLU(True),
-        )
-        '''
+
         # def the decoder function
         self.decoder = nn.Sequential(
             nn.Linear(self.smallest_layer, self.hidden_layer),
@@ -260,16 +245,6 @@ class AutoGenoShallow(pl.LightningModule):
             nn.Linear(self.hidden_layer, self.output_features),
             nn.Sigmoid()
         )
-        '''
-        self.decoder = nn.Sequential(
-            nn.Linear(512, 1024),
-            nn.ReLU(True),
-            nn.Linear(1024, 4096),
-            nn.ReLU(True),
-            nn.Linear(4096, self.output_features),
-            nn.Sigmoid()
-        )
-        '''
 
     # define forward function
     def forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
@@ -425,8 +400,9 @@ class AutoGenoShallow(pl.LightningModule):
         parser.add_argument("-sd", "--save_dir", type=Path,
                             default=Path(__file__).absolute().parent.parent.joinpath("AE"),
                             help='base dir to saved AE models e.g. ./AE')
-        parser.add_argument("-cr", "--ratio", type=int, default=8,
-                            help='compression ratio for smallest layer NB: ideally a number that is power of 2')
+        parser.add_argument("-sl", "--smallest_layer", type=int, default=16,
+                            help='number of nodes for smallest layer NB: ideally a number that is power of 2. '
+                                 'default: 16')
         parser.add_argument("-lr", "--learning_rate", type=float, default=0.0001,
                             help='the base learning rate for training e.g 0.0001')
         parser.add_argument("--data", type=Path,
@@ -459,7 +435,5 @@ class AutoGenoShallow(pl.LightningModule):
                             help='selecting this flag causes the last column in the dataset to be dropped.')
         parser.add_argument("--pin_memory_no", action="store_false", default=True,
                             help='selecting this flag causes the numpy to tensor conversion to be less efficient.')
-        parser.add_argument("-p", "--pathways", action="store_true", default=False,
-                            help='selecting this flag causes the model architecture be based on less input features.')
 
         return parent_parser

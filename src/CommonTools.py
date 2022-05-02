@@ -11,6 +11,7 @@ from pandas import DataFrame, Series
 from pyensembl import EnsemblRelease
 from scipy.stats import levene, anderson, ks_2samp
 from torch import device, Tensor
+from torch.utils.data import DataLoader
 
 
 class DataNormalization:
@@ -34,8 +35,8 @@ class DataNormalization:
 
         # apply column mask
         print(f"x: {x.shape} column_mask {self.column_mask.shape}")
-        tmp, _ = get_transformed_data(x[:, self.column_mask], fold=fold)
-        # tmp, _ = get_fold_change(tmp[:, self.column_mask], median=median)
+        tmp, median = get_transformed_data(x[:, self.column_mask], fold=fold)
+        tmp, _ = get_fold_change(tmp, median=median, fold=fold)
         if self.column_names is not None:
             self.column_names = self.column_names[self.column_mask]
 
@@ -47,9 +48,8 @@ class DataNormalization:
     def transform(self, x: Any, fold: bool) -> Union[Any, DataFrame]:
         # calculate fold change relative to the median after applying column mask
         print(f"x: {x.shape} column_mask: {self.column_mask.shape}")
-        tmp, _ = get_transformed_data(x[:, self.column_mask], fold=fold)
-        # tmp, median = get_transformed_data(x, fold=True)
-        # tmp, _ = get_fold_change(tmp[:, self.column_mask], median=median)
+        tmp, median = get_transformed_data(x[:, self.column_mask], fold=fold)
+        tmp, _ = get_fold_change(tmp[:, self.column_mask], median=median, fold=fold)
         print(f'\ntmp: {tmp.shape} mask: {self.column_mask.shape}', file=sys.stderr)
         # print(f'\ntmp: {tmp.shape} median: {median.shape}', file=sys.stderr)
 
@@ -72,8 +72,8 @@ def get_device() -> device:
 
 
 def get_xy(dataloader: DataLoader) -> Tuple[Tensor, Tensor]:
-    result_x = torch.cat([x for x, _ in self.train_dataloader()], dim=0)
-    result_y = torch.cat([y for _, y in self.train_dataloader()], dim=0)
+    result_x = torch.cat([x for x, _ in dataloader], dim=0)
+    result_y = torch.cat([y for _, y in dataloader], dim=0)
     return result_x, result_y
 
 
@@ -199,26 +199,29 @@ def get_phen(geno: DataFrame) -> Tuple[DataFrame, Optional[Series]]:
     return geno, phen
 
 
-def get_transformed_data(data, fold=False, median=None, col_names=None) -> Tuple[Union[ndarray, DataFrame], ndarray]:
+def get_transformed_data(data, fold=False, median=None, col_names=None) -> \
+        Tuple[Union[ndarray, DataFrame], Optional[ndarray]]:
     # filter out outliers
 
     # log2(TPM+0.25) transformation (0.25 to prevent negative inf)
     modified = np.log2(data + 0.25)
-    med_exp: ndarray = np.asarray([])
+    med_exp: Optional[ndarray] = None
 
     if fold:
-        modified, med_exp = get_fold_change(modified, median)
+        modified, med_exp = get_fold_change(modified, median, fold)
 
     if col_names is not None:
-        return DataFrame(data=modified, columns=col_names), med_exp
+        modified = DataFrame(data=modified, columns=col_names)
 
     return modified, med_exp
 
 
-def get_fold_change(x, median) -> Tuple[ndarray, ndarray]:
+def get_fold_change(x, median, fold: bool) -> Tuple[ndarray, ndarray]:
     med_exp = np.median(x, axis=1) if median is None else median
-    # fold change respect to  row median
-    return np.asarray([x[i, :] - med_exp[i] for i in range(x.shape[0])]), med_exp
+
+    # fold change respect to  row median if fold is true
+    result = np.asarray([x[i, :] - med_exp[i] for i in range(x.shape[0])]) if fold else x
+    return result , med_exp
 
 
 def filter_data(data: DataFrame, filter_str):

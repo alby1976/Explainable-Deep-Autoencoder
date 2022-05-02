@@ -19,6 +19,7 @@ from pytorch_lightning.loggers import WandbLogger
 
 from AutoEncoderModule import AutoGenoShallow
 from CommonTools import create_dir, float_or_none
+from src.ShapDeepExplainerModule import create_shap_values
 
 _DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 
@@ -31,10 +32,10 @@ def main(args):
     with wandb.init(name=args.name, project="XAE4Exp", config=args):
         # wandb configuration
         wandb.init()
-        # instantiate model
+        # pathway instantiate model
         path_to_save_ae = Path(args.save_dir)
         create_dir(path_to_save_ae)
-        model = AutoGenoShallow(args.pathways, args.save_dir, args.name, args.ratio, args.cyclical_lr,
+        model = AutoGenoShallow(args.save_dir, args.name, args.smallest_layer, args.cyclical_lr,
                                 args.learning_rate, args.data,
                                 args.transformed_data, args.batch_size, args.val_split, args.test_split,
                                 args.filter_str,
@@ -117,6 +118,8 @@ def main(args):
             tbl = wandb.Table(dataframe=pd.DataFrame(hidden_layer), dtype=float)
             wandb.log({"AE_out": tbl})
 
+    create_shap_values(model, args.model_name, args.gene_model, args.save_bar, args.save_scatter, args.top_rate)
+
 
 if __name__ == '__main__':
     if torch.cuda.is_available():
@@ -168,35 +171,63 @@ if __name__ == '__main__':
     parser.add_argument("-v", "--verbose", action="store_true", default=False, help="verbosity mode")
     parser.add_argument("--ensembl_version", type=int, default=104, help='Ensembl Release version e.g. 104')
 
-    # add model specific args
-    parser = AutoGenoShallow.add_model_specific_args(parser)
+    group = parser.add_argument_group("calculates the shapey values for the AE model's output")
+    group.add_argument("--model_name", type=str, required=True, help='AE model name')
+    group.add_argument("-name", "--gene_name", type=Path,
+                       help='path to input data with gene name as column headers e.g. ./gene_name_QC')
+    group.add_argument("-id", "--gene_id", type=Path, required=True,
+                       help='path to input data with gene id as column headers e.g. ./gene_id_QC')
+    group.add_argument("--ae_result", type=Path, required=True,
+                       help='path to AutoEncoder results.  e.g. ./AE_199.csv')
+    group.add_argument("--col_mask", type=Path, required=True,
+                       help='path to column mask data.')
+    group.add_argument("-b", "--save_bar", type=Path,
+                       default=Path(__file__).absolute().parent.parent.joinpath("shap/bar"),
+                       help='base dir to saved AE models e.g. ./shap/bar')
+    group.add_argument("--save_scatter", type=Path,
+                       default=Path(__file__).absolute().parent.parent.joinpath("shap/scatter"),
+                       help='path to save SHAP scatter chart e.g. ./shap/scatter')
+    group.add_argument("-m", "--gene_model", type=Path,
+                       default=Path(__file__).absolute().parent.parent.joinpath("shap/gene_model"),
+                       help='path to save gene module e.g. ./shap/gene_model')
+    group.add_argument("-w", "--num_workers", type=int,
+                       help='number of processors used to run in parallel. -1 mean using all processor '
+                            'available default is None')
+    group.add_argument("--fold", type=bool, default=False,
+                       help='selecting this flag causes the x to be transformed to change fold relative to '
+                            'row median. default is False')
+    group.add_argument("-tf", "--top_num", type=float, default=0.2,
+                       help='test set split ratio. default is 0.2')
 
-    # add all the available trainer options to argparse
-    # ie: now --gpus --num_nodes ... --fast_dev_run all work in the cli
-    parser = Trainer.add_argparse_args(parser)
+# add model specific args
+parser = AutoGenoShallow.add_model_specific_args(parser)
 
-    # parse the command line arguements
-    arguments: Namespace = parser.parse_args()
-    print(arguments)
+# add all the available trainer options to argparse
+# ie: now --gpus --num_nodes ... --fast_dev_run all work in the cli
+parser = Trainer.add_argparse_args(parser)
 
-    main(arguments)
+# parse the command line arguements
+arguments: Namespace = parser.parse_args()
+print(arguments)
 
-    '''
-    if len(sys.argv) < 7:
-        print('Default setting are used. Either change AutoEncoder.py to change settings or type:\n')
-        print('python AutoEncoder.py model_name original_datafile '
-              'quality_control_filename dir_AE_model compression_ratio epoch batch_size')
-        print('\tmodel_name - model name e.g. AE_Geno')
-        print('\toriginal_datafile - original datafile e.g. ../data_example.csv')
-        print('\tquality_control_filename - filename of original x after quality control e.g. ./data_QC.csv')
-        print('\tdir_AE_model - base dir to saved AE models e.g. ./AE')
-        print('\tcompression_ratio - compression ratio for smallest layer NB: ideally a number that is power of 2')
-        print('\tnum_epoch - min number of epochs e.g. 200')
-        print('\tbatch_size - the size of each batch e.g. 4096')
+main(arguments)
 
-        main('AE_Geno', Path('../data_example.csv'), Path('./data_QC.csv'), Path('./AE'), 32, 200, 4096)
-    else:
-        main(model_name=sys.argv[1], path_to_data=Path(sys.argv[2]), path_to_save_qc=Path(sys.argv[3]),
-             path_to_save_ae=Path(sys.argv[4]),
-             compression_ratio=int(sys.argv[5]), num_epochs=int(sys.argv[6]), batch_size=int(sys.argv[7]))
-    '''
+'''
+if len(sys.argv) < 7:
+    print('Default setting are used. Either change AutoEncoder.py to change settings or type:\n')
+    print('python AutoEncoder.py model_name original_datafile '
+          'quality_control_filename dir_AE_model compression_ratio epoch batch_size')
+    print('\tmodel_name - model name e.g. AE_Geno')
+    print('\toriginal_datafile - original datafile e.g. ../data_example.csv')
+    print('\tquality_control_filename - filename of original x after quality control e.g. ./data_QC.csv')
+    print('\tdir_AE_model - base dir to saved AE models e.g. ./AE')
+    print('\tcompression_ratio - compression ratio for smallest layer NB: ideally a number that is power of 2')
+    print('\tnum_epoch - min number of epochs e.g. 200')
+    print('\tbatch_size - the size of each batch e.g. 4096')
+
+    main('AE_Geno', Path('../data_example.csv'), Path('./data_QC.csv'), Path('./AE'), 32, 200, 4096)
+else:
+    main(model_name=sys.argv[1], path_to_data=Path(sys.argv[2]), path_to_save_qc=Path(sys.argv[3]),
+         path_to_save_ae=Path(sys.argv[4]),
+         compression_ratio=int(sys.argv[5]), num_epochs=int(sys.argv[6]), batch_size=int(sys.argv[7]))
+'''
