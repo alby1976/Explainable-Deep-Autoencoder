@@ -1,6 +1,5 @@
 # Filters Dataset by KEGG Pathway and uses PyEnsembl to get EnsemblID
 import argparse
-import concurrent.futures
 import os
 import subprocess
 import sys
@@ -10,7 +9,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from CommonTools import create_dir, get_gene_ids, get_gene_names
+from src.CommonTools import create_dir, get_gene_ids, get_gene_names, get_data
 
 
 def get_gene_ids_from_string(ensembl_release: int, genes: str) -> np.ndarray:
@@ -89,8 +88,9 @@ def create_model(base_name, path_to_save_filtered_data, qc_file_gene_id, save_di
     print('Error:\n', out.stderr)
 
 
-def merge_gene(slurm: bool, ensembl_version: int, geno: pd.DataFrame, filename: Path, pathways: pd.DataFrame,
-               base_to_save_filtered_data: Path, dir_to_model: Path, index: int, gene_set):
+def batch_script_setup(slurm: bool, ensembl_version: int, geno: pd.DataFrame, filename: Path, pathways: pd.DataFrame,
+                       base_to_save_filtered_data: Path, dir_to_model: Path, index: int, gene_set):
+    print(f'Creating parameters for scripts for {filename} and pathway {pathways.iloc[index, 0]}')
     pathway = pathways.iloc[index, 0]
     input_data: pd.DataFrame = geno[geno.columns.intersection(gene_set)]
     base_name = f'{pathway}-{filename.stem}'
@@ -102,18 +102,20 @@ def merge_gene(slurm: bool, ensembl_version: int, geno: pd.DataFrame, filename: 
     create_dir(save_dir)
 
     path_to_save_filtered_data = filtered_data_dir.joinpath(f'{base_name}.csv')
+    input_data['phen'] = geno.phen
     input_data.to_csv(path_to_save_filtered_data)
 
-    qc_file_gene_id = filtered_data_dir.joinpath(f'{base_name}_gene_id_QC.csv')
+    qc_file_gene_id = filtered_data_dir.joinpath(f'{base_name}_gene_id.csv')
 
-    qc_file_gene_name = filtered_data_dir.joinpath(f'{base_name}_gene_name_QC.csv')
+    qc_file_gene_name = filtered_data_dir.joinpath(f'{base_name}_gene_name.csv')
     names = get_gene_names(ensembl_release=ensembl_version, gene_list=np.array(input_data.columns))
     input_data.rename(dict(zip(np.array(input_data.columns), names)), axis='columns', inplace=True)
-    input_data['phen'] = geno.phen
+    input_data.to_csv(qc_file_gene_name)
     # get_filtered_data(input_data, qc_file_gene_name)
     base_bar_path: Path = save_dir.joinpath('shap/bar')
     base_scatter_path: Path = save_dir.joinpath('shap/scatter')
     base_model_path: Path = save_dir.joinpath('shap/model')
+    """
     if slurm:
         job_directory = Path(f'{os.getcwd()}/.job')
         create_dir(job_directory)
@@ -124,24 +126,60 @@ def merge_gene(slurm: bool, ensembl_version: int, geno: pd.DataFrame, filename: 
         with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
             executor.submit(create_model, base_name, path_to_save_filtered_data, qc_file_gene_id, save_dir,
                             base_bar_path, qc_file_gene_name, base_scatter_path, base_model_path)
+    """
+
+
+def merge_gene(slurm: bool, ensembl_version: int, geno: pd.DataFrame, filename: Path, pathways: pd.DataFrame,
+               base_to_save_filtered_data: Path, dir_to_model: Path, index: int, gene_set):
+    print(f'Processing {filename} and pathway {pathways.iloc[index, 0]}')
+    input_data: pd.DataFrame = geno[geno.columns.intersection(gene_set)]
+    base_name = f'{ pathways.iloc[index, 0]}-{filename.stem}'
+    filtered_data_dir = base_to_save_filtered_data.joinpath(filename.stem)
+    save_dir = dir_to_model.joinpath(base_name)
+
+    # Make top level directories
+    create_dir(filtered_data_dir)
+    create_dir(save_dir)
+
+    path_to_save_filtered_data = filtered_data_dir.joinpath(f'{base_name}_gene_id.csv')
+    input_data['phen'] = geno.phen
+    input_data.to_csv(path_to_save_filtered_data)
+
+    qc_file_gene_name = filtered_data_dir.joinpath(f'{base_name}_gene_name.csv')
+    names = get_gene_names(ensembl_release=ensembl_version, gene_list=np.array(input_data.columns))
+    input_data.rename(dict(zip(np.array(input_data.columns), names)), axis='columns', inplace=True)
+    input_data.to_csv(qc_file_gene_name)
+    gene_num = len(input_data.columns) - 2
+    return pathways.iloc[index, 0], input_data.columns.values[1:-1], gene_num
 
 
 def process_pathways(slurm: bool, ensembl_version: int, filename: Path, pathways: pd.DataFrame,
                      base_to_save_filtered_data: Path, dir_to_model: Path):
     geno: pd.DataFrame = pd.read_csv(filename, index_col=0)  # original x
-    result = []
-    with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
-        result.append(executor.map(lambda x, y: merge_gene(slurm, ensembl_version, geno, filename, pathways,
-                                                           base_to_save_filtered_data, dir_to_model, index=x,
-                                                           gene_set=y),
-                                   enumerate(pathways.All_Genes)))
 
-    data = pd.DataFrame(result, columns=['Pathway #', '# of Genes in common with Cancer of Interest'])
-    name = filename.stem.join('-common.csv')
-    data.to_csv(name)
+    results = []
+    arguments = (
+        (slurm, ensembl_version, geno, filename, pathways, base_to_save_filtered_data, dir_to_model, index, gene_set)
+        for index, gene_set in enumerate(pathways.All_Genes))
+    for r in map(lambda x: merge_gene(*x), arguments):
+        results.append(r)
+        print(f"processed: {r[0]} # of genes in common: {r[2]}")
+
+    print("... Complete Data...")
+    print(f"filename: {filename} # of pathways: {len(pathways.index)} # of genes: {len(pathways.columns)}")
+    combined_dir = filename.parent.joinpath('combined')
+    create_dir(combined_dir)
+    name = filename.stem
+    name = combined_dir.joinpath(f'{name}-id-common.csv')
+    print(f" filename: {filename} CancerPathwayData: {name}")
+    data = pd.DataFrame(results, columns=['Pathway Name', f"Genes in common with {filename.stem}",
+                                          f'# of Genes in common with {filename.stem}'])
+    data.to_csv(name, index=False)
+    return data
 
 
 def get_pathways_gene_names(ensembl_version: int, pathway_data: Path) -> pd.DataFrame:
+    print("...Converting pathway gene names to ids...")
     pathways = pd.read_csv(pathway_data)
     pathways['All_Genes'] = pathways['All_Genes'].map(lambda x:
                                                       get_gene_ids_from_string(ensembl_release=ensembl_version,
@@ -150,18 +188,45 @@ def get_pathways_gene_names(ensembl_version: int, pathway_data: Path) -> pd.Data
     return pathways
 
 
+def get_geneids(pathway_data: Path) -> pd.DataFrame:
+    print("...Converting pathway gene names to ids...")
+    pathways = get_data(pathway_data, index_col=False)
+    pathways['All_Genes'] = pathways['All_Genes'].map(lambda x:
+                                                      np.array(x.split(';')))
+    pathways.to_csv(pathway_data.parent.joinpath('pathways_gene_ids.csv'))
+    return pathways
+
+
 def main(slurm: bool, ensembl_version: int, path_to_original_data: Path, pathway_data: Path,
          base_to_save_filtered_data: Path, dir_to_model: Path):
+    print("...Starting program...")
+    print(
+        f"pathway_data: {pathway_data} base_to_save_filtered_data: {base_to_save_filtered_data} dir_to_model: "
+        f"{dir_to_model} path_to_original_data: {path_to_original_data}")
+    for file in path_to_original_data.glob('*.csv'):
+        print(f'\t{file}')
+
     if not (pathway_data.is_file()):
-        print(f'{pathway_data} is not a file')
+        print(f'{pathway_data} is not a file. {pathway_data.is_file()}')
         sys.exit(-1)
 
-    pathways = get_pathways_gene_names(ensembl_version=ensembl_version, pathway_data=pathway_data)
-    with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
-        executor.map(lambda x: process_pathways(slurm=slurm, ensembl_version=ensembl_version, filename=x,
-                                                pathways=pathways,
-                                                base_to_save_filtered_data=base_to_save_filtered_data,
-                                                dir_to_model=dir_to_model), path_to_original_data.glob('*.csv'))
+    # pathways = get_pathways_gene_names(ensembl_version=ensembl_version, pathway_data=pathway_data)
+    pathways = get_geneids(pathway_data)
+
+    print("...Starting to combine cancer's genes with pathway genes ...")
+    df = pd.DataFrame(columns=["Pathway Name"])
+    for x in path_to_original_data.glob('*.csv'):
+        r = process_pathways(slurm=slurm, ensembl_version=ensembl_version, filename=x,
+                             pathways=pathways,
+                             base_to_save_filtered_data=base_to_save_filtered_data,
+                             dir_to_model=dir_to_model)
+        df = pd.merge(df, r, how='outer', copy=False)
+
+    print(f"df empty: {df.empty} dim:{df.size}")
+    combined = path_to_original_data.joinpath('combined')
+    create_dir(combined)
+    filename = combined.joinpath('pathway-id-combined.csv')
+    df.to_csv(filename, index=False)
 
 
 if __name__ == '__main__':
