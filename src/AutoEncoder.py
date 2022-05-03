@@ -188,23 +188,3 @@ if __name__ == '__main__':
     print(arguments)
 
     main(arguments)
-
-'''
-if len(sys.argv) < 7:
-    print('Default setting are used. Either change AutoEncoder.py to change settings or type:\n')
-    print('python AutoEncoder.py model_name original_datafile '
-          'quality_control_filename dir_AE_model compression_ratio epoch batch_size')
-    print('\tmodel_name - model name e.g. AE_Geno')
-    print('\toriginal_datafile - original datafile e.g. ../data_example.csv')
-    print('\tquality_control_filename - filename of original x after quality control e.g. ./data_QC.csv')
-    print('\tdir_AE_model - base dir to saved AE models e.g. ./AE')
-    print('\tcompression_ratio - compression ratio for smallest layer NB: ideally a number that is power of 2')
-    print('\tnum_epoch - min number of epochs e.g. 200')
-    print('\tbatch_size - the size of each batch e.g. 4096')
-
-    main('AE_Geno', Path('../data_example.csv'), Path('./data_QC.csv'), Path('./AE'), 32, 200, 4096)
-else:
-    main(model_name=sys.argv[1], path_to_data=Path(sys.argv[2]), path_to_save_qc=Path(sys.argv[3]),
-         path_to_save_ae=Path(sys.argv[4]),
-         compression_ratio=int(sys.argv[5]), num_epochs=int(sys.argv[6]), batch_size=int(sys.argv[7]))
-'''
