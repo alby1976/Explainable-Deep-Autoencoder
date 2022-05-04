@@ -19,8 +19,8 @@ from pytorch_lightning.loggers import WandbLogger
 
 from AutoEncoderModule import AutoGenoShallow
 from CommonTools import create_dir, float_or_none
-from src.SHAP_combo import add_shap_arguments
-from src.ShapDeepExplainerModule import create_shap_values
+from SHAP_combo import add_shap_arguments
+from ShapDeepExplainerModule import create_shap_values
 
 _DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 

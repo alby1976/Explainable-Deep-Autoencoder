@@ -50,7 +50,6 @@ class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
 
         self.dm = DataNormalization()
         self.le = preprocessing.LabelEncoder()
-        self.gene_names = x.columns.to_numpy()
         self.sample_size = len(x.index)
 
         print(f"unique: {np.unique(y)} size: {np.unique(y).size}", file=sys.stderr, flush=True)
@@ -59,6 +58,7 @@ class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
                                     random_state, fold)
         dataset = result[0]
         self.size: int = dataset.shape[1]
+        self.gene_names = x.columns.values[self.dm.column_mask]
 
         super().__init__(
             result[0],
