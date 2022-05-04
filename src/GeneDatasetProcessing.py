@@ -60,8 +60,13 @@ def create_sbatch_files(job_file, base_name, path_to_save_filtered_data, qc_file
     print('Output:\n', output.stdout)
     print('Error:\n', output.stderr)
 
+
 """
-python src/AutoEncoder.py -v --name=TCGA_BRCA_TPM_Regression_AE_Geno --data=data/TCGA_BRCA_TPM_Regression.csv --transformed_data=data/TCGA_BRCA_TPM_Regression_gene_id_QC.csv --save_dir=data/model/TCGA_BRCA_TPM_Regression/TCGA_BRCA_TPM_Regression --ratio=4096 --tune --filter_str 'Primary Tumor' 'Metastatic' -bs=1024 --num_workers=8 --val_split=0.2 --patience=10 &> breast-2-log-median-wandb-column-name-log.txt & disown -h
+python src/AutoEncoder.py -v --name=TCGA_BRCA_TPM_Regression_AE_Geno --data=data/TCGA_BRCA_TPM_Regression.csv 
+--transformed_data=data/TCGA_BRCA_TPM_Regression_gene_id_QC.csv 
+--save_dir=data/model/TCGA_BRCA_TPM_Regression/TCGA_BRCA_TPM_Regression --ratio=4096 --tune 
+--filter_str 'Primary Tumor' 'Metastatic' -bs=1024 --num_workers=8 --val_split=0.2 --patience=10 
+&> breast-2-log-median-wandb-column-name-log.txt & disown -h
 """
 
 
