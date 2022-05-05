@@ -73,9 +73,18 @@ python src/AutoEncoder.py -v --name=TCGA_BRCA_TPM_Regression_AE_Geno --data=data
 def create_model(base_name, path_to_save_filtered_data, qc_file_gene_id, save_dir, base_bar_path,
                  qc_file_gene_name, base_scatter_path, base_model_path):
     print("\n####### Run script ##############################\n")
-    print(f"python src/AutoEncoder.py {base_name}_AE_Geno {path_to_save_filtered_data} " +
-          f"{qc_file_gene_id} {save_dir} 32 200 4096\n")
-    out = subprocess.run(('python', 'src/AutoEncoder.py', f'{base_name}_AE_Geno', path_to_save_filtered_data,
+    print(f"python src/AutoEncoder.py -v --name={base_name}_AE_Geno "
+          f"--data={path_to_save_filtered_data} " 
+          f"--transformed_data={qc_file_gene_name} "
+          f"-id={qc_file_gene_id} "
+          f"--save_dir={save_dir} "
+          f"--tune "
+          f"--filter_str 'Primary Tumor' 'Metastatic' "
+          f"-bs=32 "
+          f"--num_workers=8 "
+          f"--patience=10 "
+          f"&> {base_name}-2-log-median-wandb-column-name-log.txt & disown -h\n")
+    out = subprocess.run(('python', 'src/AutoEncoder.py', '-v', f'--name={base_name}_AE_Geno', path_to_save_filtered_data,
                           qc_file_gene_id, save_dir, 32, 200, 4096), capture_output=True, text=True, check=True)
 
     print('####################')
@@ -115,6 +124,7 @@ def batch_script_setup(slurm: bool, path_to_save_filtered_data: Path, save_dir: 
 
 def merge_gene(slurm: bool, ensembl_version: int, geno: pd.DataFrame, filename: Path, pathways: pd.DataFrame,
                base_to_save_filtered_data: Path, dir_to_model: Path, index: int, gene_set):
+    #TODO: need to move some of the code to process_data and change header
     print(f'Processing {filename} and pathway {pathways.iloc[index, 0]}')
     input_data: pd.DataFrame = geno[geno.columns.intersection(gene_set)]
     base_name = f'{pathways.iloc[index, 0]}-{filename.stem}'
@@ -140,17 +150,24 @@ def merge_gene(slurm: bool, ensembl_version: int, geno: pd.DataFrame, filename: 
     return pathways.iloc[index, 0], input_data.columns.values[1:-1], gene_num
 
 
+def process_data (slurm: bool, ensembl_version: int, geno: pd.DataFrame, filename: Path, pathways: pd.DataFrame,
+               base_to_save_filtered_data: Path, dir_to_model: Path, index: int, gene_set):
+    pass
+
+
 def process_pathways(slurm: bool, ensembl_version: int, filename: Path, pathways: pd.DataFrame,
                      base_to_save_filtered_data: Path, dir_to_model: Path):
     geno: pd.DataFrame = pd.read_csv(filename, index_col=0)  # original x
 
     results = []
-    arguments = (
-        (slurm, ensembl_version, geno, filename, pathways, base_to_save_filtered_data, dir_to_model, index, gene_set)
-        for index, gene_set in enumerate(pathways.All_Genes))
-    for r in map(lambda x: merge_gene(*x), arguments):
-        results.append(r)
-        print(f"processed: {r[0]} # of genes in common: {r[2]}")
+    with ProcessPoolExecutor(max_workers = 4) as exe:
+        arguments = ((
+            slurm, ensembl_version, geno, filename, pathways, base_to_save_filtered_data, dir_to_model, index, gene_set)
+            for index, gene_set in enumerate(pathways.All_Genes))
+        result = exe.map(lambda x: process_data(*x), arguments)
+        for r in result:
+            results.append(r)
+            print(f"processed: {r[0]} # of genes in common: {r[2]}")
 
     print("... Complete Data...")
     print(f"filename: {filename} # of pathways: {len(pathways.index)} # of genes: {len(pathways.columns)}")
