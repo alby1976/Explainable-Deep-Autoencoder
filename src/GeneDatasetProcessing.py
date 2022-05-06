@@ -1,7 +1,9 @@
 # Filters Dataset by KEGG Pathway and uses PyEnsembl to get EnsemblID
+import argparse
 import os
 import subprocess
 import sys
+from argparse import ArgumentParser
 from pathlib import Path
 from concurrent.futures import ProcessPoolExecutor
 import numpy as np
@@ -74,7 +76,7 @@ def create_model(base_name, path_to_save_filtered_data, qc_file_gene_id, save_di
                  qc_file_gene_name, base_scatter_path, base_model_path):
     print("\n####### Run script ##############################\n")
     print(f"python src/AutoEncoder.py -v --name={base_name}_AE_Geno "
-          f"--data={path_to_save_filtered_data} " 
+          f"--data={path_to_save_filtered_data} "
           f"--transformed_data={qc_file_gene_name} "
           f"-id={qc_file_gene_id} "
           f"--save_dir={save_dir} "
@@ -83,8 +85,13 @@ def create_model(base_name, path_to_save_filtered_data, qc_file_gene_id, save_di
           f"-bs=32 "
           f"--num_workers=8 "
           f"--patience=10 "
+          f"--save_bar={base_bar_path}"
+          f"--save_scatter={base_scatter_path}"
+          f"--gene_model={base_model_path}"
+          f"--top_rate=0.2"
           f"&> {base_name}-2-log-median-wandb-column-name-log.txt & disown -h\n")
-    out = subprocess.run(('python', 'src/AutoEncoder.py', '-v', f'--name={base_name}_AE_Geno', path_to_save_filtered_data,
+    out = subprocess.run(('python', 'src/AutoEncoder.py', '-v', f'--name={base_name}_AE_Geno',
+                          path_to_save_filtered_data,
                           qc_file_gene_id, save_dir, 32, 200, 4096), capture_output=True, text=True, check=True)
 
     print('####################')
@@ -122,11 +129,24 @@ def batch_script_setup(slurm: bool, path_to_save_filtered_data: Path, save_dir: 
                             base_bar_path, qc_file_gene_name, base_scatter_path, base_model_path)
 
 
-def merge_gene(slurm: bool, ensembl_version: int, geno: pd.DataFrame, filename: Path, pathways: pd.DataFrame,
-               base_to_save_filtered_data: Path, dir_to_model: Path, index: int, gene_set):
-    #TODO: need to move some of the code to process_data and change header
+def merge_gene(geno: pd.DataFrame, ensembl_version: int, filename: Path, pathways: pd.DataFrame,
+               qc_file_gene_id: Path, qc_file_gene_name: Path, index: int, gene_set):
     print(f'Processing {filename} and pathway {pathways.iloc[index, 0]}')
     input_data: pd.DataFrame = geno[geno.columns.intersection(gene_set)]
+    input_data['phen'] = geno.phen
+    input_data.to_csv(qc_file_gene_id)
+
+    names = get_gene_names(ensembl_release=ensembl_version, gene_list=np.array(input_data.columns))
+    input_data.rename(dict(zip(np.array(input_data.columns), names)), axis='columns', inplace=True)
+    input_data.to_csv(qc_file_gene_name)
+    gene_num = len(input_data.columns) - 2
+
+    return pathways.iloc[index, 0], input_data.columns.values[1:-1], gene_num
+
+
+def process_data(slurm: bool, ensembl_version: int, geno: pd.DataFrame, filename: Path, pathways: pd.DataFrame,
+                 base_to_save_filtered_data: Path, dir_to_model: Path, index: int, gene_set):
+
     base_name = f'{pathways.iloc[index, 0]}-{filename.stem}'
     filtered_data_dir = base_to_save_filtered_data.joinpath(filename.stem)
     save_dir = dir_to_model.joinpath(base_name)
@@ -136,23 +156,12 @@ def merge_gene(slurm: bool, ensembl_version: int, geno: pd.DataFrame, filename: 
     create_dir(save_dir)
 
     qc_file_gene_id = filtered_data_dir.joinpath(f'{base_name}_gene_id.csv')
-    input_data['phen'] = geno.phen
-    input_data.to_csv(qc_file_gene_id)
-
     qc_file_gene_name = filtered_data_dir.joinpath(f'{base_name}_gene_name.csv')
-    names = get_gene_names(ensembl_release=ensembl_version, gene_list=np.array(input_data.columns))
-    input_data.rename(dict(zip(np.array(input_data.columns), names)), axis='columns', inplace=True)
-    input_data.to_csv(qc_file_gene_name)
-    gene_num = len(input_data.columns) - 2
 
+    result = merge_gene(geno, ensembl_version, filename, pathways, qc_file_gene_id, qc_file_gene_name, index, gene_set)
     batch_script_setup(slurm, base_to_save_filtered_data, save_dir, base_name, qc_file_gene_id, qc_file_gene_name)
 
-    return pathways.iloc[index, 0], input_data.columns.values[1:-1], gene_num
-
-
-def process_data (slurm: bool, ensembl_version: int, geno: pd.DataFrame, filename: Path, pathways: pd.DataFrame,
-               base_to_save_filtered_data: Path, dir_to_model: Path, index: int, gene_set):
-    pass
+    return result
 
 
 def process_pathways(slurm: bool, ensembl_version: int, filename: Path, pathways: pd.DataFrame,
@@ -160,7 +169,7 @@ def process_pathways(slurm: bool, ensembl_version: int, filename: Path, pathways
     geno: pd.DataFrame = pd.read_csv(filename, index_col=0)  # original x
 
     results = []
-    with ProcessPoolExecutor(max_workers = 4) as exe:
+    with ProcessPoolExecutor(max_workers=4) as exe:
         arguments = ((
             slurm, ensembl_version, geno, filename, pathways, base_to_save_filtered_data, dir_to_model, index, gene_set)
             for index, gene_set in enumerate(pathways.All_Genes))

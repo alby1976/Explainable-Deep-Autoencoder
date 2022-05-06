@@ -115,13 +115,7 @@ def main(model_name, gene_name, gene_id, ae_result, col_mask, save_bar, save_sca
 
 
 def add_shap_arguments(parse):
-    parse.add_argument("-id", "--gene_id", type=Path, required=True,
-                       help='path to input data with gene id as column headers e.g. ./gene_id_QC')
-    parse.add_argument("--ae_result", type=Path, required=True,
-                       help='path to AutoEncoder results.  e.g. ./AE_199.csv')
-    parse.add_argument("--col_mask", type=Path, required=True,
-                       help='path to column mask data.')
-    parse.add_argument("-b", "--save_bar", type=Path,
+    parse.add_argument("-b", "--save_bar", type=Path, required=True,
                        default=Path(__file__).absolute().parent.parent.joinpath("shap/bar"),
                        help='base dir to saved AE models e.g. ./shap/bar')
     parse.add_argument("--save_scatter", type=Path,
@@ -137,8 +131,14 @@ def add_shap_arguments(parse):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="calculates the shapey values for the AE model's output")
     add_shap_arguments(parser)
-    parse.add_argument("--gene_name", type=Path, required=True,
-                       help='path to input data with gene name as column headers e.g. ./gene_name_QC')
+    parser.add_argument("--ae_result", type=Path, required=True,
+                        help='path to AutoEncoder results.  e.g. ./AE_199.csv')
+    parser.add_argument("--col_mask", type=Path, required=True,
+                        help='path to column mask data.')
+    parser.add_argument("--gene_name", type=Path, required=True,
+                        help='path to input data with gene name as column headers e.g. ./gene_name_QC')
+    parser.add_argument("-id", "--gene_id", type=Path, required=True,
+                        help='path to input data with gene id as column headers e.g. ./gene_id_QC')
     parser.add_argument("--name", type=str, required=True, help='AE model name')
     parser.add_argument("-w", "--num_workers", type=int,
                         help='number of processors used to run in parallel. -1 mean using all processor '
