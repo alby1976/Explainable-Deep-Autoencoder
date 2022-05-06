@@ -4,8 +4,9 @@ import os
 import subprocess
 import sys
 from argparse import ArgumentParser
-from pathlib import Path
 from concurrent.futures import ProcessPoolExecutor
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 
@@ -39,14 +40,38 @@ def create_sbatch_files(job_file, base_name, path_to_save_filtered_data, qc_file
         line.append("conda activate XAI\n")
 
         line.append("\n####### Run script ##############################\n")
-        line.append(f"echo \"python src/AutoEncoder.py {base_name}_AE_Geno " +
-                    f"{path_to_save_filtered_data} {qc_file_gene_id} {save_dir} 64\"\n")
-        line.append(f"python src/AutoEncoder.py {base_name}_AE_Geno {path_to_save_filtered_data} " +
-                    f"{qc_file_gene_id} {save_dir} 64\n")
-        line.append(f"echo \"python src/SHAP_combo.py {qc_file_gene_name} {qc_file_gene_id} {save_dir} "
-                    f"{base_bar_path} {base_scatter_path} {base_model_path}\"\n")
-        line.append(f"python src/SHAP_combo.py {qc_file_gene_name} {qc_file_gene_id} {save_dir} "
-                    f"{base_bar_path} {base_scatter_path} {base_model_path}\n")
+        line.append(f"echo python src/AutoEncoder.py -v "
+                    f"--name={base_name}_AE_Geno "
+                    f"--data={path_to_save_filtered_data} "
+                    f"--transformed_data={qc_file_gene_name} "
+                    f"-id={qc_file_gene_id} "
+                    f"--save_dir={save_dir} "
+                    f"--tune "
+                    f"--filter_str 'Primary Tumor' 'Metastatic' "
+                    f"-bs=32 "
+                    f"--num_workers=8 "
+                    f"--patience=10 "
+                    f"--save_bar={base_bar_path}"
+                    f"--save_scatter={base_scatter_path}"
+                    f"--gene_model={base_model_path}"
+                    f"--top_rate=0.2"
+                    f"&> {base_name}-2-log-median-wandb-column-name-log.txt & disown -h\n")
+        line.append(f"python src/AutoEncoder.py -v "
+                    f"--name={base_name}_AE_Geno "
+                    f"--data={path_to_save_filtered_data} "
+                    f"--transformed_data={qc_file_gene_name} "
+                    f"-id={qc_file_gene_id} "
+                    f"--save_dir={save_dir} "
+                    f"--tune "
+                    f"--filter_str 'Primary Tumor' 'Metastatic' "
+                    f"-bs=32 "
+                    f"--num_workers=8 "
+                    f"--patience=10 "
+                    f"--save_bar={base_bar_path}"
+                    f"--save_scatter={base_scatter_path}"
+                    f"--gene_model={base_model_path}"
+                    f"--top_rate=0.2"
+                    f"&> {base_name}-2-log-median-wandb-column-name-log.txt & disown -h\n")
 
         line.append("\n####### Clean up ################################\n")
         line.append("module unload python/anaconda3-2019.10-tensorflowgpu\n")
@@ -54,28 +79,28 @@ def create_sbatch_files(job_file, base_name, path_to_save_filtered_data, qc_file
         fh.flush()
         os.fsync(fd=fh)
         fh.close()
-    print(f"sbatch {job_file}")
-    output = subprocess.run(('sbatch', job_file), capture_output=True, text=True, check=True)
+        print(f"sbatch {job_file}")
+        output = subprocess.run(('sbatch', job_file), capture_output=True, text=True, check=True)
 
-    print('####################')
-    print('Return code:', output.returncode)
-    print('Output:\n', output.stdout)
-    print('Error:\n', output.stderr)
+        print('####################')
+        print('Return code:', output.returncode)
+        print('Output:\n', output.stdout)
+        print('Error:\n', output.stderr)
 
-
-"""
-python src/AutoEncoder.py -v --name=TCGA_BRCA_TPM_Regression_AE_Geno --data=data/TCGA_BRCA_TPM_Regression.csv 
---transformed_data=data/TCGA_BRCA_TPM_Regression_gene_id_QC.csv 
---save_dir=data/model/TCGA_BRCA_TPM_Regression/TCGA_BRCA_TPM_Regression --ratio=4096 --tune 
---filter_str 'Primary Tumor' 'Metastatic' -bs=1024 --num_workers=8 --val_split=0.2 --patience=10 
-&> breast-2-log-median-wandb-column-name-log.txt & disown -h
-"""
+        """
+        python src/AutoEncoder.py -v --name=TCGA_BRCA_TPM_Regression_AE_Geno --data=data/TCGA_BRCA_TPM_Regression.csv 
+        --transformed_data=data/TCGA_BRCA_TPM_Regression_gene_id_QC.csv 
+        --save_dir=data/model/TCGA_BRCA_TPM_Regression/TCGA_BRCA_TPM_Regression --ratio=4096 --tune 
+        --filter_str 'Primary Tumor' 'Metastatic' -bs=1024 --num_workers=8 --val_split=0.2 --patience=10 
+        &> breast-2-log-median-wandb-column-name-log.txt & disown -h
+        """
 
 
 def create_model(base_name, path_to_save_filtered_data, qc_file_gene_id, save_dir, base_bar_path,
                  qc_file_gene_name, base_scatter_path, base_model_path):
     print("\n####### Run script ##############################\n")
-    print(f"python src/AutoEncoder.py -v --name={base_name}_AE_Geno "
+    print(f"python src/AutoEncoder.py -v "
+          f"--name={base_name}_AE_Geno "
           f"--data={path_to_save_filtered_data} "
           f"--transformed_data={qc_file_gene_name} "
           f"-id={qc_file_gene_id} "
@@ -90,19 +115,22 @@ def create_model(base_name, path_to_save_filtered_data, qc_file_gene_id, save_di
           f"--gene_model={base_model_path}"
           f"--top_rate=0.2"
           f"&> {base_name}-2-log-median-wandb-column-name-log.txt & disown -h\n")
-    out = subprocess.run(('python', 'src/AutoEncoder.py', '-v', f'--name={base_name}_AE_Geno',
-                          path_to_save_filtered_data,
-                          qc_file_gene_id, save_dir, 32, 200, 4096), capture_output=True, text=True, check=True)
-
-    print('####################')
-    print('Return code:', out.returncode)
-    print('Output:\n', out.stdout)
-    print('Error:\n', out.stderr)
-
-    print(f"python src/SHAP_combo.py {qc_file_gene_name} {qc_file_gene_id} {save_dir} "
-          f"{base_bar_path} {base_scatter_path} {base_model_path}\n")
-    out = subprocess.run(('python', 'src/SHAP_combo.py', qc_file_gene_name, qc_file_gene_id, save_dir,
-                          base_bar_path, base_scatter_path, base_model_path),
+    out = subprocess.run(('python', 'src/AutoEncoder.py', '-v',
+                          f"--name={base_name}_AE_Geno "
+                          f"--data={path_to_save_filtered_data} "
+                          f"--transformed_data={qc_file_gene_name} "
+                          f"-id={qc_file_gene_id} "
+                          f"--save_dir={save_dir} "
+                          f"--tune "
+                          f"--filter_str 'Primary Tumor' 'Metastatic' "
+                          f"-bs=32 "
+                          f"--num_workers=8 "
+                          f"--patience=10 "
+                          f"--save_bar={base_bar_path}"
+                          f"--save_scatter={base_scatter_path}"
+                          f"--gene_model={base_model_path}"
+                          f"--top_rate=0.2"
+                          f"&> {base_name}-2-log-median-wandb-column-name-log.txt & disown -h\n"),
                          capture_output=True, text=True, check=True)
 
     print('####################')
@@ -146,7 +174,6 @@ def merge_gene(geno: pd.DataFrame, ensembl_version: int, filename: Path, pathway
 
 def process_data(slurm: bool, ensembl_version: int, geno: pd.DataFrame, filename: Path, pathways: pd.DataFrame,
                  base_to_save_filtered_data: Path, dir_to_model: Path, index: int, gene_set):
-
     base_name = f'{pathways.iloc[index, 0]}-{filename.stem}'
     filtered_data_dir = base_to_save_filtered_data.joinpath(filename.stem)
     save_dir = dir_to_model.joinpath(base_name)
@@ -202,7 +229,7 @@ def get_pathways_gene_names(ensembl_version: int, pathway_data: Path) -> pd.Data
     return pathways
 
 
-def get_geneids(pathway_data: Path) -> pd.DataFrame:
+def get_gene_ids(pathway_data: Path) -> pd.DataFrame:
     print("...Converting pathway gene names to ids...")
     pathways = get_data(pathway_data, index_col=False)
     pathways['All_Genes'] = pathways['All_Genes'].map(lambda x:
@@ -225,7 +252,7 @@ def main(slurm: bool, ensembl_version: int, path_to_original_data: Path, pathway
         sys.exit(-1)
 
     # pathways = get_pathways_gene_names(ensembl_version=ensembl_version, pathway_data=pathway_data)
-    pathways = get_geneids(pathway_data)
+    pathways = get_gene_ids(pathway_data)
 
     print("...Starting to combine cancer's genes with pathway genes ...")
     df = pd.DataFrame(columns=["Pathway Name"])
