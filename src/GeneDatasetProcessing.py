@@ -229,7 +229,7 @@ def get_pathways_gene_names(ensembl_version: int, pathway_data: Path) -> pd.Data
     return pathways
 
 
-def get_gene_ids(pathway_data: Path) -> pd.DataFrame:
+def gene_ids(pathway_data: Path) -> pd.DataFrame:
     print("...Converting pathway gene names to ids...")
     pathways = get_data(pathway_data, index_col=False)
     pathways['All_Genes'] = pathways['All_Genes'].map(lambda x:
@@ -252,7 +252,7 @@ def main(slurm: bool, ensembl_version: int, path_to_original_data: Path, pathway
         sys.exit(-1)
 
     # pathways = get_pathways_gene_names(ensembl_version=ensembl_version, pathway_data=pathway_data)
-    pathways = get_gene_ids(pathway_data)
+    pathways = gene_ids(pathway_data)
 
     print("...Starting to combine cancer's genes with pathway genes ...")
     df = pd.DataFrame(columns=["Pathway Name"])
