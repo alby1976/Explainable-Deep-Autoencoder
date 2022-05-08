@@ -49,7 +49,7 @@ class DataNormalization:
         # calculate fold change relative to the median after applying column mask
         print(f"x: {x.shape} column_mask: {self.column_mask.shape}")
         tmp, median = get_transformed_data(x[:, self.column_mask], fold=fold)
-        tmp, _ = get_fold_change(tmp[:, self.column_mask], median=median, fold=fold)
+        tmp, _ = get_fold_change(tmp, median=median, fold=fold)
         print(f'\ntmp: {tmp.shape} mask: {self.column_mask.shape}', file=sys.stderr)
         # print(f'\ntmp: {tmp.shape} median: {median.shape}', file=sys.stderr)
 
