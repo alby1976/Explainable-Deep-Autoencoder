@@ -10,7 +10,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from src.CommonTools import create_dir, get_gene_ids, get_gene_names, get_data
+from CommonTools import create_dir, get_gene_ids, get_gene_names, get_data
 
 
 def get_gene_ids_from_string(ensembl_release: int, genes: str) -> np.ndarray:
