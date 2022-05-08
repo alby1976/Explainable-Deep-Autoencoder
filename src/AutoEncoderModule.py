@@ -25,6 +25,15 @@ from torch.utils.data import DataLoader, Dataset
 from CommonTools import get_dict_values_1d, DataNormalization, get_data_phen
 
 
+class LambdaLayer(nn.Module):
+    def __init__(self, lamb):
+        super(LambdaLayer, self).__init__()
+        self.lamb = lamb
+
+    def forward(self, x):
+        return self.lam(x)
+
+
 class GPDataSet(Dataset):
     def __init__(self, gp_list):
         # 'Initialization'
@@ -205,8 +214,8 @@ class AutoGenoShallow(pl.LightningModule):
         # self.geno: ndarray = get_filtered_data(pd.read_csv(path_to_data, index_col=0), path_to_save_qc).to_numpy()
         self.input_features = self.dataset.size
         self.output_features = self.input_features
-        self.smallest_layer = min([smallest_layer, len(self.dataset)])
-        self.hidden_layer = min([2 * self.smallest_layer, len(self.dataset)])
+        self.smallest_layer = min([smallest_layer, len(self.dataset.train_dataset)])
+        self.hidden_layer = min([2 * self.smallest_layer, len(self.dataset.train_dataset)])
 
         print(f"input_features: {self.input_features} hidden_features: {self.hidden_layer} "
               f"smallest_layer: {self.smallest_layer}")
@@ -233,15 +242,19 @@ class AutoGenoShallow(pl.LightningModule):
         # def the encoder function
         self.encoder = nn.Sequential(
             nn.Linear(self.input_features, self.hidden_layer),
-            nn.ReLU(True),
+            LambdaLayer(lambda l:
+                        torch.maximum(torch.zeros(1), l) + torch.minimum(torch.zeros(1), -l * (torch.exp(l) - 1))),
             nn.Linear(self.hidden_layer, self.smallest_layer),
-            nn.ReLU(True),
+            LambdaLayer(lambda l:
+                        torch.maximum(torch.zeros(1), l) + torch.minimum(torch.zeros(1), -l * (torch.exp(l) - 1))),
+
         )
 
         # def the decoder function
         self.decoder = nn.Sequential(
             nn.Linear(self.smallest_layer, self.hidden_layer),
-            nn.ReLU(True),
+            LambdaLayer(lambda l:
+                        torch.maximum(torch.zeros(1), l) + torch.minimum(torch.zeros(1), -l * (torch.exp(l) - 1))),
             nn.Linear(self.hidden_layer, self.output_features),
             nn.Sigmoid()
         )
