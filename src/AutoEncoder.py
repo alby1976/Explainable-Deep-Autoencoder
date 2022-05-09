@@ -119,7 +119,7 @@ def main(args):
             tbl = wandb.Table(dataframe=pd.DataFrame(hidden_layer), dtype=float)
             wandb.log({"AE_out": tbl})
 
-    create_shap_values(model, args.model_name + "_Shap", args.save_dir.joinpath(args.gene_model),
+    create_shap_values(model, args.name + "_Shap", args.save_dir.joinpath(args.gene_model),
                        args.save_dir.joinpath(args.save_bar), args.save_dir.joinpath(args.save_scatter), args.top_rate)
 
 
