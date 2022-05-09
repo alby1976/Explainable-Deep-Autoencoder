@@ -65,10 +65,13 @@ def create_shap_values(model: AutoGenoShallow, model_name: str, gene_model: Path
 
     # setup
     model.decoder = nn.Identity()
-    x_train, _ = model.dataset.train_dataset
-    x_train = torch.from_numpy(x_train)
+    batch = next(iter(model.train_dataloader()))
+    genes, _ = batch
+    x_train = genes[:100]
+
+    batch = next(iter(model.val_dataloader()))
+    genes, _ = batch
     x_test, _ = model.dataset.val_dataset
-    x_test = torch.from_numpy(x_test)
 
     gene_names: ndarray = model.gene_names
     top_num: int = int(top_rate * len(gene_names))  # top_rate is the percentage of features to be calculated
