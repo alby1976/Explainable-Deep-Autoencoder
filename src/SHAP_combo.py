@@ -115,14 +115,11 @@ def main(model_name, gene_name, gene_id, ae_result, col_mask, save_bar, save_sca
 
 
 def add_shap_arguments(parse):
-    parse.add_argument("-b", "--save_bar", type=Path, required=True,
-                       default=Path(__file__).absolute().parent.parent.joinpath("shap/bar"),
+    parse.add_argument("-b", "--save_bar", type=str, required=True,
                        help='base dir to saved AE models e.g. ./shap/bar')
-    parse.add_argument("--save_scatter", type=Path,
-                       default=Path(__file__).absolute().parent.parent.joinpath("shap/scatter"),
+    parse.add_argument("--save_scatter", type=str, required=True,
                        help='path to save SHAP scatter chart e.g. ./shap/scatter')
-    parse.add_argument("-m", "--gene_model", type=Path,
-                       default=Path(__file__).absolute().parent.parent.joinpath("shap/gene_model"),
+    parse.add_argument("-m", "--gene_model", type=str, required=True,
                        help='path to save gene module e.g. ./shap/gene_model')
     parse.add_argument("-tr", "--top_rate", type=float, default=0.2,
                        help='test set split ratio. default is 0.2')
@@ -131,6 +128,9 @@ def add_shap_arguments(parse):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="calculates the shapey values for the AE model's output")
     add_shap_arguments(parser)
+    parser.add_argument("-sd", "--save_dir", type=Path,
+                        default=Path(__file__).absolute().parent.parent.joinpath("AE"),
+                        help='base dir to saved Shap models e.g. ./AE/shap')
     parser.add_argument("--ae_result", type=Path, required=True,
                         help='path to AutoEncoder results.  e.g. ./AE_199.csv')
     parser.add_argument("--col_mask", type=Path, required=True,
