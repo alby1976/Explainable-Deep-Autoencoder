@@ -31,7 +31,7 @@ class LambdaLayer(nn.Module):
         self.lamb = lamb
 
     def forward(self, x):
-        return self.lam(x)
+        return self.lamb(x)
 
 
 class GPDataSet(Dataset):
