@@ -64,7 +64,7 @@ class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
 
         result = self.split_dataset(x.to_numpy(), self.le.fit_transform(y=y.to_numpy()), val_split, test_split,
                                     random_state, fold)
-        self.gene_names = get_gene_names(ensembl_release=version, gene_list=x.columns.values[self.dm.column_mask])
+        self.gene_names = get_gene_names(ensembl_release=version, gene_list=x.columns.values)
         self.size = len(self.gene_names)
 
         super().__init__(
