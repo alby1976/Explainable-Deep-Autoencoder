@@ -143,7 +143,7 @@ if __name__ == '__main__':
     parser.add_argument("-w", "--num_workers", type=int,
                         help='number of processors used to run in parallel. -1 mean using all processor '
                              'available default is None')
-    parser.add_argument("--fold", type=bool, default=False,
+    parser.add_argument("--fold", action="store_true", default=False,
                         help='selecting this flag causes the x to be transformed to change fold relative to '
                              'row median. default is False')
     parser.add_argument("-ts", "--test_split", type=float, default=0.2,
