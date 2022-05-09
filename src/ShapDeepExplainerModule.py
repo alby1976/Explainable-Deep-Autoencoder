@@ -70,8 +70,7 @@ def create_shap_values(model: AutoGenoShallow, model_name: str, gene_model: Path
     x_train = genes[:100]
 
     batch = next(iter(model.val_dataloader()))
-    genes, _ = batch
-    x_test, _ = model.dataset.val_dataset
+    x_test, _ = batch
 
     gene_names: ndarray = model.gene_names
     top_num: int = int(top_rate * len(gene_names))  # top_rate is the percentage of features to be calculated
