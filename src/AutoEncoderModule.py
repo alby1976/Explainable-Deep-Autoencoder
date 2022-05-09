@@ -12,7 +12,6 @@ import pl_bolts.datamodules
 import pytorch_lightning as pl
 import torch
 import torchmetrics as tm
-from numpy import ndarray
 from pandas import DataFrame, Series
 from pytorch_lightning.utilities.types import EVAL_DATALOADERS, TRAIN_DATALOADERS
 from sklearn.model_selection import train_test_split
@@ -22,7 +21,7 @@ from torch.optim.swa_utils import SWALR
 from torch.utils.data import DataLoader, Dataset
 
 # custom modules
-from CommonTools import get_dict_values_1d, DataNormalization, get_data_phen
+from CommonTools import get_dict_values_1d, DataNormalization, get_data_phen, get_gene_names
 
 
 class LambdaLayer(nn.Module):
@@ -54,7 +53,7 @@ class GPDataSet(Dataset):
 class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
     def __init__(self, x: DataFrame, y: Series, val_split: float, test_split: float,
                  num_workers: int, random_state: int, fold: bool, shuffle: bool, batch_size: int,
-                 pin_memory: bool, drop_last: bool):
+                 pin_memory: bool, drop_last: bool, version: int):
         from sklearn import preprocessing
 
         self.dm = DataNormalization()
@@ -65,9 +64,8 @@ class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
 
         result = self.split_dataset(x.to_numpy(), self.le.fit_transform(y=y.to_numpy()), val_split, test_split,
                                     random_state, fold)
-        dataset = result[0]
-        self.size: int = dataset.shape[1]
-        self.gene_names = x.columns.values[self.dm.column_mask]
+        self.gene_names = get_gene_names(ensembl_release=version, gene_list=x.columns.values[self.dm.column_mask])
+        self.size = len(self.gene_names)
 
         super().__init__(
             result[0],
@@ -207,15 +205,14 @@ class AutoGenoShallow(pl.LightningModule):
 
         # get normalized x quality control
         x, y = get_data_phen(data=data, filter_str=filter_str, path_to_save_qc=transformed_data)
-        self.column_names: ndarray = x.columns.values
-        self.dataset = GPDataModule(
-            x, y, val_split, test_split, num_workers, random_state, fold, shuffle, batch_size, pin_memory, drop_last
-        )
+        self.dataset = GPDataModule(x, y, val_split, test_split, num_workers, random_state, fold, shuffle, batch_size,
+                                    pin_memory, drop_last, version)
         # self.geno: ndarray = get_filtered_data(pd.read_csv(path_to_data, index_col=0), path_to_save_qc).to_numpy()
+
         self.input_features = self.dataset.size
         self.output_features = self.input_features
-        self.smallest_layer = min([smallest_layer, len(self.dataset.train_dataset)])
-        self.hidden_layer = min([2 * self.smallest_layer, len(self.dataset.train_dataset)])
+        self.smallest_layer = min(smallest_layer, self.input_features)
+        self.hidden_layer = min(2 * self.smallest_layer, self.input_features)
 
         print(f"input_features: {self.input_features} hidden_features: {self.hidden_layer} "
               f"smallest_layer: {self.smallest_layer}")
@@ -237,7 +234,7 @@ class AutoGenoShallow(pl.LightningModule):
         #  save gene names and column mask
         name: Path = transformed_data.parent
         name = name.joinpath(f'{data.stem}_column_mask.csv')
-        self.dataset.dm.save_column_mask(name, self.column_names)
+        self.dataset.dm.save_column_mask(name, self.dataset.gene_names)
 
         # def the encoder function
         self.encoder = nn.Sequential(
@@ -245,7 +242,6 @@ class AutoGenoShallow(pl.LightningModule):
             nn.ELU(inplace=True),
             nn.Linear(self.hidden_layer, self.smallest_layer),
             nn.ELU(inplace=True)
-
         )
 
         # def the decoder function

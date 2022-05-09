@@ -59,10 +59,9 @@ class DataNormalization:
         else:
             return DataFrame(self.scaler.transform(X=tmp), columns=self.column_names)
 
-    def save_column_mask(self, file: Path, column_name=None, version: int = 104):
-        gene_names = get_gene_names(ensembl_release=version, gene_list=column_name)
+    def save_column_mask(self, file: Path, column_name=None):
         data = self.column_mask[np.newaxis, :]
-        df = pd.DataFrame(data=data, columns=gene_names)
+        df = pd.DataFrame(data=data, columns=column_name)
         df.to_csv(file)
 
 
@@ -221,7 +220,7 @@ def get_fold_change(x, median, fold: bool) -> Tuple[ndarray, ndarray]:
 
     # fold change respect to  row median if fold is true
     result = np.asarray([x[i, :] - med_exp[i] for i in range(x.shape[0])]) if fold else x
-    return result , med_exp
+    return result, med_exp
 
 
 def filter_data(data: DataFrame, filter_str):
