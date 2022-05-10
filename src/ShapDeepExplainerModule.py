@@ -73,7 +73,8 @@ def create_shap_values(model: AutoGenoShallow, model_name: str, gene_model: Path
     print(f"batch type: {type(batch)} batch size: {len(batch)}\n{batch}\n\n")
     print(f"x_train type: {type(x_train)}\n{x_train}\n\n")
     print(f"x_test type: {type(x_test)} x_test size: {len(x_test)}\n\n")
-    print(f"model type: {type(model)} device: {model.device}\n{model}\n\n{model(*x_train)}\n\n")
+    print(f"model type: {type(model)} device: {model.device}\n{model}\n\n")
+    print(f"model:\n{model(x_train[:2])}\n\n")
     gene_names: ndarray = model.dataset.gene_names[model.dataset.dm.column_mask]
     top_num: int = int(top_rate * len(gene_names))  # top_rate is the percentage of features to be calculated
 
