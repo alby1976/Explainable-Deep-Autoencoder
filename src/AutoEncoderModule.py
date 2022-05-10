@@ -337,7 +337,7 @@ class AutoGenoShallow(pl.LightningModule):
     def test_step(self, batch: Any, batch_idx: int):
         inputs, hidden = batch
         x_pred, hidden_pred = self.forward(inputs)
-        self.hidden_r2score.update(preds=hidden_pred, target=hidden)
+        self.hidden_r2score.update(preds=x_pred, target=inputs)
         self.log("hidden r2:", self.hidden_r2score, on_step=False, on_epoch=True)
 
     # define prediction step
