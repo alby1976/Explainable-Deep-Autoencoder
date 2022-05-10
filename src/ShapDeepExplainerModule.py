@@ -1,8 +1,9 @@
 # python system library
 # 3rd party modules
+import argparse
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import Union, List, Tuple, Any
+from typing import Union, List, Tuple, Any, Dict
 
 import numpy as np
 import pandas as pd
@@ -15,6 +16,7 @@ from pandas import DataFrame
 from torch import nn, Tensor
 
 from AutoEncoderModule import AutoGenoShallow
+from src.SHAP_combo import add_shap_arguments
 
 
 def create_gene_model(model_name: str, gene_model: Path, shap_values, gene_names: ndarray, sample_num: int,
@@ -90,3 +92,38 @@ def create_shap_values(model: AutoGenoShallow, model_name: str, gene_model: Path
         params = ((save_bar, save_scatter, gene_model, model_name, x_test, shap_values, model.gene_names,
                    model.sample_size, top_num, node) for node in shap_values)
         pool.map(lambda x: process_shap_values(*x), params)
+
+
+def main():
+    model = AutoGenoShallow()
+    pass
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description="calculates the shapey values for the AE model's output")
+    add_shap_arguments(parser)
+    parser.add_argument("-sd", "--save_dir", type=Path, required=True,
+                        default=Path(__file__).absolute().parent.parent.joinpath("AE"),
+                        help='base dir to saved Shap models e.g. ./AE/shap')
+    parser.add_argument("--ckpt", type=Path, required=True,
+                        help='path to AutoEncoder checkpoint.  e.g. ckpt/model.ckpt')
+    parser.add_argument("--name", type=str, required=True, help='AE model name')
+    '''
+    parser.add_argument("-w", "--num_workers", type=int,
+                        help='number of processors used to run in parallel. -1 mean using all processor '
+                             'available default is None')
+    parser.add_argument("-ts", "--test_split", type=float, default=0.2,
+                        help='test set split ratio. default is 0.2')
+    parser.add_argument("-rs", "--random_state", type=int, default=42,
+                        help='sets a seed to the random generator, so that your train-val-test splits are '
+                             'always deterministic. default is 42')
+    parser.add_argument("--fold", action="store_true", default=False,
+                        help='selecting this flag causes the x to be transformed to change fold relative to '
+                             'row median. default is False')
+    parser.add_argument("-s", "--shuffle", action='store_true', default=False,
+                        help='when this flag is used the dataset is shuffled before splitting the dataset.')
+    '''
+    args: Dict[str, Any] = vars(parser.parse_args())
+    print(f"args:\n{args}")
+
+    main(**args)
