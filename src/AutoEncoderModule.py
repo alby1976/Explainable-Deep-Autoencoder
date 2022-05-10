@@ -34,7 +34,7 @@ class LambdaLayer(nn.Module):
 
 
 class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
-    def __init__(self, data_dir: Pathx, val_split: float, test_split: float, filter_str: str, transformed_data:Path,
+    def __init__(self, data_dir: Path, val_split: float, test_split: float, filter_str: str, transformed_data:Path,
                  num_workers: int, random_state: int, fold: bool, shuffle: bool, batch_size: int,
                  pin_memory: bool, drop_last: bool, version: int):
         from sklearn import preprocessing
