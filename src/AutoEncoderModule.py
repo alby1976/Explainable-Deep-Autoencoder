@@ -33,40 +33,22 @@ class LambdaLayer(nn.Module):
         return self.lamb(x)
 
 
-class GPDataSet(Dataset):
-    def __init__(self, gp_list):
-        # 'Initialization'
-        self.gp_list = gp_list
-
-    def __len__(self):
-        # 'Denotes the total number of samples'
-        return len(self.gp_list)
-
-    def __getitem__(self, index):
-        # 'Generates one sample of x'
-        # Load x and get label
-        x = self.gp_list[index]
-        x = np.array(x)
-        return x
-
-
 class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
-    def __init__(self, x: DataFrame, y: Series, val_split: float, test_split: float,
+    def __init__(self, data_dir: Pathx, val_split: float, test_split: float, filter_str: str, transformed_data:Path,
                  num_workers: int, random_state: int, fold: bool, shuffle: bool, batch_size: int,
                  pin_memory: bool, drop_last: bool, version: int):
         from sklearn import preprocessing
 
         self.dm = DataNormalization()
         self.le = preprocessing.LabelEncoder()
+
+        x, y = get_data_phen(data=data_dir, filter_str=filter_str, path_to_save_qc=transformed_data)
         self.sample_size = len(x.index)
 
         print(f"unique: {np.unique(y)} size: {np.unique(y).size}", file=sys.stderr, flush=True)
 
         result = self.split_dataset(x.to_numpy(), self.le.fit_transform(y=y.to_numpy()), val_split, test_split,
                                     random_state, fold)
-        self.gene_names = get_gene_names(ensembl_release=version, gene_list=x.columns.values)
-        self.size = len(self.gene_names[self.dm.column_mask])
-
         super().__init__(
             result[0],
             result[1],
@@ -86,6 +68,10 @@ class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
 
         self.predict_dataset = pl_bolts.datamodules.SklearnDataset(X=self.dm.transform(x.to_numpy(), fold),
                                                                    y=self.le.transform(y))
+        self.gene_names = get_gene_names(ensembl_release=version, gene_list=x.columns.values)
+        self.size = len(self.gene_names[self.dm.column_mask])
+
+        self.save_hyperparameters()
 
         '''
         print(f'train x: \n{self.train_dataset} {range(len(self.train_dataset))}\n'
@@ -93,46 +79,6 @@ class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
               f'{self.train_dataset[0]}')
         sys.exit(1)
         '''
-
-    def get_phenotype(self, item):
-        return self.le.inverse_transform(item)
-
-    def split_dataset(self, x, y, val_split: float, test_split: float, random_state: int,
-                      fold: bool) -> Tuple[Any, Any, Any, Any, Any, Any]:
-        holding_split: float = val_split + test_split
-        unique, unique_count = np.unique(y, return_counts=True)
-
-        if unique.size > 1 and np.min(unique_count) > 1:
-            x_train, x_holding, y_train, y_holding = train_test_split(x, y, test_size=holding_split,
-                                                                      random_state=random_state, stratify=y)
-        else:
-            x_train, x_holding, y_train, y_holding = train_test_split(x, y, test_size=holding_split,
-                                                                      random_state=random_state)
-
-        self.dm.fit(x=x_train, fold=fold)
-        if holding_split == val_split:
-            return (
-                self.dm.transform(x_train, fold=fold), y_train,
-                self.dm.transform(x_holding, fold=fold), y_holding,
-                None, None
-            )
-        elif holding_split == test_split:
-            return (
-                self.dm.transform(x_train, fold=fold), y_train,
-                None, None,
-                self.dm.transform(x_holding, fold=fold), y_holding
-            )
-        else:
-            size: float = val_split / holding_split
-            x_val, x_test, y_val, y_test = train_test_split(x_holding, y_holding,
-                                                            train_size=size,
-                                                            shuffle=self.shuffle,
-                                                            random_state=random_state)
-            return (
-                self.dm.transform(x_train, fold=fold), y_train,
-                self.dm.transform(x_val, fold=fold), y_val,
-                self.dm.transform(x_test, fold=fold), y_test
-            )
 
     def train_dataloader(self) -> TRAIN_DATALOADERS:
         print(f'train: batch size: {self.batch_size} shuffle: {self.shuffle} '
@@ -184,6 +130,46 @@ class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
 
         return loader
 
+    def get_phenotype(self, item):
+        return self.le.inverse_transform(item)
+
+    def split_dataset(self, x, y, val_split: float, test_split: float, random_state: int,
+                      fold: bool) -> Tuple[Any, Any, Any, Any, Any, Any]:
+        holding_split: float = val_split + test_split
+        unique, unique_count = np.unique(y, return_counts=True)
+
+        if unique.size > 1 and np.min(unique_count) > 1:
+            x_train, x_holding, y_train, y_holding = train_test_split(x, y, test_size=holding_split,
+                                                                      random_state=random_state, stratify=y)
+        else:
+            x_train, x_holding, y_train, y_holding = train_test_split(x, y, test_size=holding_split,
+                                                                      random_state=random_state)
+
+        self.dm.fit(x=x_train, fold=fold)
+        if holding_split == val_split:
+            return (
+                self.dm.transform(x_train, fold=fold), y_train,
+                self.dm.transform(x_holding, fold=fold), y_holding,
+                None, None
+            )
+        elif holding_split == test_split:
+            return (
+                self.dm.transform(x_train, fold=fold), y_train,
+                None, None,
+                self.dm.transform(x_holding, fold=fold), y_holding
+            )
+        else:
+            size: float = val_split / holding_split
+            x_val, x_test, y_val, y_test = train_test_split(x_holding, y_holding,
+                                                            train_size=size,
+                                                            shuffle=self.shuffle,
+                                                            random_state=random_state)
+            return (
+                self.dm.transform(x_train, fold=fold), y_train,
+                self.dm.transform(x_val, fold=fold), y_val,
+                self.dm.transform(x_test, fold=fold), y_test
+            )
+
     def teardown(self, stage: Optional[str] = None):
         # Used to clean-up when the run is finished
         ...
@@ -204,8 +190,8 @@ class AutoGenoShallow(pl.LightningModule):
         self.verbose = verbose
 
         # get normalized x quality control
-        x, y = get_data_phen(data=data, filter_str=filter_str, path_to_save_qc=transformed_data)
-        self.dataset = GPDataModule(x, y, val_split, test_split, num_workers, random_state, fold, shuffle, batch_size,
+        self.dataset = GPDataModule(data, val_split, test_split, filter_str, transformed_data,
+                                    num_workers, random_state, fold, shuffle, batch_size,
                                     pin_memory, drop_last, version)
         # self.geno: ndarray = get_filtered_data(pd.read_csv(path_to_data, index_col=0), path_to_save_qc).to_numpy()
 

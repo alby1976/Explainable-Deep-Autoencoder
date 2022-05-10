@@ -3,7 +3,7 @@
 import argparse
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import Union, List, Tuple, Any, Dict
+from typing import Union, List, Tuple, Any
 
 import numpy as np
 import pandas as pd
@@ -80,7 +80,7 @@ def create_shap_values(model: AutoGenoShallow, model_name: str, gene_model: Path
     print(f"{x_train}\n\n")
     print(f"model type: {type(model)} device: {model.device}\n{model}\n\n")
     with torch.no_grad():
-        outputs = model(*x_train)
+        outputs = model(x_train[:2])
     print(f"output type:\n{type(outputs)}\n\n")
     gene_names: ndarray = model.dataset.gene_names[model.dataset.dm.column_mask]
     top_num: int = int(top_rate * len(gene_names))  # top_rate is the percentage of features to be calculated
@@ -94,9 +94,11 @@ def create_shap_values(model: AutoGenoShallow, model_name: str, gene_model: Path
         pool.map(lambda x: process_shap_values(*x), params)
 
 
-def main():
-    model = AutoGenoShallow()
-    pass
+def main(ckpt: Path, model_name: str, gene_model: Path, save_bar: Path, save_scatter: Path,
+         top_rate: float = 0.05):
+    # model = AutoGenoShallow()
+    model = AutoGenoShallow.load_from_checkpoint(str(ckpt))
+    create_shap_values(model, model_name, gene_model, save_bar, save_scatter, top_rate)
 
 
 if __name__ == '__main__':
@@ -105,10 +107,9 @@ if __name__ == '__main__':
     parser.add_argument("-sd", "--save_dir", type=Path, required=True,
                         default=Path(__file__).absolute().parent.parent.joinpath("AE"),
                         help='base dir to saved Shap models e.g. ./AE/shap')
-    parser.add_argument("--ckpt", type=Path, required=True,
+    parser.add_argument("--ckpt", type=str, required=True,
                         help='path to AutoEncoder checkpoint.  e.g. ckpt/model.ckpt')
     parser.add_argument("--name", type=str, required=True, help='AE model name')
-    '''
     parser.add_argument("-w", "--num_workers", type=int,
                         help='number of processors used to run in parallel. -1 mean using all processor '
                              'available default is None')
@@ -122,8 +123,9 @@ if __name__ == '__main__':
                              'row median. default is False')
     parser.add_argument("-s", "--shuffle", action='store_true', default=False,
                         help='when this flag is used the dataset is shuffled before splitting the dataset.')
-    '''
-    args: Dict[str, Any] = vars(parser.parse_args())
+
+    args = parser.parse_args()
     print(f"args:\n{args}")
 
-    main(**args)
+    main(args.save_dir.joinpath(args.ckpt), args.name, args.save_dir.joinpath(args.gene_model),
+         args.save_dir.joinpath(args.save_bar), args.save_dir.joinpath(args.save_scatter), args.top_rate)
