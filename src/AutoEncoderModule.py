@@ -12,13 +12,12 @@ import pl_bolts.datamodules
 import pytorch_lightning as pl
 import torch
 import torchmetrics as tm
-from pandas import DataFrame, Series
 from pytorch_lightning.utilities.types import EVAL_DATALOADERS, TRAIN_DATALOADERS
 from sklearn.model_selection import train_test_split
 from torch import nn, Tensor
 from torch.nn import functional as f
 from torch.optim.swa_utils import SWALR
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader
 
 # custom modules
 from CommonTools import get_dict_values_1d, DataNormalization, get_data_phen, get_gene_names
@@ -34,7 +33,7 @@ class LambdaLayer(nn.Module):
 
 
 class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
-    def __init__(self, data_dir: Path, val_split: float, test_split: float, filter_str: str, transformed_data:Path,
+    def __init__(self, data_dir: Path, val_split: float, test_split: float, filter_str: str, transformed_data: Path,
                  num_workers: int, random_state: int, fold: bool, shuffle: bool, batch_size: int,
                  pin_memory: bool, drop_last: bool, version: int):
         from sklearn import preprocessing

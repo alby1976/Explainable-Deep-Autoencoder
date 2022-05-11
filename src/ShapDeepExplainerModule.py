@@ -9,6 +9,7 @@ from torch import nn, Tensor
 
 from AutoEncoderModule import AutoGenoShallow
 from SHAP_combo import *
+from CommonTools import *
 
 
 def create_gene_model(model_name: str, gene_model: Path, shap_values, gene_names: ndarray, sample_num: int,
@@ -59,20 +60,24 @@ def create_shap_values(model: AutoGenoShallow, model_name: str, gene_model: Path
 
     # setup
     model.decoder = nn.Identity()
-    model = model.cuda() if torch.cuda.is_available() else model.cpu()
-    batch = next(iter(model.train_dataloader()))
-    genes, _ = batch.cuda() if torch.cuda.is_available() else batch.cpu()
-    x_train: Tensor = genes[:100]
+    model = model.to(get_device())
 
-    x_test: Tensor = torch.cat([batch[0] for batch in model.val_dataloader()])
+    print(f"model type: {type(model)} device: {model.device}\n{model}\n\n")
+
+    batch = next(iter(model.train_dataloader()))
+    genes, _ = batch
 
     print(f"batch type: {type(batch)} batch size: {len(batch)}\n{batch}\n\n")
+
+    x_train: Tensor = genes[:100]
+    x_train = x_train.to(get_device())
     try:
         print(f"x_train type: {type(x_train)} device; cuda:{x_train.get_device()}")
     except RuntimeError:
         print(f"x_train type: {type(x_train)} device; cpu")
     print(f"{x_train}\n\n")
-    print(f"model type: {type(model)} device: {model.device}\n{model}\n\n")
+
+    x_test: Tensor = torch.cat([batch[0] for batch in model.val_dataloader()])
     try:
         print(f"x_train type: {type(x_test)} device; cuda:{x_test.get_device()}")
     except RuntimeError:
@@ -81,6 +86,7 @@ def create_shap_values(model: AutoGenoShallow, model_name: str, gene_model: Path
     print(f"model type: {type(model)} device: {model.device}\n{model}\n\n")
     with torch.no_grad():
         outputs = model(x_train[:2])
+
     print(f"output type:\n{type(outputs)}\n{outputs}\n\n")
     gene_names: ndarray = model.dataset.gene_names[model.dataset.dm.column_mask]
     top_num: int = int(top_rate * len(gene_names))  # top_rate is the percentage of features to be calculated
