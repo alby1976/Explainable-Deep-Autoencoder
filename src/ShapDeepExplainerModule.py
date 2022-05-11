@@ -59,6 +59,7 @@ def create_shap_values(model: AutoGenoShallow, model_name: str, gene_model: Path
 
     # setup
     model.decoder = nn.Identity()
+    model = model.cuda() if torch.cuda.is_available() else model.cpu()
     batch = next(iter(model.train_dataloader()))
     genes, _ = batch
     x_train: Tensor = genes[:100]
