@@ -239,6 +239,9 @@ class AutoGenoShallow(pl.LightningModule):
 
     # define forward function
     def forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
+        return self.decoder(self.encoder(x))
+
+    def reg_forward(self, x:Tensor) -> Tuple[Tensor, Tensor]:
         y: Tensor = self.encoder(x)
         x = self.decoder(y)
         return x, y
@@ -247,7 +250,7 @@ class AutoGenoShallow(pl.LightningModule):
     def training_step(self, batch, batch_idx) -> Dict[str, Tensor]:
         output: Tensor
         x: Tensor = batch[0]
-        output, _ = self.forward(x)
+        output, _ = self.reg_forward(x)
         self.training_r2score_node.update(preds=output, target=x)
         loss: Tensor = f.mse_loss(input=output, target=x)
         # return {'model': coder, 'loss': loss, 'r2_node': r2_node, 'input': x, 'output': output}
@@ -291,7 +294,7 @@ class AutoGenoShallow(pl.LightningModule):
     # define validation step
     def validation_step(self, batch, batch_idx) -> Dict[str, Tensor]:
         x = batch[0]
-        output, _ = self.forward(x)
+        output, _ = self.reg_forward(x)
 
         self.testing_r2score_node.update(preds=output, target=x)
         loss = f.mse_loss(input=output, target=x)
@@ -321,14 +324,14 @@ class AutoGenoShallow(pl.LightningModule):
     # define testing step
     def test_step(self, batch: Any, batch_idx: int):
         inputs, hidden = batch
-        x_pred, hidden_pred = self.forward(inputs)
+        x_pred, hidden_pred = self.reg_forward(inputs)
         self.hidden_r2score.update(preds=x_pred, target=inputs)
         self.log("hidden r2:", self.hidden_r2score, on_step=False, on_epoch=True)
 
     # define prediction step
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: Optional[int] = None) -> Any:
         x, _ = batch
-        _, hidden = self.forward(x)
+        _, hidden = self.reg_forward(x)
 
         return hidden
 
