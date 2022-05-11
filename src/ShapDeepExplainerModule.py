@@ -16,8 +16,7 @@ from pandas import DataFrame
 from torch import nn, Tensor
 
 from AutoEncoderModule import AutoGenoShallow
-#from SHAP_combo import add_shap_arguments
-from src.SHAP_combo import add_shap_arguments
+from SHAP_combo import add_shap_arguments
 
 
 def create_gene_model(model_name: str, gene_model: Path, shap_values, gene_names: ndarray, sample_num: int,
@@ -104,7 +103,7 @@ def main(ckpt: Path, model_name: str, gene_model: Path, save_bar: Path, save_sca
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="calculates the shapey values for the AE model's output")
-    # add_shap_arguments(parser)
+    add_shap_arguments(parser)
     parser.add_argument("-sd", "--save_dir", type=Path, required=True,
                         default=Path(__file__).absolute().parent.parent.joinpath("AE"),
                         help='base dir to saved Shap models e.g. ./AE/shap')
