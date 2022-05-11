@@ -1,22 +1,14 @@
 # python system library
 # 3rd party modules
-import argparse
 from concurrent.futures import ThreadPoolExecutor
-from pathlib import Path
-from typing import Union, List, Tuple, Any
+from typing import Union, List
 
-import numpy as np
-import pandas as pd
-import shap
 import torch
-import wandb
 from matplotlib import pyplot as plt
-from numpy import ndarray
-from pandas import DataFrame
 from torch import nn, Tensor
 
 from AutoEncoderModule import AutoGenoShallow
-from SHAP_combo import add_shap_arguments
+from SHAP_combo import *
 
 
 def create_gene_model(model_name: str, gene_model: Path, shap_values, gene_names: ndarray, sample_num: int,
