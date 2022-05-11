@@ -16,7 +16,7 @@ from pandas import DataFrame
 from torch import nn, Tensor
 
 from AutoEncoderModule import AutoGenoShallow
-from src.SHAP_combo import add_shap_arguments
+from SHAP_combo import add_shap_arguments
 
 
 def create_gene_model(model_name: str, gene_model: Path, shap_values, gene_names: ndarray, sample_num: int,
