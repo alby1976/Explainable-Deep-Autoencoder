@@ -241,7 +241,7 @@ class AutoGenoShallow(pl.LightningModule):
     def forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
         return self.decoder(self.encoder(x))
 
-    def reg_forward(self, x:Tensor) -> Tuple[Tensor, Tensor]:
+    def reg_forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
         y: Tensor = self.encoder(x)
         x = self.decoder(y)
         return x, y
