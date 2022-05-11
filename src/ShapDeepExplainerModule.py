@@ -61,16 +61,23 @@ def create_shap_values(model: AutoGenoShallow, model_name: str, gene_model: Path
     model.decoder = nn.Identity()
     model = model.cuda() if torch.cuda.is_available() else model.cpu()
     batch = next(iter(model.train_dataloader()))
-    genes, _ = batch
+    genes, _ = batch.cuda() if torch.cuda.is_available() else batch.cpu()
     x_train: Tensor = genes[:100]
 
     x_test: Tensor = torch.cat([batch[0] for batch in model.val_dataloader()])
+
     print(f"batch type: {type(batch)} batch size: {len(batch)}\n{batch}\n\n")
     try:
         print(f"x_train type: {type(x_train)} device; cuda:{x_train.get_device()}")
     except RuntimeError:
         print(f"x_train type: {type(x_train)} device; cpu")
     print(f"{x_train}\n\n")
+    print(f"model type: {type(model)} device: {model.device}\n{model}\n\n")
+    try:
+        print(f"x_train type: {type(x_test)} device; cuda:{x_test.get_device()}")
+    except RuntimeError:
+        print(f"x_train type: {type(x_test)} device; cpu")
+    print(f"{x_test}\n\n")
     print(f"model type: {type(model)} device: {model.device}\n{model}\n\n")
     with torch.no_grad():
         outputs = model(x_train[:2])
