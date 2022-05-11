@@ -73,7 +73,7 @@ def create_shap_values(model: AutoGenoShallow, model_name: str, gene_model: Path
     print(f"model type: {type(model)} device: {model.device}\n{model}\n\n")
     with torch.no_grad():
         outputs = model(x_train[:2])
-    print(f"output type:\n{type(outputs)}\n\n")
+    print(f"output type:\n{type(outputs)}\n{outputs}\n\n")
     gene_names: ndarray = model.dataset.gene_names[model.dataset.dm.column_mask]
     top_num: int = int(top_rate * len(gene_names))  # top_rate is the percentage of features to be calculated
 
