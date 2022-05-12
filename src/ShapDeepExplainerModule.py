@@ -5,7 +5,7 @@ from concurrent.futures import ThreadPoolExecutor
 from matplotlib import pyplot as plt
 from torch import nn
 
-from AutoEncoderModule import AutoGenoShallow, LambdaLayer
+from AutoEncoderModule import AutoGenoShallow
 from SHAP_combo import *
 from CommonTools import *
 
@@ -57,7 +57,7 @@ def create_shap_values(model: AutoGenoShallow, model_name: str, gene_model: Path
         ndarray, List[ndarray], Tuple[List[Union[ndarray, List[ndarray]]], Any], List[Union[ndarray, List[ndarray]]]]
 
     # setup
-    model.decoder = nn.Indentity()
+    model.decoder = nn.Identity()
     model = model.to(get_device())
 
     print(f"model type: {type(model)} device: {model.device}\n{model}\n\n")
