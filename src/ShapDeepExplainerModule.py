@@ -1,6 +1,6 @@
 # python system library
 # 3rd party modules
-from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
+from concurrent.futures import ThreadPoolExecutor
 from itertools import repeat
 
 from matplotlib import pyplot as plt
@@ -96,10 +96,10 @@ def create_shap_values(model: AutoGenoShallow, model_name: str, gene_model: Path
     explainer = shap.DeepExplainer(model, x_train)
     shap_values = explainer.shap_values(x_test, top_num, "max")  # shap_values contains values for all nodes
     x_test = x_test.detach().cpu().numpy()
-    with ProcessPoolExecutor(max_workers=num_workers) as pool:
+    with ThreadPoolExecutor(max_workers=num_workers) as pool:
         params = (save_bar, save_scatter, gene_model, model_name, x_test, shap_values, gene_names,
                   sample_size, top_num)
-        print(f"calling with : {params}")
+        print(f"calling with:\n{params}\n\nshap_values:\n{shap_values}\n")
         pool.map(process_shap_values, repeat(params), shap_values)
 
 
