@@ -3,7 +3,6 @@
 from concurrent.futures import ThreadPoolExecutor
 
 from matplotlib import pyplot as plt
-from torch import nn
 
 from AutoEncoderModule import AutoGenoShallow, LambdaLayer
 from SHAP_combo import *
@@ -76,6 +75,8 @@ def create_shap_values(model: AutoGenoShallow, model_name: str, gene_model: Path
     print(f"{x_train}\n\n")
 
     x_test: Tensor = torch.cat([batch[0] for batch in model.val_dataloader()])
+    x_test = x_test.to(get_device())
+
     try:
         print(f"x_train type: {type(x_test)} device; cuda:{x_test.get_device()}")
     except RuntimeError:
@@ -87,6 +88,7 @@ def create_shap_values(model: AutoGenoShallow, model_name: str, gene_model: Path
 
     print(f"output type:\n{type(outputs)}\n{outputs}\n\n")
     gene_names: ndarray = model.dataset.gene_names[model.dataset.dm.column_mask]
+    sample_size = x_test.size(dim=1)
     top_num: int = int(top_rate * len(gene_names))  # top_rate is the percentage of features to be calculated
 
     explainer = shap.DeepExplainer(model, x_train)
@@ -94,7 +96,7 @@ def create_shap_values(model: AutoGenoShallow, model_name: str, gene_model: Path
     x_test = x_test.detach().cpu().numpy()
     with ThreadPoolExecutor(max_workers=8) as pool:
         params = ((save_bar, save_scatter, gene_model, model_name, x_test, shap_values, gene_names,
-                   model.sample_size, top_num, node) for node in shap_values)
+                   sample_size, top_num, node) for node in shap_values)
         pool.map(lambda x: process_shap_values(*x), params)
 
 
