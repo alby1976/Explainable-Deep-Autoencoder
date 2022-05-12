@@ -96,7 +96,7 @@ def create_shap_values(model: AutoGenoShallow, model_name: str, gene_model: Path
     top_num: int = int(top_rate * len(gene_names))  # top_rate is the percentage of features to be calculated
 
     explainer = shap.DeepExplainer(model, x_train)
-    shap_values = explainer.shap_values(x_test, top_num, "max")  # shap_values contains values for all nodes
+    shap_values, top_index = explainer.shap_values(x_test, top_num, "max")  # shap_values contains values for all nodes
     x_test = x_test.detach().cpu().numpy()
     with ThreadPoolExecutor(max_workers=num_workers) as pool:
         params = (save_bar, save_scatter, gene_model, model_name, x_test, shap_values, gene_names,
