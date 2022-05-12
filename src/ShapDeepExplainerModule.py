@@ -107,7 +107,7 @@ def main(ckpt: Path, model_name: str, gene_model: Path, save_bar: Path, save_sca
          top_rate: float = 0.05, num_workers: int = 8):
     # model = AutoGenoShallow()
     model = AutoGenoShallow.load_from_checkpoint(str(ckpt))
-    create_shap_values(model, model_name, gene_model, save_bar, save_scatter, top_rate, num_worker=num_workers)
+    create_shap_values(model, model_name, gene_model, save_bar, save_scatter, top_rate, num_workers=num_workers)
 
 
 if __name__ == '__main__':
