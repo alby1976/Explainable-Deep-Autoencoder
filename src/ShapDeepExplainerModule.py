@@ -95,7 +95,7 @@ def create_shap_values(model: AutoGenoShallow, model_name: str, gene_model: Path
     shap_values = explainer.shap_values(x_test, top_num, "max")  # shap_values contains values for all nodes
     x_test = x_test.detach().cpu().numpy()
     with ThreadPoolExecutor(max_workers=8) as pool:
-        params = ((save_bar, save_scatter, gene_model, model_name, x_test, shap_values, model.gene_names,
+        params = ((save_bar, save_scatter, gene_model, model_name, x_test, shap_values, gene_names,
                    model.sample_size, top_num, node) for node in shap_values)
         pool.map(lambda x: process_shap_values(*x), params)
 
