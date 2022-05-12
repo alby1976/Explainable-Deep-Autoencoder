@@ -6,7 +6,7 @@ from itertools import repeat
 from matplotlib import pyplot as plt
 from torch import nn
 
-from AutoEncoderModule import AutoGenoShallow
+from AutoEncoderModule import AutoGenoShallow, GPDataModule
 from SHAP_combo import *
 from CommonTools import *
 
@@ -43,6 +43,8 @@ def plot_shap_values(model_name: str, node: int, values, x_test: Union[ndarray, 
 
 def process_shap_values(save_bar: Path, save_scatter: Path, gene_model: Path, model_name: str, x_test, shap_values,
                         gene_names, sample_num, top_num, node):
+    print(f"save_bar: {save_bar}\nsave_scatter: {save_scatter}\ngene_model: {gene_model}\nmodel_name: {model_name}\n"
+          f"x_test:\n{x_test}\nshap_values:\n{shap_values}\ngene_names:{gene_names}\n")
     # save shap_gene_model
     create_gene_model(model_name, gene_model, shap_values, gene_names, sample_num, top_num, node)
 
@@ -99,8 +101,8 @@ def create_shap_values(model: AutoGenoShallow, model_name: str, gene_model: Path
     with ThreadPoolExecutor(max_workers=num_workers) as pool:
         params = (save_bar, save_scatter, gene_model, model_name, x_test, shap_values, gene_names,
                   sample_size, top_num)
-        print(f"calling with:\n{params}\n\nshap_values:\n{shap_values}\n")
-        pool.map(process_shap_values, repeat(params), shap_values)
+        print(f"calling with {range(shap_values.shape[0])}")
+        pool.map(process_shap_values, repeat(params), range(shap_values.shape[0]))
 
 
 def main(ckpt: Path, model_name: str, gene_model: Path, save_bar: Path, save_scatter: Path,
@@ -116,13 +118,16 @@ if __name__ == '__main__':
     parser.add_argument("-sd", "--save_dir", type=Path, required=True,
                         default=Path(__file__).absolute().parent.parent.joinpath("AE"),
                         help='base dir to saved Shap models e.g. ./AE/shap')
+    parser.add_argument("--data", type=Path,
+                        default=Path(__file__).absolute().parent.parent.joinpath("data_example.csv"),
+                        help='original datafile e.g. ./data_example.csv')
     parser.add_argument("--ckpt", type=str, required=True,
                         help='path to AutoEncoder checkpoint.  e.g. ckpt/model.ckpt')
     parser.add_argument("--name", type=str, required=True, help='AE model name')
     parser.add_argument("-w", "--num_workers", type=int,
                         help='number of processors used to run in parallel. -1 mean using all processor '
                              'available default is None')
-    parser.add_argument("-ts", "--test_split", type=float, default=0.2,
+    parser.add_argument("-vs", "--val_split", type=float, default=0.2,
                         help='test set split ratio. default is 0.2')
     parser.add_argument("-rs", "--random_state", type=int, default=42,
                         help='sets a seed to the random generator, so that your train-val-test splits are '
@@ -132,10 +137,18 @@ if __name__ == '__main__':
                              'row median. default is False')
     parser.add_argument("-s", "--shuffle", action='store_true', default=False,
                         help='when this flag is used the dataset is shuffled before splitting the dataset.')
+    parser.add_argument("-f", "--filter_str", nargs="*",
+                        help='filter string(s) to select which rows are processed. default: \'\'')
 
     args = parser.parse_args()
     print(f"args:\n{args}")
 
+    '''
+    data = GPDataModule(data_dir=args.data, val_split=args.val_split, filter_str=args.filter_str)
+    main(args.save_dir.joinpath(args.ckpt), args.name, data, args.save_dir.joinpath(args.gene_model),
+         args.save_dir.joinpath(args.save_bar), args.save_dir.joinpath(args.save_scatter),
+         args.top_rate, args.num_workers)
+    '''
     main(args.save_dir.joinpath(args.ckpt), args.name, args.save_dir.joinpath(args.gene_model),
          args.save_dir.joinpath(args.save_bar), args.save_dir.joinpath(args.save_scatter),
          args.top_rate, args.num_workers)
