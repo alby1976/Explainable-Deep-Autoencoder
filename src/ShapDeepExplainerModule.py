@@ -4,9 +4,8 @@ from concurrent.futures import ThreadPoolExecutor
 from itertools import repeat
 
 from matplotlib import pyplot as plt
-from torch import nn
 
-from AutoEncoderModule import AutoGenoShallow, GPDataModule
+from AutoEncoderModule import AutoGenoShallow
 from SHAP_combo import *
 from CommonTools import *
 
@@ -97,9 +96,11 @@ def create_shap_values(model: AutoGenoShallow, model_name: str, gene_model: Path
 
     explainer = shap.DeepExplainer(model, x_train)
     shap_values, top_index = explainer.shap_values(x_test, top_num, "max")  # shap_values contains values for all nodes
-    gene_table = wandb.Table(columns=range(len(gene_names)), data=gene_names)
-    my_table = wandb.Table(columns=range(top_num), data=shap_values),
-    my_index_table = wandb.Table(columns=range(top_num), data=top_index)
+    col = [x for x in range(len(gene_names))]
+    gene_table = wandb.Table(columns=col, data=gene_names)
+    col = [x for x in range(top_num)]
+    my_table = wandb.Table(columns=col, data=shap_values),
+    my_index_table = wandb.Table(columns=col, data=top_index)
     wandb.log({"top num of features": top_num,
                "sample size": sample_size,
                "input features": len(gene_names),
