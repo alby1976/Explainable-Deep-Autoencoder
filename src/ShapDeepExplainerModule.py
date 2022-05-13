@@ -107,7 +107,7 @@ def create_shap_values(model: AutoGenoShallow, model_name: str, gene_model: Path
                "top index": top_index.size()})
 
     for i in range(shap_values.shape[0]):
-        wandb.log({"Shap Value - Node {i}": wandb.Table(dataframe=pd.DataFrame(data=shap_values[i],
+        wandb.log({f"Shap Value - Node {i}": wandb.Table(dataframe=pd.DataFrame(data=shap_values[i],
                                                                                columns=gene_names))})
         # "Shap Top Index - Node {i}":
         # wandb.Table(dataframe=pd.DataFrame(data=top_index[i].detach().cpu().numpy()))})
