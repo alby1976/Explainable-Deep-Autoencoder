@@ -2,6 +2,7 @@
 # 3rd party modules
 from concurrent.futures import ThreadPoolExecutor
 
+import pandas as pd
 from matplotlib import pyplot as plt
 
 from AutoEncoderModule import AutoGenoShallow
@@ -106,6 +107,10 @@ def create_shap_values(model: AutoGenoShallow, model_name: str, gene_model: Path
                "shap_values": shap_values.shape,
                "top index": top_index.size()})
 
+    shap_table = {f"Shap Value Node{i}": wandb.Table(dataframe=pd.DataFrame(data=node, columns=gene_names))
+                  for i, node in enumerate(shap_values)}
+    top_table = {f"Top Shap Value rows{i}": wandb.Table(dataframe=pd.DataFrame(data=row))
+                 for i, row in enumerate(top_index)}
     for i in range(shap_values.shape[0]):
         wandb.log({f"Shap Value - Node {i}": wandb.Table(dataframe=pd.DataFrame(data=shap_values[i],
                                                                                 columns=gene_names))})
