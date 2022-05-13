@@ -3,6 +3,7 @@
 from concurrent.futures import ThreadPoolExecutor
 from itertools import repeat
 
+import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 
@@ -99,13 +100,14 @@ def create_shap_values(model: AutoGenoShallow, model_name: str, gene_model: Path
 
     explainer = shap.DeepExplainer(model, x_train)
     shap_values, top_index = explainer.shap_values(x_test, top_num, "max")  # shap_values contains values for all nodes
+    shap_values = np.asarray(shap_values)
     df = pd.DataFrame(data=gene_names)
     gene_table = wandb.Table(dataframe=pd.DataFrame(data=gene_names))
     wandb.log({"top num of features": top_num,
                "sample size": sample_size,
                "input features": len(gene_names),
                "gene name index": gene_table,
-               "shap_values": shap_values.shape,
+               "shap_values": shap_values.shape(),
                "top index": top_index.size()})
 
     for i in range(shap_values.shape[0]):
