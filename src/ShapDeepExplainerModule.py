@@ -111,7 +111,7 @@ def create_shap_values(model: AutoGenoShallow, model_name: str, gene_model: Path
     top_index = np.swapaxes(top_index,0, 1)
     shap_table = {f"Shap Value Node{i}": wandb.Table(dataframe=pd.DataFrame(data=node, columns=gene_names))
                   for i, node in enumerate(shap_values)}
-    top_table = {f"Top Shap Value rows{i}": wandb.Table(dataframe=pd.DataFrame(data=row))
+    top_table = {f"Top Shap Value rows{i}": wandb.Table(dataframe=pd.DataFrame(data=row.detach().cpu().numpy()))
                  for i, row in enumerate(top_index)}
     wandb.log(shap_table)
     wandb.log(top_table)
