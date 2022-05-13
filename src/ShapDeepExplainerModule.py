@@ -100,23 +100,24 @@ def create_shap_values(model: AutoGenoShallow, model_name: str, gene_model: Path
     explainer = shap.DeepExplainer(model, x_train)
     shap_values, top_index = explainer.shap_values(x_test, top_num, "max")  # shap_values contains values for all nodes
     df = pd.DataFrame(data=gene_names)
-    gene_table = wandb.Table(dataframe=df)
-    df = pd.DataFrame(data=shap_values)
-    my_table = wandb.Table(dataframe=df),
-    df = pd.DataFrame(data=top_index)
-    my_index_table = wandb.Table(dataframe=df)
+    gene_table = wandb.Table(dataframe=pd.DataFrame(data=gene_names))
     wandb.log({"top num of features": top_num,
                "sample size": sample_size,
                "input features": len(gene_names),
                "gene name index": gene_table,
-               "shap_values": my_table,
-               "top index": my_index_table})
+               "shap_values": shap_values.shape,
+               "top index": top_index.size()})
+
+    for i in range(shap_values.shape[0]):
+        wandb.log({"Shap Value - Node {i}":
+                   wandb.Table(dataframe=pd.DataFrame(data=shap_values[i], columns=gene_names)),
+                   "Shap Top Index - Node {i}":
+                   wandb.Table(dataframe=pd.Dataframe(data=top_index[i]))})
     x_test = x_test.detach().cpu().numpy()
     with ThreadPoolExecutor(max_workers=num_workers) as pool:
-        params = (save_bar, save_scatter, gene_model, model_name, x_test, shap_values, gene_names,
-                  sample_size, top_num)
-        print(f"calling {[x for x in range(len(shap_values))]} times with sample_size: {sample_size}")
-        pool.map(process_shap_values, repeat(params), range(len(shap_values)))
+        params = ((save_bar, save_scatter, gene_model, model_name, x_test, shap_values[node], gene_names,
+                   sample_size, top_num, node) for node in shap_values.shape[0])
+        pool.map(lambda p: process_shap_values(*p), params)
 
 
 def main(ckpt: Path, model_name: str, gene_model: Path, save_bar: Path, save_scatter: Path,
