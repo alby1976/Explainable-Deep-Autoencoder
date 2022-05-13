@@ -102,7 +102,7 @@ def create_shap_values(model: AutoGenoShallow, model_name: str, gene_model: Path
         params = (save_bar, save_scatter, gene_model, model_name, x_test, shap_values, gene_names,
                   sample_size, top_num)
         print(f"calling {range(len(shap_values))} times with sample_size: {sample_size}")
-        pool.map(process_shap_values, repeat(params), range(shap_values.shape[0]))
+        pool.map(process_shap_values, repeat(params), range(len(shap_values)))
 
 
 def main(ckpt: Path, model_name: str, gene_model: Path, save_bar: Path, save_scatter: Path,
