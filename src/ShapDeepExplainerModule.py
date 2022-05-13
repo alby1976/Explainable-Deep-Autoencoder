@@ -97,6 +97,15 @@ def create_shap_values(model: AutoGenoShallow, model_name: str, gene_model: Path
 
     explainer = shap.DeepExplainer(model, x_train)
     shap_values, top_index = explainer.shap_values(x_test, top_num, "max")  # shap_values contains values for all nodes
+    gene_table = wandb.Table(columns=range(len(gene_names)), data=gene_names)
+    my_table = wandb.Table(columns=range(top_num), data=shap_values),
+    my_index_table = wandb.Table(columns=range(top_num), data=top_index)
+    wandb.log({"top num of features": top_num,
+               "sample size": sample_size,
+               "input features": len(gene_names),
+               "gene name index": gene_table,
+               "shap_values": my_table,
+               "top index": my_index_table})
     x_test = x_test.detach().cpu().numpy()
     with ThreadPoolExecutor(max_workers=num_workers) as pool:
         params = (save_bar, save_scatter, gene_model, model_name, x_test, shap_values, gene_names,
@@ -108,8 +117,13 @@ def create_shap_values(model: AutoGenoShallow, model_name: str, gene_model: Path
 def main(ckpt: Path, model_name: str, gene_model: Path, save_bar: Path, save_scatter: Path,
          top_rate: float = 0.05, num_workers: int = 8):
     # model = AutoGenoShallow()
-    model = AutoGenoShallow.load_from_checkpoint(str(ckpt))
-    create_shap_values(model, model_name, gene_model, save_bar, save_scatter, top_rate, num_workers=num_workers)
+    with wandb.init(name=model_name, project="XAE4Exp"):
+        # wandb configuration
+        wandb.config.update = {"architecture": platform.platform(),
+                               "Note": f"Using DeepExplainer top {top_rate} of input features are explained"}
+
+        model = AutoGenoShallow.load_from_checkpoint(str(ckpt))
+        create_shap_values(model, model_name, gene_model, save_bar, save_scatter, top_rate, num_workers=num_workers)
 
 
 if __name__ == '__main__':
