@@ -104,7 +104,7 @@ def create_shap_values(model: AutoGenoShallow, model_name: str, gene_model: Path
     wandb.log({"top num of features": top_num,
                "sample size": sample_size,
                "input features": len(gene_names),
-               "gene name index": gene_table,
+               # "gene name index": gene_table,
                "shap_values": my_table,
                "top index": my_index_table})
     x_test = x_test.detach().cpu().numpy()
