@@ -121,6 +121,7 @@ def main(args):
 
     create_shap_values(model, args.name + "_Shap", args.save_dir.joinpath(args.gene_model),
                        args.save_dir.joinpath(args.save_bar), args.save_dir.joinpath(args.save_scatter), args.top_rate)
+    wandb.finish()
 
 
 if __name__ == '__main__':

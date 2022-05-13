@@ -101,7 +101,7 @@ def create_shap_values(model: AutoGenoShallow, model_name: str, gene_model: Path
     with ThreadPoolExecutor(max_workers=num_workers) as pool:
         params = (save_bar, save_scatter, gene_model, model_name, x_test, shap_values, gene_names,
                   sample_size, top_num)
-        print(f"calling {range(shap_values.shape[0])} times")
+        print(f"calling {range(len(shap_values))} times with sample_size: {sample_size}")
         pool.map(process_shap_values, repeat(params), range(shap_values.shape[0]))
 
 
@@ -118,27 +118,12 @@ if __name__ == '__main__':
     parser.add_argument("-sd", "--save_dir", type=Path, required=True,
                         default=Path(__file__).absolute().parent.parent.joinpath("AE"),
                         help='base dir to saved Shap models e.g. ./AE/shap')
-    parser.add_argument("--data", type=Path,
-                        default=Path(__file__).absolute().parent.parent.joinpath("data_example.csv"),
-                        help='original datafile e.g. ./data_example.csv')
     parser.add_argument("--ckpt", type=str, required=True,
                         help='path to AutoEncoder checkpoint.  e.g. ckpt/model.ckpt')
     parser.add_argument("--name", type=str, required=True, help='AE model name')
-    parser.add_argument("-w", "--num_workers", type=int,
+    parser.add_argument("-w", "--num_workers", type=int, default=1,
                         help='number of processors used to run in parallel. -1 mean using all processor '
                              'available default is None')
-    parser.add_argument("-vs", "--val_split", type=float, default=0.2,
-                        help='test set split ratio. default is 0.2')
-    parser.add_argument("-rs", "--random_state", type=int, default=42,
-                        help='sets a seed to the random generator, so that your train-val-test splits are '
-                             'always deterministic. default is 42')
-    parser.add_argument("--fold", action="store_true", default=False,
-                        help='selecting this flag causes the x to be transformed to change fold relative to '
-                             'row median. default is False')
-    parser.add_argument("-s", "--shuffle", action='store_true', default=False,
-                        help='when this flag is used the dataset is shuffled before splitting the dataset.')
-    parser.add_argument("-f", "--filter_str", nargs="*",
-                        help='filter string(s) to select which rows are processed. default: \'\'')
 
     args = parser.parse_args()
     print(f"args:\n{args}")
