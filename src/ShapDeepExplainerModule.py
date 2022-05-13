@@ -100,6 +100,7 @@ def create_shap_values(model: AutoGenoShallow, model_name: str, gene_model: Path
     explainer = shap.DeepExplainer(model, x_train)
     shap_values, top_index = explainer.shap_values(x_test, top_num, "max")  # shap_values contains values for all nodes
     shap_values = np.asarray(shap_values)
+    top_index = np.swapaxes(top_index,0, 1)
     gene_table = wandb.Table(dataframe=pd.DataFrame(data=gene_names))
     wandb.log({"top num of features": top_num,
                "sample size": x_test.size(dim=0),
@@ -108,7 +109,6 @@ def create_shap_values(model: AutoGenoShallow, model_name: str, gene_model: Path
                "shap_values": shap_values.shape,
                "top index": top_index.size()})
 
-    top_index = np.swapaxes(top_index,0, 1)
     shap_table = {f"Shap Value Node{i}": wandb.Table(dataframe=pd.DataFrame(data=node, columns=gene_names))
                   for i, node in enumerate(shap_values)}
     top_table = {f"Top Shap Value rows{i}": wandb.Table(dataframe=pd.DataFrame(data=row.detach().cpu().numpy()))
@@ -120,6 +120,8 @@ def create_shap_values(model: AutoGenoShallow, model_name: str, gene_model: Path
     with ThreadPoolExecutor(max_workers=num_workers) as pool:
         params = ((save_bar, save_scatter, gene_model, model_name, x_test, shap_value, gene_names,
                    sample_size, top_num, node) for node, shap_value in enumerate(shap_values))
+        print(f"params:\n{params}\n\n")
+        print(f"index:\n{top_index}\n\n")
         pool.map(lambda p: process_shap_values(*p), params)
 
 
