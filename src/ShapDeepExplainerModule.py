@@ -114,7 +114,7 @@ def create_shap_values(model: AutoGenoShallow, model_name: str, gene_model: Path
         wandb.log({"Shap Value - Node {i}":
                    wandb.Table(dataframe=pd.DataFrame(data=shap_values[i], columns=gene_names)),
                    "Shap Top Index - Node {i}":
-                   wandb.Table(dataframe=pd.Dataframe(data=top_index[i]))})
+                   wandb.Table(dataframe=pd.DataFrame(data=top_index[i]))})
     x_test = x_test.detach().cpu().numpy()
     with ThreadPoolExecutor(max_workers=num_workers) as pool:
         params = ((save_bar, save_scatter, gene_model, model_name, x_test, shap_values[node], gene_names,
