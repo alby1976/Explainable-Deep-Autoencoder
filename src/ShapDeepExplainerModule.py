@@ -111,7 +111,7 @@ def create_shap_values(model: AutoGenoShallow, model_name: str, gene_model: Path
     with ThreadPoolExecutor(max_workers=num_workers) as pool:
         params = (save_bar, save_scatter, gene_model, model_name, x_test, shap_values, gene_names,
                   sample_size, top_num)
-        print(f"calling {range(len(shap_values))} times with sample_size: {sample_size}")
+        print(f"calling {[x for x in range(len(shap_values))]} times with sample_size: {sample_size}")
         pool.map(process_shap_values, repeat(params), range(len(shap_values)))
 
 
