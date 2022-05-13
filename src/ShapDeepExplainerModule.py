@@ -3,6 +3,7 @@
 from concurrent.futures import ThreadPoolExecutor
 from itertools import repeat
 
+import pandas as pd
 from matplotlib import pyplot as plt
 
 from AutoEncoderModule import AutoGenoShallow
@@ -90,21 +91,24 @@ def create_shap_values(model: AutoGenoShallow, model_name: str, gene_model: Path
         outputs = model(x_train[:2])
 
     print(f"output type:\n{type(outputs)}\n{outputs}\n\n")
+
+    print(f"gene_names")
     gene_names: ndarray = model.dataset.gene_names[model.dataset.dm.column_mask]
     sample_size = x_test.size(dim=1)
     top_num: int = int(top_rate * len(gene_names))  # top_rate is the percentage of features to be calculated
 
     explainer = shap.DeepExplainer(model, x_train)
     shap_values, top_index = explainer.shap_values(x_test, top_num, "max")  # shap_values contains values for all nodes
-    # col = [x for x in range(len(gene_names))]
-    # gene_table = wandb.Table(columns=col, data=gene_names)
-    col = [x for x in range(top_num)]
-    my_table = wandb.Table(columns=col, data=shap_values),
-    my_index_table = wandb.Table(columns=col, data=top_index)
+    df = pd.DataFrame(data=gene_names)
+    gene_table = wandb.Table(dataframe=df)
+    df = pd.DataFrame(data=shap_values)
+    my_table = wandb.Table(dataframe=df),
+    df = pd.DataFrame(data=top_index)
+    my_index_table = wandb.Table(dataframe=df)
     wandb.log({"top num of features": top_num,
                "sample size": sample_size,
                "input features": len(gene_names),
-               # "gene name index": gene_table,
+               "gene name index": gene_table,
                "shap_values": my_table,
                "top index": my_index_table})
     x_test = x_test.detach().cpu().numpy()
