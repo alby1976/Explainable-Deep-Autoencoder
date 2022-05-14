@@ -33,13 +33,14 @@ def create_gene_model(model_name: str, gene_model: Path, shap_values, gene_names
 
 def plot_shap_values(model_name: str, node: int, values, x_test: Union[ndarray, DataFrame, List], plot_type: str,
                      plot_size, save_shap: Path):
-    shap.summary_plot(values, x_test, plot_type=plot_type, plot_size=plot_size)
     filename = f"{model_name}-{plot_type}({node}).png"
-    print(f'{save_shap.joinpath(filename)}')
+    print(f"Creating {save_shap.joinpath(filename)} ...")
+    shap.summary_plot(values, x_test, plot_type=plot_type, plot_size=plot_size)
     plt.savefig(f"{save_shap.joinpath(filename)}", dpi=100, format='png')
     plt.close()
     tmp = f"{model_name}-{plot_type}({node})"
-    wandb.log({tmp: wandb.Image(f"{save_shap}.png")})
+    wandb.log({tmp: wandb.Image(save_shap.joinpath(filename))})
+    print("Done")
 
 
 def process_shap_values(save_bar: Path, save_scatter: Path, gene_model: Path, model_name: str, x_test, shap_values,
@@ -102,16 +103,17 @@ def create_shap_values(model: AutoGenoShallow, model_name: str, gene_model: Path
     top_num: int = int(top_rate * len(gene_names))  # top_rate is the percentage of features to be calculated
 
     explainer = shap.DeepExplainer(model, x_train)
-    shap_values, top_index = explainer.shap_values(x_test, top_num, "max")  # shap_values contains values for all nodes
-    shap_values = np.asarray(shap_values)
-    top_index = np.swapaxes(top_index,0, 1)
+    # shap_values, top_index = explainer.shap_values(x_test, top_num, "max")  # shap_values contains values for all nodes
+    #shap_values = np.asarray(shap_values)
+    #top_index = np.swapaxes(top_index,0, 1)
     gene_table = wandb.Table(dataframe=pd.DataFrame(data=gene_names))
     wandb.log({"top num of features": top_num,
                "sample size": x_test.size(dim=0),
                "input features": sample_size,
                "gene name index": gene_table,
                "shap_values": shap_values.shape,
-               "top index": top_index.size()})
+               #"top index": top_index.size()
+               })
 
     #shap_table = {f"Shap Value Node{i}": wandb.Table(dataframe=pd.DataFrame(data=node, columns=gene_names))
     #              for i, node in enumerate(shap_values)}
@@ -125,7 +127,7 @@ def create_shap_values(model: AutoGenoShallow, model_name: str, gene_model: Path
         params = ((save_bar, save_scatter, gene_model, model_name, x_test, shap_value, gene_names,
                    sample_size, top_num, node) for node, shap_value in enumerate(shap_values))
         print(f"params:\n{params}\n\n")
-        print(f"index:\n{top_index}\n\n")
+        #print(f"index:\n{top_index}\n\n")
         for r in pool.map(lambda p: process_shap_values(*p), params):
             pass
         print("\n\t....Finish processing....")
