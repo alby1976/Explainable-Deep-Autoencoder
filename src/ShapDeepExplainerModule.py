@@ -23,11 +23,11 @@ def create_gene_model(model_name: str, gene_model: Path, shap_values, gene_names
     masking: Union[ndarray, bool] = gene_module[[1]] != -np.inf
     gene_module = gene_module[masking.all(axis=1)]
     if len(gene_module.index) > (1 / 4) * top_num:
-        filename = gene_model.joinpath(f"{model_name}-shap({node}).csv")
-        print(f'Creating {gene_model}-shap({node}).csv ...')
+        filename = f"{model_name}-shap({node}).csv"
+        print(f'Creating {gene_model.joinpath(filename)} ...')
         gene_module.to_csv(gene_model.joinpath(filename), header=True, index=False, sep='\t')
         tbl = wandb.Table(dataframe=gene_module)
-        wandb.log({f"{model_name}({node})": tbl})
+        wandb.log({f"{model_name}-shap({node})": tbl})
         print("... Done ...\n")
 
 
