@@ -66,17 +66,10 @@ def create_shap_values(model: AutoGenoShallow, model_name: str, gene_model: Path
     create_dir(save_bar)
     create_dir(save_scatter)
     # model.decoder = nn.Identity()
-    model = model.to(get_device())
-
     print(f"model type: {type(model)} device: {model.device}\n{model}\n\n")
 
-    batch = next(iter(model.train_dataloader()))
-    genes, _ = batch
-
-    print(f"batch type: {type(batch)} batch size: {len(batch)}\n{batch}\n\n")
-
+    genes = torch.cat([batch[0] for batch in model.predict_dataloader()])
     x_train: Tensor = genes[:100]
-    x_train = x_train.to(get_device())
     try:
         print(f"x_train type: {type(x_train)} device; cuda:{x_train.get_device()}")
     except RuntimeError:
@@ -84,18 +77,12 @@ def create_shap_values(model: AutoGenoShallow, model_name: str, gene_model: Path
     print(f"{x_train}\n\n")
 
     x_test: Tensor = torch.cat([batch[0] for batch in model.val_dataloader()])
-    x_test = x_test.to(get_device())
-
     try:
         print(f"x_train type: {type(x_test)} device; cuda:{x_test.get_device()}")
     except RuntimeError:
         print(f"x_train type: {type(x_test)} device; cpu")
     print(f"{x_test}\n\n")
     print(f"model type: {type(model)} device: {model.device}\n{model}\n\n")
-    with torch.no_grad():
-        outputs = model(x_train[:2])
-
-    print(f"output type:\n{type(outputs)}\n{outputs}\n\n")
 
     print(f"gene_names")
     gene_names: ndarray = model.dataset.gene_names[model.dataset.dm.column_mask]
@@ -105,7 +92,7 @@ def create_shap_values(model: AutoGenoShallow, model_name: str, gene_model: Path
     explainer = shap.DeepExplainer(model, x_train)
     shap_values = explainer.shap_values(x_test)  # shap_values contains values for all nodes
     # shap_values, top_index = explainer.shap_values(x_test, top_num, "max") # shap_values contains values for all nodes
-    # shap_values = np.asarray(shap_values)
+    shap_values = np.asarray(shap_values)
     # top_index = np.swapaxes(top_index,0, 1)
     gene_table = wandb.Table(dataframe=pd.DataFrame(data=gene_names), columns=[i for i in range(sample_size)])
     wandb.log({"top num of features": top_num,
