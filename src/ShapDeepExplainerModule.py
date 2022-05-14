@@ -129,7 +129,7 @@ def create_shap_values(model: AutoGenoShallow, model_name: str, gene_model: Path
                    sample_size, top_num, node) for node, shap_value in enumerate(shap_values))
         print(f"params:\n{params}\n\n")
         # print(f"index:\n{top_index}\n\n")
-        for r in pool.map(lambda p: process_shap_values(*p), params):
+        for _ in pool.map(lambda p: process_shap_values(*p), params):
             pass
         print("\n\t....Finish processing....")
 
