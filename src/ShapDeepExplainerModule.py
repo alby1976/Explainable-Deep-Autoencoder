@@ -2,8 +2,6 @@
 # 3rd party modules
 from concurrent.futures import ThreadPoolExecutor
 
-import numpy as np
-import pandas as pd
 from matplotlib import pyplot as plt
 
 from AutoEncoderModule import AutoGenoShallow
@@ -25,17 +23,19 @@ def create_gene_model(model_name: str, gene_model: Path, shap_values, gene_names
     masking: Union[ndarray, bool] = gene_module[[1]] != -np.inf
     gene_module = gene_module[masking.all(axis=1)]
     if len(gene_module.index) > (1 / 4) * top_num:
-        print(f'{gene_model}({node}).csv')
-        gene_module.to_csv(f'{gene_model}({node}).csv', header=True, index=False, sep='\t')
+        filename = gene_model.joinpath(f"{model_name}-shap({node}).csv")
+        print(f'Creating {gene_model}-shap({node}).csv ...')
+        gene_module.to_csv(gene_model.joinpath(filename), header=True, index=False, sep='\t')
         tbl = wandb.Table(dataframe=gene_module)
         wandb.log({f"{model_name}({node})": tbl})
+        print("... Done ...\n")
 
 
-def plot_shap_values(model_name: str, node: int, values, x_test: Union[ndarray, DataFrame, List], plot_type: str,
-                     plot_size, save_shap: Path):
+def plot_shap_values(model_name: str, node: int, values, x_test: Union[ndarray, DataFrame, List], names: ndarray,
+                     plot_type: str, plot_size, save_shap: Path):
     filename = f"{model_name}-{plot_type}({node}).png"
     print(f"Creating {save_shap.joinpath(filename)} ...")
-    shap.summary_plot(values, x_test, plot_type=plot_type, plot_size=plot_size)
+    shap.summary_plot(values, x_test, names, plot_type=plot_type, plot_size=plot_size)
     plt.savefig(f"{save_shap.joinpath(filename)}", dpi=100, format='png')
     plt.close()
     tmp = f"{model_name}-{plot_type}({node})"
@@ -48,12 +48,12 @@ def process_shap_values(save_bar: Path, save_scatter: Path, gene_model: Path, mo
     print(f"save_bar: {save_bar}\nsave_scatter: {save_scatter}\ngene_model: {gene_model}\nmodel_name: {model_name}\n"
           f"x_test:\n{x_test}\nshap_values:\n{shap_values}\ngene_names:{gene_names}\n")
     # save shap_gene_model
-    # create_gene_model(model_name, gene_model, shap_values, gene_names, sample_num, top_num, node)
+    create_gene_model(model_name, gene_model, shap_values, gene_names, sample_num, top_num, node)
 
     # generate bar char
-    plot_shap_values(model_name, node, shap_values, x_test, "bar", (15, 10), save_bar)
+    plot_shap_values(model_name, node, shap_values, x_test, gene_names, "bar", (15, 10), save_bar)
     # generate scatter chart
-    plot_shap_values(model_name, node, shap_values, x_test, "dot", (15, 10), save_scatter)
+    plot_shap_values(model_name, node, shap_values, x_test, gene_names, "dot", (15, 10), save_scatter)
 
 
 def create_shap_values(model: AutoGenoShallow, model_name: str, gene_model: Path, save_bar: Path, save_scatter: Path,
@@ -103,31 +103,32 @@ def create_shap_values(model: AutoGenoShallow, model_name: str, gene_model: Path
     top_num: int = int(top_rate * len(gene_names))  # top_rate is the percentage of features to be calculated
 
     explainer = shap.DeepExplainer(model, x_train)
-    # shap_values, top_index = explainer.shap_values(x_test, top_num, "max")  # shap_values contains values for all nodes
-    #shap_values = np.asarray(shap_values)
-    #top_index = np.swapaxes(top_index,0, 1)
-    gene_table = wandb.Table(dataframe=pd.DataFrame(data=gene_names))
+    shap_values = explainer.shap_values(x_test)  # shap_values contains values for all nodes
+    # shap_values, top_index = explainer.shap_values(x_test, top_num, "max") # shap_values contains values for all nodes
+    # shap_values = np.asarray(shap_values)
+    # top_index = np.swapaxes(top_index,0, 1)
+    gene_table = wandb.Table(dataframe=pd.DataFrame(data=gene_names), columns=[i for i in range(sample_size)])
     wandb.log({"top num of features": top_num,
                "sample size": x_test.size(dim=0),
                "input features": sample_size,
                "gene name index": gene_table,
                "shap_values": shap_values.shape,
-               #"top index": top_index.size()
+               # "top index": top_index.size()
                })
 
-    #shap_table = {f"Shap Value Node{i}": wandb.Table(dataframe=pd.DataFrame(data=node, columns=gene_names))
+    # shap_table = {f"Shap Value Node{i}": wandb.Table(dataframe=pd.DataFrame(data=node, columns=gene_names))
     #              for i, node in enumerate(shap_values)}
-    #top_table = {f"Top Shap Value rows{i}": wandb.Table(dataframe=pd.DataFrame(data=row.detach().cpu().numpy()))
+    # top_table = {f"Top Shap Value rows{i}": wandb.Table(dataframe=pd.DataFrame(data=row.detach().cpu().numpy()))
     #             for i, row in enumerate(top_index)}
-    #wandb.log(shap_table)
-    #wandb.log(top_table)
+    # wandb.log(shap_table)
+    # wandb.log(top_table)
     x_test = x_test.detach().cpu().numpy()
 
     with ThreadPoolExecutor(max_workers=num_workers) as pool:
         params = ((save_bar, save_scatter, gene_model, model_name, x_test, shap_value, gene_names,
                    sample_size, top_num, node) for node, shap_value in enumerate(shap_values))
         print(f"params:\n{params}\n\n")
-        #print(f"index:\n{top_index}\n\n")
+        # print(f"index:\n{top_index}\n\n")
         for r in pool.map(lambda p: process_shap_values(*p), params):
             pass
         print("\n\t....Finish processing....")
@@ -143,6 +144,7 @@ def main(ckpt: Path, model_name: str, gene_model: Path, save_bar: Path, save_sca
 
         model = AutoGenoShallow.load_from_checkpoint(str(ckpt))
         create_shap_values(model, model_name, gene_model, save_bar, save_scatter, top_rate, num_workers=num_workers)
+        wandb.finish()
 
 
 if __name__ == '__main__':
