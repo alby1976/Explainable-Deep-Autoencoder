@@ -34,8 +34,9 @@ def create_gene_model(model_name: str, gene_model: Path, shap_values, gene_names
 def plot_shap_values(model_name: str, node: int, values, x_test: Union[ndarray, DataFrame, List], plot_type: str,
                      plot_size, save_shap: Path):
     shap.summary_plot(values, x_test, plot_type=plot_type, plot_size=plot_size)
-    print(f'{save_shap}-{plot_type}({node}).png')
-    plt.savefig(f'{save_shap}-{plot_type}({node}).png', dpi=100, format='png')
+    filename = f"{model_name}-{plot_type}({node}).png"
+    print(f'{save_shap.joinpath(filename)}')
+    plt.savefig(f"{save_shap.joinpath(filename)}", dpi=100, format='png')
     plt.close()
     tmp = f"{model_name}-{plot_type}({node})"
     wandb.log({tmp: wandb.Image(f"{save_shap}.png")})
@@ -60,6 +61,9 @@ def create_shap_values(model: AutoGenoShallow, model_name: str, gene_model: Path
         ndarray, List[ndarray], Tuple[List[Union[ndarray, List[ndarray]]], Any], List[Union[ndarray, List[ndarray]]]]
 
     # setup
+    create_dir(gene_model)
+    create_dir(save_bar)
+    create_dir(save_scatter)
     # model.decoder = nn.Identity()
     model = model.to(get_device())
 
