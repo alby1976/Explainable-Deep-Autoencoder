@@ -77,7 +77,7 @@ def create_shap_values(model: AutoGenoShallow, model_name: str, gene_model: Path
         print(f"x_train type: {type(x_train)} device; cpu")
     print(f"{x_train}\n\n")
 
-    x_test: Tensor = torch.cat([batch[0] for batch in model.val_dataloader()])
+    x_test: Tensor = genes[100:]
     try:
         print(f"x_train type: {type(x_test)} device; cuda:{x_test.get_device()}")
     except RuntimeError:
