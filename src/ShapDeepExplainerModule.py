@@ -29,7 +29,7 @@ def create_gene_model(model_name: str, gene_model: Path, shap_values, gene_names
         tbl = wandb.Table(dataframe=gene_module)
         tmp = f"{model_name}-shap({node})"
         wandb.log({tmp: tbl})
-        print("... Done ...\n")
+        print(f"...{gene_model.joinpath(filename)} Done ...\n")
 
 
 def plot_shap_values(model_name: str, node: int, values, x_test: Union[ndarray, DataFrame, List], names: ndarray,
@@ -117,8 +117,9 @@ def create_shap_values(model: AutoGenoShallow, model_name: str, gene_model: Path
                    sample_size, top_num, node) for node, shap_value in enumerate(shap_values))
         print(f"params:\n{params}\n\n")
         # print(f"index:\n{top_index}\n\n")
-        for _ in pool.map(lambda p: process_shap_values(*p), params):
-            pass
+        # for _ in pool.map(lambda p: process_shap_values(*p), params):
+        for _ in map(lambda p: process_shap_values(*p), params):
+        pass
         print("\n\t....Finish processing....")
 
 
