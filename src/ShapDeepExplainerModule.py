@@ -36,7 +36,7 @@ def plot_shap_values(model_name: str, node: int, values, x_test: Union[ndarray, 
                      plot_type: str, plot_size, save_shap: Path):
     filename = f"{model_name}-{plot_type}({node}).png"
     print(f"Creating {save_shap.joinpath(filename)} ...")
-    shap.summary_plot(values, x_test, names, plot_type=plot_type, plot_size=plot_size)
+    shap.summary_plot(values, x_test, names, plot_type=plot_type, plot_size=plot_size, show=False)
     plt.savefig(f"{save_shap.joinpath(filename)}", dpi=100, format='png')
     plt.close()
     tmp = f"{model_name}-{plot_type}({node})"
