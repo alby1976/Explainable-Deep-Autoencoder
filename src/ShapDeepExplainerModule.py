@@ -40,7 +40,7 @@ def plot_shap_values(model_name: str, node: int, values, x_test: Union[ndarray, 
     plt.savefig(f"{save_shap.joinpath(filename)}", dpi=100, format='png')
     plt.close()
     tmp = f"{model_name}-{plot_type}({node})"
-    wandb.log({tmp: wandb.Image(save_shap.joinpath(filename))})
+    wandb.log({tmp: wandb.Image(save_shap.joinpath(filename), caption="Top 20 features based on SHAP_values")})
     print("Done")
 
 
