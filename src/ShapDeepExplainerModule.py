@@ -27,7 +27,8 @@ def create_gene_model(model_name: str, gene_model: Path, shap_values, gene_names
         print(f'Creating {gene_model.joinpath(filename)} ...')
         gene_module.to_csv(gene_model.joinpath(filename), header=True, index=False, sep='\t')
         tbl = wandb.Table(dataframe=gene_module)
-        wandb.log({f"{model_name}-shap({node})": tbl})
+        tmp = f"{model_name}-shap({node})"
+        wandb.log({tmp: tbl})
         print("... Done ...\n")
 
 
