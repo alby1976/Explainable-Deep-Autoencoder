@@ -3,6 +3,7 @@
 from concurrent.futures import ThreadPoolExecutor
 
 from matplotlib import pyplot as plt
+from wandb import Image
 
 from AutoEncoderModule import AutoGenoShallow
 from SHAP_combo import *
@@ -40,7 +41,8 @@ def plot_shap_values(model_name: str, node: int, values, x_test: Union[ndarray, 
     plt.savefig(f"{save_shap.joinpath(filename)}", dpi=100, format='png')
     plt.close()
     tmp = f"{model_name}-{plot_type}({node})"
-    wandb.log({tmp: wandb.Image(save_shap.joinpath(filename), caption="Top 20 features based on SHAP_values")})
+    image: Image = wandb.Image(str(save_shap.joinpath(filename)), caption="Top 20 features based on SHAP_values")
+    wandb.log({tmp: image})
     print("Done")
 
 
