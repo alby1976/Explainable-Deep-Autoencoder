@@ -119,6 +119,10 @@ def main(args):
             tbl = wandb.Table(dataframe=pd.DataFrame(hidden_layer), dtype=float)
             wandb.log({"AE_out": tbl})
 
+        gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
         create_shap_values(model, args.name + "_Shap", args.save_dir.joinpath(args.gene_model),
                            args.save_dir.joinpath(args.save_bar),
                            args.save_dir.joinpath(args.save_scatter), args.top_rate)
