@@ -35,15 +35,15 @@ def create_gene_model(model_name: str, gene_model: Path, shap_values, gene_names
 
 def plot_shap_values(model_name: str, node: int, values, x_test: Union[ndarray, DataFrame, List], names: ndarray,
                      plot_type: str, plot_size, save_shap: Path):
-    filename = f"{model_name}-{plot_type}({node}).png"
+    filename = f"{node:02}-{model_name}-{plot_type}.png"
     print(f"Creating {save_shap.joinpath(filename)} ...")
     shap.summary_plot(values, x_test, names, plot_type=plot_type, plot_size=plot_size, show=False)
     plt.savefig(f"{save_shap.joinpath(filename)}", dpi=100, format='png')
     plt.close()
-    tmp = f"{model_name}-{plot_type}({node})"
+    tmp = f"{node:02}-{model_name}-{plot_type}"
     image: Image = wandb.Image(str(save_shap.joinpath(filename)), caption="Top 20 features based on SHAP_values")
     wandb.log({tmp: image})
-    print("Done")
+    print(f"{filename} Done")
 
 
 def process_shap_values(save_bar: Path, save_scatter: Path, gene_model: Path, model_name: str, x_test, shap_values,
