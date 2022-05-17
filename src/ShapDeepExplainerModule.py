@@ -71,7 +71,10 @@ def create_shap_values(model: AutoGenoShallow, model_name: str, gene_model: Path
     # model.decoder = nn.Identity()
     print(f"model type: {type(model)} device: {model.device}\n{model}\n\n")
 
-    genes = torch.cat([batch[0] for batch in model.train_dataloader()])
+    data = model.train_dataloader()
+    batch = next(iter(data)) if model.dataset.batch_size >= 100 else torch.cat([batch
+                                                                                for batch in model.train_dataloader()])
+    genes = batch[0]
     x_train: Tensor = genes[:100]
     try:
         print(f"x_train type: {type(x_train)} device; cuda:{x_train.get_device()}")
@@ -79,8 +82,9 @@ def create_shap_values(model: AutoGenoShallow, model_name: str, gene_model: Path
         print(f"x_train type: {type(x_train)} device; cpu")
     print(f"{x_train}\n\n")
 
-    genes = torch.cat([batch[0] for batch in model.val_dataloader()])
-    x_test: Tensor = genes
+    data = model.train_dataloader()
+    batch = next(iter(data))
+    x_test: Tensor = batch[0]
     try:
         print(f"x_train type: {type(x_test)} device; cuda:{x_test.get_device()}")
     except RuntimeError:
