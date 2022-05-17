@@ -1,6 +1,7 @@
 # ** Use Python to run Deep Autoencoder (feature selection) **
 # ** path - is a string to desired path location. **
 import argparse
+import gc
 import os
 import sys
 from argparse import ArgumentParser, Namespace
