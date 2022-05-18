@@ -82,13 +82,13 @@ def create_shap_values(model: AutoGenoShallow, model_name: str, gene_model: Path
         print(f"x_train type: {type(x_train)} device; cpu")
     print(f"{x_train}\n\n")
 
-    data = model.train_dataloader()
+    data = model.val_dataloader()
     batch = next(iter(data))
     x_test: Tensor = batch[0]
     try:
-        print(f"x_train type: {type(x_test)} device; cuda:{x_test.get_device()}")
+        print(f"x_test type: {type(x_test)} device; cuda:{x_test.get_device()}")
     except RuntimeError:
-        print(f"x_train type: {type(x_test)} device; cpu")
+        print(f"x_test type: {type(x_test)} device; cpu")
     print(f"{x_test}\n\n")
     print(f"model type: {type(model)} device: {model.device}\n{model}\n\n")
 
