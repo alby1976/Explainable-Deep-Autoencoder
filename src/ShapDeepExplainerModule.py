@@ -24,11 +24,11 @@ def create_gene_model(model_name: str, gene_model: Path, shap_values, gene_names
     masking: Union[ndarray, bool] = gene_module[[1]] != -np.inf
     gene_module = gene_module[masking.all(axis=1)]
     if len(gene_module.index) > (1 / 4) * top_num:
-        filename = f"{model_name}-shap({node}).csv"
+        filename = f"{model_name}-shap({node:02}).csv"
         print(f'Creating {gene_model.joinpath(filename)} ...')
         gene_module.to_csv(gene_model.joinpath(filename), header=True, index=False, sep='\t')
         tbl = wandb.Table(dataframe=gene_module)
-        tmp = f"{model_name}-shap({node})"
+        tmp = f"{model_name}-shap({node:02})"
         wandb.log({tmp: tbl})
         print(f"...{gene_model.joinpath(filename)} Done ...\n")
 
@@ -82,13 +82,13 @@ def create_shap_values(model: AutoGenoShallow, model_name: str, gene_model: Path
         print(f"x_train type: {type(x_train)} device; cpu")
     print(f"{x_train}\n\n")
 
-    data = model.train_dataloader()
+    data = model.val_dataloader()
     batch = next(iter(data))
     x_test: Tensor = batch[0]
     try:
-        print(f"x_train type: {type(x_test)} device; cuda:{x_test.get_device()}")
+        print(f"x_test type: {type(x_test)} device; cuda:{x_test.get_device()}")
     except RuntimeError:
-        print(f"x_train type: {type(x_test)} device; cpu")
+        print(f"x_test type: {type(x_test)} device; cpu")
     print(f"{x_test}\n\n")
     print(f"model type: {type(model)} device: {model.device}\n{model}\n\n")
 

@@ -120,6 +120,10 @@ def main(args):
             tbl = wandb.Table(dataframe=pd.DataFrame(hidden_layer), dtype=float)
             wandb.log({"AE_out": tbl})
 
+        del trainer
+        del hidden_layer
+        del tbl
+
         gc.collect()
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
