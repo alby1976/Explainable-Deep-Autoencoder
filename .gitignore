@@ -130,3 +130,7 @@ dmypy.json
 
 # Project settings
 .idea/
+/scripts/full_cancer_TCGA_TPM_Regression-job.slurm-fg5-13702719.error
+/scripts/full_cancer_TCGA_TPM_Regression-job.slurm-fg5-13702719.out
+/kegg_hsa_2022_04-25_gmt
+/pathways-27-Apr-2022-1115.csv
