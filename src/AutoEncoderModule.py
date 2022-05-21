@@ -224,15 +224,15 @@ class AutoGenoShallow(pl.LightningModule):
         # def the encoder function
         self.encoder = nn.Sequential(
             nn.Linear(self.input_features, self.hidden_layer),
-            nn.ELU(inplace=True),
+            nn.LeakyReLU(inplace=True),
             nn.Linear(self.hidden_layer, self.smallest_layer),
-            nn.ELU(inplace=True)
+            nn.LeakyReLU(inplace=True)
         )
 
         # def the decoder function
         self.decoder = nn.Sequential(
             nn.Linear(self.smallest_layer, self.hidden_layer),
-            nn.ELU(inplace=True),
+            nn.LeakyReLU(inplace=True),
             nn.Linear(self.hidden_layer, self.output_features),
             nn.Sigmoid()
         )
