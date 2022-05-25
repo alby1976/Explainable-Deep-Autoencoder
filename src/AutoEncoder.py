@@ -6,7 +6,7 @@ import os
 import sys
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
-from typing import List, Union
+from typing import List, Union, Optional
 
 import numpy as np
 import pandas as pd
@@ -113,11 +113,13 @@ def main(args):
         print(f'...Training and Validating model...')
         trainer.fit(model=model)
         hidden_layer = trainer.predict(model=model, ckpt_path="best")
+
         if hidden_layer is not None:
             hidden_layer = torch.cat([hidden_layer[i] for i in range(len(hidden_layer))])
             hidden_layer = hidden_layer.detach().cpu().numpy()
             np.savetxt(fname=args.save_dir.joinpath(f"{args.name}-output.csv"), X=hidden_layer, fmt='%f', delimiter=',')
-            tbl = wandb.Table(dataframe=pd.DataFrame(hidden_layer), dtype=float)
+            df = pd.DataFrame(hidden_layer)
+            tbl = wandb.Table(dataframe=df, dtype=float)
             wandb.log({"AE_out": tbl})
 
         del trainer
@@ -128,9 +130,12 @@ def main(args):
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
 
-        create_shap_values(model, args.name + "_Shap", args.save_dir.joinpath(args.gene_model),
-                           args.save_dir.joinpath(args.save_bar),
-                           args.save_dir.joinpath(args.save_scatter), args.top_rate)
+        if args.deep:
+            create_shap_values(model, args.name + "_Shap", args.save_dir.joinpath(args.gene_model),
+                               args.save_dir.joinpath(args.save_bar),
+                               args.save_dir.joinpath(args.save_scatter), args.top_rate)
+        else:
+
         wandb.finish()
 
 

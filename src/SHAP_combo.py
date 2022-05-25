@@ -70,6 +70,11 @@ def predict_shap_values(phen, unique, unique_count, gene, hidden_vars, test_spli
     return i, r2
 
 
+def create_shap_tree_val(model_name, gene_name, gene_id, hidden_vars, col_mask, save_bar, save_scatter, gene_model,
+                         num_workers, fold, test_split, random_state, shuffle, top_rate):
+    pass
+
+
 def main(model_name, gene_name, gene_id, ae_result, col_mask, save_bar, save_scatter, gene_model, num_workers, fold,
          test_split, random_state, shuffle, top_rate):
     with wandb.init(name=model_name, project="XAE4Exp"):
@@ -123,6 +128,8 @@ def add_shap_arguments(parse):
                        help='path to save gene module e.g. ./shap/gene_model')
     parse.add_argument("-tr", "--top_rate", type=float, default=0.2,
                        help='test set split ratio. default is 0.2')
+    parse.add_argument("-d", "--deep", action="store_true", default=False,
+                       help="using this flag selects DeepExplainer otherwise TreeExplainer is used.")
 
 
 if __name__ == '__main__':
