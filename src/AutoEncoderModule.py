@@ -41,13 +41,13 @@ class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
         self.dm = DataNormalization()
         self.le = preprocessing.LabelEncoder()
 
-        x, y = get_data_phen(data=data_dir, filter_str=filter_str, path_to_save_qc=transformed_data)
-        self.sample_size = len(x.index)
+        self.x, self.y = get_data_phen(data=data_dir, filter_str=filter_str, path_to_save_qc=transformed_data)
+        self.sample_size = len(self.x.index)
 
-        print(f"unique: {np.unique(y)} size: {np.unique(y).size}", file=sys.stderr, flush=True)
+        print(f"unique: {np.unique(self.y)} size: {np.unique(self.y).size}", file=sys.stderr, flush=True)
 
-        result = self.split_dataset(x.to_numpy(), self.le.fit_transform(y=y.to_numpy()), val_split, test_split,
-                                    random_state, fold)
+        result = self.split_dataset(self.x.to_numpy(), self.le.fit_transform(y=self.y.to_numpy()), val_split,
+                                    test_split, random_state, fold)
         super().__init__(
             result[0],
             result[1],
@@ -65,9 +65,9 @@ class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
             drop_last
         )
 
-        self.predict_dataset = pl_bolts.datamodules.SklearnDataset(X=self.dm.transform(x.to_numpy(), fold),
-                                                                   y=self.le.transform(y))
-        self.gene_names = get_gene_names(ensembl_release=version, gene_list=x.columns.values)
+        self.predict_dataset = pl_bolts.datamodules.SklearnDataset(X=self.dm.transform(self.x.to_numpy(), fold),
+                                                                   y=self.le.transform(self.y))
+        self.gene_names = get_gene_names(ensembl_release=version, gene_list=self.x.columns.values)
         self.size = len(self.gene_names[self.dm.column_mask])
 
         self.save_hyperparameters()

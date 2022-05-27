@@ -70,8 +70,25 @@ def predict_shap_values(phen, unique, unique_count, gene, hidden_vars, test_spli
     return i, r2
 
 
-def create_shap_tree_val(model_name, gene_name, gene_id, hidden_vars, col_mask, save_bar, save_scatter, gene_model,
+def create_shap_tree_val(model_name, dm, phen, gene, ids, hidden_vars, save_bar, save_scatter, gene_model,
                          num_workers, fold, test_split, random_state, shuffle, top_rate):
+    column_num: int = len(hidden_vars.columns)
+    sample_num: int = len(gene.index)
+    top_num: int = int(top_rate * len(gene.columns))
+
+    result = []
+    unique, unique_count = np.unique(phen, return_counts=True)
+    params = ((phen, unique, unique_count, gene, hidden_vars[i], test_split, shuffle,
+               random_state, num_workers, dm, fold, sample_num, ids, top_num, gene_model,
+               model_name, save_bar, save_scatter, column_num, i) for i in range(column_num))
+    for r in map(lambda p: predict_shap_values(*p), params):
+        result.append(r)
+
+    r2_scores = pd.Dataframe(result, columns=['node', 'R^2'])
+    r2_scores.to_csv(f'{gene_model}-r2.csv', header=True, index=False)
+    tmp = f"{model_name}-r2)"
+    tbl = wandb.Table(dataframe=r2_scores)
+    wandb.log({tmp: tbl})
     pass
 
 
@@ -100,22 +117,9 @@ def main(model_name, gene_name, gene_id, ae_result, col_mask, save_bar, save_sca
         sample_num: int = len(gene.index)
         top_num: int = int(top_rate * len(gene.columns))
         ids: ndarray = geno_id.columns.to_numpy()[mask.values.flatten()]
-        unique, unique_count = np.unique(phen, return_counts=True)
         print(f"\ndf mask:\n{mask}\nnp mask:\n{mask.to_numpy()}\n")
         dm = DataNormalization(column_mask=mask.values.flatten(), column_names=gene.columns.to_numpy())
 
-        result = []
-        params = ((phen, unique, unique_count, gene, hidden_vars[i], test_split, shuffle,
-                   random_state, num_workers, dm, fold, sample_num, ids, top_num, gene_model,
-                   model_name, save_bar, save_scatter, column_num, i) for i in range(column_num))
-        for r in map(lambda p: predict_shap_values(*p), params):
-            result.append(r)
-
-        r2_scores = pd.Dataframe(result, columns=['node', 'R^2'])
-        r2_scores.to_csv(f'{gene_model}-r2.csv', header=True, index=False)
-        tmp = f"{model_name}-r2)"
-        tbl = wandb.Table(dataframe=r2_scores)
-        wandb.log({tmp: tbl})
         wandb.finish()
 
 
