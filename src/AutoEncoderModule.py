@@ -179,6 +179,7 @@ class AutoGenoShallow(pl.LightningModule):
 
     def __init__(self, save_dir: Path, name: str, smallest_layer: int, cyclical_lr: bool,
                  learning_rate: float,
+                 reg_parm: float,
                  data: Path, transformed_data: Path,
                  batch_size: int, val_split: float, test_split: float,
                  filter_str: str, num_workers: int, random_state: int, fold: bool,
@@ -212,6 +213,7 @@ class AutoGenoShallow(pl.LightningModule):
         self.model_name = name
 
         # Hyper-parameters
+        self.reg_param = reg_param
         self.lr = learning_rate
         self.hparams.batch_size = batch_size
         self.save_hyperparameters()
@@ -252,7 +254,7 @@ class AutoGenoShallow(pl.LightningModule):
         x: Tensor = batch[0]
         output, _ = self.reg_forward(x)
         self.training_r2score_node.update(preds=output, target=x)
-        loss: Tensor = f.mse_loss(input=output, target=x)
+        loss: Tensor = f.mse_loss(input=output, target=x) + reg_param * l1_loss
         # return {'model': coder, 'loss': loss, 'r2_node': r2_node, 'input': x, 'output': output}
         # return {'model': coder.detach(), 'loss': loss, "input": x, "'output": output.detach()}
         # return {'model': coder.detach(), 'loss': loss}
@@ -399,6 +401,8 @@ class AutoGenoShallow(pl.LightningModule):
                                  'default: 16')
         parser.add_argument("-lr", "--learning_rate", type=float, default=0.0001,
                             help='the base learning rate for training e.g 0.0001')
+        parser.add_argument("-rg", "--learning_rate", type=float,
+                            help='regulation parameter for lasso e.g 0.0005')
         parser.add_argument("--data", type=Path,
                             default=Path(__file__).absolute().parent.parent.joinpath("data_example.csv"),
                             help='original datafile e.g. ./data_example.csv')

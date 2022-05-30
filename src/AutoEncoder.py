@@ -20,7 +20,7 @@ from pytorch_lightning.loggers import WandbLogger
 
 from AutoEncoderModule import AutoGenoShallow
 from CommonTools import create_dir, float_or_none
-from SHAP_combo import add_shap_arguments
+from SHAP_combo import add_shap_arguments, create_shap_tree_val
 from ShapDeepExplainerModule import create_shap_values
 
 _DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -113,6 +113,7 @@ def main(args):
         print(f'...Training and Validating model...')
         trainer.fit(model=model)
         hidden_layer = trainer.predict(model=model, ckpt_path="best")
+        df = None
 
         if hidden_layer is not None:
             hidden_layer = torch.cat([hidden_layer[i] for i in range(len(hidden_layer))])
@@ -135,6 +136,12 @@ def main(args):
                                args.save_dir.joinpath(args.save_bar),
                                args.save_dir.joinpath(args.save_scatter), args.top_rate)
         else:
+            create_shap_tree_val(args.name + "_Shap", model.dataset.dm,
+                                 model.dataset.y, model.dataset.x, model.dataset.gene_names, df,
+                                 args.save_dir.joinpath(args.save_bar),
+                                 args.save_dir.joinpath(args.save_scatter), args.save_dir.joinpath(args.gene_model),
+                                 args.num_workers, args.fold, args.val_split,
+                                 args.random_state, args.shuffle, args.top_rate)
 
         wandb.finish()
 

@@ -1,6 +1,6 @@
 # python system library
 # 3rd party modules
-from concurrent.futures import ThreadPoolExecutor
+# from concurrent.futures import ThreadPoolExecutor
 
 from matplotlib import pyplot as plt
 from torch import nn
@@ -120,15 +120,15 @@ def create_shap_values(model: AutoGenoShallow, model_name: str, gene_model: Path
     # wandb.log(top_table)
     x_test = x_test.detach().cpu().numpy()
 
-    with ThreadPoolExecutor(max_workers=num_workers) as pool:
-        params = ((save_bar, save_scatter, gene_model, model_name, x_test, shap_value, gene_names,
-                   sample_size, top_num, node) for node, shap_value in enumerate(shap_values))
-        print(f"params:\n{params}\n\n")
-        # print(f"index:\n{top_index}\n\n")
-        # for _ in pool.map(lambda p: process_shap_values(*p), params):
-        for _ in map(lambda p: process_shap_values(*p), params):
-            pass
-        print("\n\t....Finish processing....")
+    # with ThreadPoolExecutor(max_workers=num_workers) as pool:
+    params = ((save_bar, save_scatter, gene_model, model_name, x_test, shap_value, gene_names,
+               sample_size, top_num, node) for node, shap_value in enumerate(shap_values))
+    print(f"params:\n{params}\n\n")
+    # print(f"index:\n{top_index}\n\n")
+    # for _ in pool.map(lambda p: process_shap_values(*p), params):
+    for _ in map(lambda p: process_shap_values(*p), params):
+        pass
+    print("\n\t....Finish processing....")
 
 
 def main(ckpt: Path, model_name: str, gene_model: Path, save_bar: Path, save_scatter: Path,
