@@ -413,7 +413,7 @@ class AutoGenoShallow(pl.LightningModule):
                                  'default: 16')
         parser.add_argument("-lr", "--learning_rate", type=float, default=0.0001,
                             help='the base learning rate for training e.g 0.0001')
-        parser.add_argument("-rg", "--learning_rate", type=float,
+        parser.add_argument("-rp", "--reg_param", type=float,
                             help='regulation parameter for lasso e.g 0.0005')
         parser.add_argument("--data", type=Path,
                             default=Path(__file__).absolute().parent.parent.joinpath("data_example.csv"),
