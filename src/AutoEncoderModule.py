@@ -11,6 +11,7 @@ import numpy as np
 import pl_bolts.datamodules
 import pytorch_lightning as pl
 import torch
+import torch.nn.functional as F
 import torchmetrics as tm
 from pytorch_lightning.utilities.types import EVAL_DATALOADERS, TRAIN_DATALOADERS
 from sklearn.model_selection import train_test_split
@@ -179,7 +180,7 @@ class AutoGenoShallow(pl.LightningModule):
 
     def __init__(self, save_dir: Path, name: str, smallest_layer: int, cyclical_lr: bool,
                  learning_rate: float,
-                 reg_parm: float,
+                 reg_param: float,
                  data: Path, transformed_data: Path,
                  batch_size: int, val_split: float, test_split: float,
                  filter_str: str, num_workers: int, random_state: int, fold: bool,
@@ -254,7 +255,8 @@ class AutoGenoShallow(pl.LightningModule):
         x: Tensor = batch[0]
         output, _ = self.reg_forward(x)
         self.training_r2score_node.update(preds=output, target=x)
-        loss: Tensor = f.mse_loss(input=output, target=x) + reg_param * l1_loss
+        l1_loss = self.sparse_loss(x)
+        loss: Tensor = f.mse_loss(input=output, target=x) + self.reg_param * l1_loss
         # return {'model': coder, 'loss': loss, 'r2_node': r2_node, 'input': x, 'output': output}
         # return {'model': coder.detach(), 'loss': loss, "input": x, "'output": output.detach()}
         # return {'model': coder.detach(), 'loss': loss}
@@ -381,6 +383,16 @@ class AutoGenoShallow(pl.LightningModule):
 
     def _forward_unimplemented(self, *inputs: Any) -> None:
         pass
+
+    # **Sparse_loss, this is not the final sparse penalty
+    def sparse_loss(self, inputs):
+        model_children = list(self.children())
+        loss = 0
+        values = inputs
+        for i in range(len(model_children)):
+            values = F.leaky_relu((model_children[i](values)))
+            loss += torch.mean(torch.abs(values))
+        return loss
 
     @staticmethod
     def add_model_specific_args(parent_parser: argparse.ArgumentParser):
