@@ -388,6 +388,7 @@ class AutoGenoShallow(pl.LightningModule):
         loss = 0
         values = inputs
         for model_child in self.children():  # child[0] is encode step and child[1] is decode step
+            print(f"model_child:\n{model_child}\nvalues: {values.size()}")
             values = model_child.forward(values)
             loss += torch.mean(torch.abs(values))
         return loss
