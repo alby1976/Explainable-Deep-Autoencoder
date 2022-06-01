@@ -262,7 +262,7 @@ class AutoGenoShallow(pl.LightningModule):
         # return {'model': coder.detach(), 'loss': loss, "input": x, "'output": output.detach()}
         # return {'model': coder.detach(), 'loss': loss}
         # return {'loss': loss}
-        return {'loss': loss, "input": x, "'output": output.detach()}
+        return {'loss': loss, "input": x, "output": output.detach()}
 
     # end of training epoch
     def training_epoch_end(self, training_step_outputs):
@@ -307,7 +307,7 @@ class AutoGenoShallow(pl.LightningModule):
         loss: Tensor = f.mse_loss(input=output, target=x) + self.reg_param * l1_loss
 
         # return {"loss": loss}
-        return {'loss': loss, "input": x, "'output": output.detach()}
+        return {'loss': loss, "input": x, "output": output.detach()}
 
     # end of validation epoch
     def validation_epoch_end(self, testing_step_outputs):
