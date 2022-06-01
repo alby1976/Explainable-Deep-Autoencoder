@@ -325,7 +325,7 @@ class AutoGenoShallow(pl.LightningModule):
         # clean up
         del loss
 
-        self.testing_r2score_node.reset()
+        # self.testing_r2score_node.reset()
         gc.collect()
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
