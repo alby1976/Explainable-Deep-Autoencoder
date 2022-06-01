@@ -387,7 +387,7 @@ class AutoGenoShallow(pl.LightningModule):
     def sparse_loss(self, inputs):
         loss = 0
         values = inputs
-        for model_child in self.children(): # child[0] is encode step and child[1] is decode step
+        for model_child in self.children():  # child[0] is encode step and child[1] is decode step
             values = model_child(values)
             loss += torch.mean(torch.abs(values))
         return loss
