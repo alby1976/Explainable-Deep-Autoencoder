@@ -11,7 +11,6 @@ import numpy as np
 import pl_bolts.datamodules
 import pytorch_lightning as pl
 import torch
-import torch.nn.functional as F
 import torchmetrics as tm
 from pytorch_lightning.utilities.types import EVAL_DATALOADERS, TRAIN_DATALOADERS
 from sklearn.model_selection import train_test_split
@@ -386,11 +385,10 @@ class AutoGenoShallow(pl.LightningModule):
 
     # **Sparse_loss, this is not the final sparse penalty
     def sparse_loss(self, inputs):
-        model_children = list(self.children())
         loss = 0
         values = inputs
-        for i in range(len(model_children)):
-            values = F.leaky_relu((model_children[i](values)))
+        for model_child in self.children():
+            values = model_child(values)
             loss += torch.mean(torch.abs(values))
         return loss
 
