@@ -116,7 +116,7 @@ def main(model_name, gene_name, gene_id, ae_result, col_mask, save_dir: Path, sa
         hidden_vars: DataFrame = get_data(ae_result, index_col=None, header=None)
         ids: ndarray = geno_id.columns.to_numpy()[mask.values.flatten()]
         print(f"\ndf mask:\n{mask}\nnp mask:\n{mask.to_numpy()}\n")
-        dm = DataNormalization(column_mask=mask.values.flatten(), column_names=gene.columns.to_numpy())
+        dm = DataNormalization(column_mask=mask.to_numpy().flatten(), column_names=gene.columns.to_numpy())
         create_shap_tree_val(model_name, dm, phen, gene, ids, hidden_vars, save_bar, save_scatter, gene_model,
                              num_workers, fold, test_split, random_state, shuffle, top_rate)
 
