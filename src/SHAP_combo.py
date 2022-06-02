@@ -148,7 +148,7 @@ if __name__ == '__main__':
                         help='path to input data with gene name as column headers e.g. ./gene_name_QC')
     parser.add_argument("-id", "--gene_id", type=Path, required=True,
                         help='path to input data with gene id as column headers e.g. ./gene_id_QC')
-    parser.add_argument("--name", type=str, required=True, help='AE model name')
+    parser.add_argument("--model_name", type=str, required=True, help='AE model name')
     parser.add_argument("-w", "--num_workers", type=int,
                         help='number of processors used to run in parallel. -1 mean using all processor '
                              'available default is None')
