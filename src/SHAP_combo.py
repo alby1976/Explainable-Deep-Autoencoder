@@ -111,7 +111,7 @@ def main(model_name, gene_name, gene_id, ae_result, col_mask, save_dir: Path, sa
         if gene_name is None:
             gene = convert_gene_id_to_name(geno_id, mask.columns.to_numpy())
         else:
-            gene, phen = get_phen(get_data(gene_name))
+            gene = get_data(gene_name)
 
         hidden_vars: DataFrame = get_data(ae_result, index_col=None, header=None)
         ids: ndarray = geno_id.columns.to_numpy()[mask.values.flatten()]
