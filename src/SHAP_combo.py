@@ -15,8 +15,7 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
 
 from CommonTools import create_dir, get_phen, get_data, DataNormalization, \
-    convert_gene_id_to_name
-from ShapDeepExplainerModule import process_shap_values
+    convert_gene_id_to_name, process_shap_values
 
 
 def get_last_model(directory: Path):

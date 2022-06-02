@@ -5,7 +5,9 @@ from typing import Tuple, Union, Iterable, Dict, Any, List, Optional
 
 import numpy as np
 import pandas as pd
+import shap
 import torch
+from matplotlib import pyplot as plt
 from numpy import ndarray
 from pandas import DataFrame, Series
 from pyensembl import EnsemblRelease
@@ -273,3 +275,52 @@ def float_or_none(value: str) -> Optional[float]:
     if value.strip().lower() in ("none", "null", "nil"):
         return None
     return float(value)
+
+
+def create_gene_model(model_name: str, gene_model: Path, shap_values, gene_names: ndarray, sample_num: int,
+                      top_num: int, node: int):
+    # **generate gene model
+    shap_values_mean = np.sum(abs(shap_values), axis=0) / sample_num
+    shap_values_ln = np.log(shap_values_mean)  # *calculate ln^|shap_values_mean|
+    gene_module: Union[ndarray, DataFrame] = np.stack((gene_names, shap_values_ln), axis=0)
+    gene_module = gene_module.T
+    gene_module = gene_module[np.argsort(gene_module[:, 1])]
+    gene_module = gene_module[::-1]  # [starting index: stopping index: stepcount]
+    gene_module = pd.DataFrame(gene_module)
+    gene_module = gene_module.head(top_num)
+    masking: Union[ndarray, bool] = gene_module[[1]] != -np.inf
+    gene_module = gene_module[masking.all(axis=1)]
+    if len(gene_module.index) > (1 / 4) * top_num:
+        filename = f"{model_name}-shap({node:02}).csv"
+        print(f'Creating {gene_model.joinpath(filename)} ...')
+        gene_module.to_csv(gene_model.joinpath(filename), header=True, index=False, sep='\t')
+        tbl = wandb.Table(dataframe=gene_module)
+        tmp = f"{model_name}-shap({node:02})"
+        wandb.log({tmp: tbl})
+        print(f"...{gene_model.joinpath(filename)} Done ...\n")
+
+
+def plot_shap_values(model_name: str, node: int, values, x_test: Union[ndarray, DataFrame, List], names: ndarray,
+                     plot_type: str, plot_size, save_shap: Path):
+    filename = f"{node:02}-{model_name}-{plot_type}.png"
+    print(f"Creating {save_shap.joinpath(filename)} ...")
+    shap.summary_plot(values, x_test, names, plot_type=plot_type, plot_size=plot_size, show=False)
+    plt.savefig(f"{save_shap.joinpath(filename)}", dpi=100, format='png')
+    plt.close()
+    tmp = f"{node:02}-{model_name}-{plot_type}"
+    image: Image = wandb.Image(str(save_shap.joinpath(filename)), caption="Top 20 features based on SHAP_values")
+    wandb.log({tmp: image})
+    print(f"{filename} Done")
+
+
+def process_shap_values(save_bar: Path, save_scatter: Path, gene_model: Path, model_name: str, x_test, shap_values,
+                        gene_names, sample_num, top_num, node):
+    print(f"save_bar: {save_bar}\nsave_scatter: {save_scatter}\ngene_model: {gene_model}\nmodel_name: {model_name}\n"
+          f"x_test:\n{x_test}\nshap_values:\n{shap_values}\ngene_names:{gene_names}\n")
+    # save shap_gene_model
+    create_gene_model(model_name, gene_model, shap_values, gene_names, sample_num, top_num, node)
+
+    # generate bar char
+    plot_shap_values(model_name, node, shap_values, x_test, gene_names, "bar", (15, 10), save_bar)
+    # generate scatter chart
+    plot_shap_values(model_name, node, shap_values, x_test, gene_names, "dot", (15, 10), save_scatter)
