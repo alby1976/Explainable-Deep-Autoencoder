@@ -133,8 +133,6 @@ def add_shap_arguments(parse):
                        help='path to save gene module e.g. ./shap/gene_model')
     parse.add_argument("-tr", "--top_rate", type=float, default=0.2,
                        help='test set split ratio. default is 0.2')
-    parse.add_argument("-d", "--deep", action="store_true", default=False,
-                       help="using this flag selects DeepExplainer otherwise TreeExplainer is used.")
 
 
 if __name__ == '__main__':

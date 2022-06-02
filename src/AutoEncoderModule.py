@@ -450,5 +450,4 @@ class AutoGenoShallow(pl.LightningModule):
                             help='selecting this flag causes the last column in the dataset to be dropped.')
         parser.add_argument("--pin_memory_no", action="store_false", default=True,
                             help='selecting this flag causes the numpy to tensor conversion to be less efficient.')
-
         return parent_parser
