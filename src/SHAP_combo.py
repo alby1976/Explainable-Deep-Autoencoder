@@ -55,6 +55,8 @@ def predict_shap_values(phen, unique, unique_count, gene, hidden_vars, test_spli
     # my_model: RandomForestRegressor = RandomForestRegressor(bootstrap=True, oob_score=False, max_depth=20,
     #                                                        random_state=random_state, n_estimators=100,
     #                                                        n_jobs=num_workers)
+
+    print(f"x_train type: {type(x_train)} x_test type: {type(x_test)}")
     print(f"\nx_train: {x_train.shape} y_train: {y_train.shape} phen_train: {phen_train.shape}\n dm: {dm.column_mask}")
     dm.fit(x_train, fold)
     my_model.fit(dm.transform(x_train, fold), y_train)
