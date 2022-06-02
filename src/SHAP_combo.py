@@ -57,7 +57,7 @@ def predict_shap_values(phen, unique, unique_count, gene, hidden_vars, test_spli
     print(f"\nx_train: {x_train.shape} y_train: {y_train.shape} phen_train: {phen_train.shape}")
     dm.fit(x_train, fold)
     my_model.fit(dm.transform(x_train, fold), y_train)
-    y_pred = my_model.predict(dm.transform(x_test,fold))
+    y_pred = my_model.predict(dm.transform(x_test, fold))
     r2: float = sklearn.metrics.r2_score(y_true=y_test, y_pred=y_pred)
     explainer = shap.TreeExplainer(my_model)
     # **explainer = shap.KernelExplainer(my_model.predict, x = x_test.iloc[0:10])

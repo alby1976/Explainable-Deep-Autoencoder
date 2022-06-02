@@ -136,8 +136,9 @@ def main(args):
                                args.save_dir.joinpath(args.save_bar),
                                args.save_dir.joinpath(args.save_scatter), args.top_rate)
         else:
+            mask: List[bool] = model.dataset.dm.column_mask
             create_shap_tree_val(args.name + "_Shap", model.dataset.dm,
-                                 model.dataset.y, model.dataset.x, model.dataset.gene_names, df,
+                                 model.dataset.y, model.dataset.x, model.dataset.gene_names[mask], df,
                                  args.save_dir.joinpath(args.save_bar),
                                  args.save_dir.joinpath(args.save_scatter), args.save_dir.joinpath(args.gene_model),
                                  args.num_workers, args.fold, args.val_split,
