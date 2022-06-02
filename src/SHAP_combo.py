@@ -36,7 +36,7 @@ def predict_shap_values(phen, unique, unique_count, gene, hidden_vars, test_spli
     phen_train: Any = None
     phen_test: Any
     if phen is not None and unique.size > 1 and np.min(unique_count) > 1:
-        x_train, x_test, y_train, y_test, phen_train, phen_test = train_test_split(gene.to_numpy(),
+        x_train, x_test, y_train, y_test, phen_train, phen_test = train_test_split(gene,
                                                                                    hidden_vars,
                                                                                    phen.to_numpy(),
                                                                                    test_size=test_split,
