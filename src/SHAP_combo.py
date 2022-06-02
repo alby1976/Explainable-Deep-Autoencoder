@@ -12,7 +12,6 @@ import wandb
 import xgboost as xgb
 from numpy import ndarray
 from pandas import DataFrame
-from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
 
 from CommonTools import create_dir, get_phen, get_data, DataNormalization, \
@@ -94,16 +93,16 @@ def create_shap_tree_val(model_name, dm, phen, gene, ids, hidden_vars, save_bar,
     pass
 
 
-def main(model_name, gene_name, gene_id, ae_result, col_mask, save_bar, save_scatter, gene_model, num_workers, fold,
-         test_split, random_state, shuffle, top_rate):
+def main(model_name, gene_name, gene_id, ae_result, col_mask, save_dir: Path, save_bar, save_scatter, gene_model,
+         num_workers, fold, test_split, random_state, shuffle, top_rate):
     with wandb.init(name=model_name, project="XAE4Exp"):
         # wandb configuration
         wandb.config.update = {"architecture": platform.platform(),
                                "Note": f"stratify splitting if there more than 2 phenotype and each category has more "
                                        f"than 1 element; random_state={random_state}"}
-        create_dir(Path(save_bar).parent)
-        create_dir(Path(save_scatter).parent)
-        create_dir(Path(gene_model).parent)
+        create_dir(save_dir.joinpath(save_bar).parent)
+        create_dir(save_dir.joinpath(save_scatter).parent)
+        create_dir(save_dir.joinpath(gene_model).parent)
         geno_id: DataFrame
 
         mask: pd.DataFrame = get_data(col_mask)
@@ -119,7 +118,7 @@ def main(model_name, gene_name, gene_id, ae_result, col_mask, save_bar, save_sca
         print(f"\ndf mask:\n{mask}\nnp mask:\n{mask.to_numpy()}\n")
         dm = DataNormalization(column_mask=mask.values.flatten(), column_names=gene.columns.to_numpy())
         create_shap_tree_val(model_name, dm, phen, gene, ids, hidden_vars, save_bar, save_scatter, gene_model,
-                             num_workers, fold, test_split, random_state, shuffle, top_rate)
+        num_workers, fold, test_split, random_state, shuffle, top_rate)
 
         wandb.finish()
 
