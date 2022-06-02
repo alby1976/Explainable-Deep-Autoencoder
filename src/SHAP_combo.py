@@ -118,7 +118,7 @@ def main(model_name, gene_name, gene_id, ae_result, col_mask, save_dir: Path, sa
         print(f"\ndf mask:\n{mask}\nnp mask:\n{mask.to_numpy()}\n")
         dm = DataNormalization(column_mask=mask.values.flatten(), column_names=gene.columns.to_numpy())
         create_shap_tree_val(model_name, dm, phen, gene, ids, hidden_vars, save_bar, save_scatter, gene_model,
-        num_workers, fold, test_split, random_state, shuffle, top_rate)
+                             num_workers, fold, test_split, random_state, shuffle, top_rate)
 
         wandb.finish()
 
