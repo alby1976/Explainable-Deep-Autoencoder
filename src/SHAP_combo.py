@@ -86,7 +86,7 @@ def create_shap_tree_val(model_name, dm, phen, gene, ids, hidden_vars, save_bar,
     for r in map(lambda p: predict_shap_values(*p), params):
         result.append(r)
 
-    r2_scores = pd.Dataframe(result, columns=['node', 'R^2'])
+    r2_scores = pd.DataFrame(result, columns=['node', 'R^2'])
     r2_scores.to_csv(f'{gene_model}-r2.csv', header=True, index=False)
     tmp = f"{model_name}-r2)"
     tbl = wandb.Table(dataframe=r2_scores)
