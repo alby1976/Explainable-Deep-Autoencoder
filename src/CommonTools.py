@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import shap
 import torch
+import wandb
 from matplotlib import pyplot as plt
 from numpy import ndarray
 from pandas import DataFrame, Series
@@ -14,6 +15,7 @@ from pyensembl import EnsemblRelease
 from scipy.stats import levene, anderson, ks_2samp
 from torch import device, Tensor
 from torch.utils.data import DataLoader
+from wandb import Image
 
 
 class DataNormalization:
