@@ -13,6 +13,7 @@ import xgboost as xgb
 from matplotlib import pyplot as plt
 from numpy import ndarray
 from pandas import DataFrame
+from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
 from wandb import Image
 
@@ -51,11 +52,11 @@ def predict_shap_values(phen, unique, unique_count, gene, hidden_vars, test_spli
                                                              stratify=phen,
                                                              random_state=random_state)
 
-    my_model = xgb.XGBRegressor(booster="gbtree", max_depth=20, random_state=random_state, eval_metric="rmse",
-                                n_estimators=100, objective='reg:squarederror')
-    # my_model: RandomForestRegressor = RandomForestRegressor(bootstrap=True, oob_score=False, max_depth=20,
-    #                                                        random_state=random_state, n_estimators=100,
-    #                                                        n_jobs=num_workers)
+    # my_model = xgb.XGBRegressor(booster="gbtree", max_depth=20, random_state=random_state, eval_metric="rmse",
+    #                            n_estimators=100, objective='reg:squarederror')
+    my_model: RandomForestRegressor = RandomForestRegressor(bootstrap=True, oob_score=False, max_depth=20,
+                                                            random_state=random_state, n_estimators=100,
+                                                            n_jobs=num_workers)
 
     print(f"\nx_train: {x_train.shape} y_train: {y_train.shape} phen_train: {phen_train.shape}\n dm: {dm.column_mask}")
     dm.fit(x_train, fold)
