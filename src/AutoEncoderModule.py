@@ -206,7 +206,7 @@ class AutoGenoShallow(pl.LightningModule):
         self.e1 = nn.Linear(self.input_features, self.hidden_layer)
         self.e2 = nn.Linear(self.hidden_layer, self.smallest_layer)
         self.d1 = nn.Linear(self.smallest_layer, self.hidden_layer)
-        self.d2 = nn.Linear(self.hidden_layer, self.input_features)
+        self.d2 = nn.Linear(self.hidden_layer, self.output_features)
         '''
         self.training_r2score_node = tm.R2Score(num_outputs=self.input_features,
                                                 multioutput='variance_weighted', compute_on_step=False)
@@ -255,7 +255,7 @@ class AutoGenoShallow(pl.LightningModule):
 
         # decoding
         x = f.leaky_relu(self.d1(y))
-        x = torch.sigmoid(x)
+        x = torch.sigmoid(self.d2(x))
         return x
 
     def reg_forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
@@ -265,7 +265,7 @@ class AutoGenoShallow(pl.LightningModule):
 
         # decoding
         x = f.leaky_relu(self.d1(y))
-        x = torch.sigmoid(x)
+        x = torch.sigmoid(self.d2(x))
         return x, y
 
     # define training step
