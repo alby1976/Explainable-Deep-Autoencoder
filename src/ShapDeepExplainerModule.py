@@ -2,13 +2,11 @@
 # 3rd party modules
 # from concurrent.futures import ThreadPoolExecutor
 
-from matplotlib import pyplot as plt
 from torch import nn
-from wandb import Image
 
 from AutoEncoderModule import AutoGenoShallow
-from SHAP_combo import *
 from CommonTools import *
+from SHAP_combo import *
 
 
 def create_shap_values(model: AutoGenoShallow, model_name: str, gene_model: Path, save_bar: Path, save_scatter: Path,
