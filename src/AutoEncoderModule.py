@@ -203,6 +203,10 @@ class AutoGenoShallow(pl.LightningModule):
         print(f"input_features: {self.input_features} hidden_features: {self.hidden_layer} "
               f"smallest_layer: {self.smallest_layer}")
 
+        self.e1 = nn.Linear(self.input_features, self.hidden_layer)
+        self.e2 = nn.Linear(self.hidden_layer, self.smallest_layer)
+        self.d1 = nn.Linear(self.smallest_layer, self.hidden_layer)
+        self.d2 = nn.Linear(self.hidden_layer, self.input_features)
         '''
         self.training_r2score_node = tm.R2Score(num_outputs=self.input_features,
                                                 multioutput='variance_weighted', compute_on_step=False)
@@ -225,6 +229,7 @@ class AutoGenoShallow(pl.LightningModule):
         name = name.joinpath(f'{data.stem}_column_mask.csv')
         self.dataset.dm.save_column_mask(name, self.dataset.gene_names)
 
+        '''
         # def the encoder function
         self.encoder = nn.Sequential(
             nn.Linear(self.input_features, self.hidden_layer),
@@ -240,14 +245,27 @@ class AutoGenoShallow(pl.LightningModule):
             nn.Linear(self.hidden_layer, self.output_features),
             nn.Sigmoid()
         )
+        '''
 
     # define forward function
     def forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
-        return self.decoder(self.encoder(x))
+        # encoding
+        x = f.leaky_relu(self.e1(x))
+        y = f.leaky_relu(self.e2(x))
+
+        # decoding
+        x = f.leaky_relu(self.d1(y))
+        x = torch.sigmoid(x)
+        return x
 
     def reg_forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
-        y: Tensor = self.encoder(x)
-        x = self.decoder(y)
+        # encoding
+        x = f.leaky_relu(self.e1(x))
+        y = f.leaky_relu(self.e2(x))
+
+        # decoding
+        x = f.leaky_relu(self.d1(y))
+        x = torch.sigmoid(x)
         return x, y
 
     # define training step
@@ -391,11 +409,12 @@ class AutoGenoShallow(pl.LightningModule):
 
     # **Sparse_loss, this is not the final sparse penalty
     def sparse_loss(self, inputs):
+        model_children = list(self.children())
         loss = 0
         values = inputs
-        for model_child in self.children():  # child[0] is encode step and child[1] is decode step
+        for model_child in model_children:
             # print(f"model_child:\n{model_child}\nvalues: {values.size()}")
-            values = model_child.forward(values)
+            values = f.leaky_relu(model_child(values))
             loss += torch.mean(torch.abs(values))
         return loss
 
