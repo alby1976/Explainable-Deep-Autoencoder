@@ -51,8 +51,8 @@ def predict_shap_values(phen, unique, unique_count, gene, hidden_vars, test_spli
                                                              stratify=phen,
                                                              random_state=random_state)
 
-    my_model = xgb.XGBRegressor(booster="gbtree", max_depth=20, random_state=42, n_estimators=100,
-                                objective='reg:squarederror')
+    my_model = xgb.XGBRegressor(booster="gbtree", max_depth=20, random_state=random_state, eval_metric="rmse",
+                                n_estimators=100, objective='reg:squarederror')
     # my_model: RandomForestRegressor = RandomForestRegressor(bootstrap=True, oob_score=False, max_depth=20,
     #                                                        random_state=random_state, n_estimators=100,
     #                                                        n_jobs=num_workers)
@@ -86,7 +86,7 @@ def create_gene_model(model_name: str, gene_model: Path, shap_values, gene_names
     gene_module = gene_module.head(top_num)
     masking: Union[ndarray, bool] = gene_module[[1]] != -np.inf
     gene_module = gene_module[masking.all(axis=1)]
-    if len(gene_module.index) > (1 / 4) * top_num:
+    if len(gene_module.index) > 0:
         filename = f"{model_name}-shap({node:02}).csv"
         print(f'Creating {gene_model.joinpath(filename)} ...')
         gene_module.to_csv(gene_model.joinpath(filename), header=True, index=False, sep='\t')
@@ -148,7 +148,6 @@ def create_shap_tree_val(model_name, dm, phen, gene, ids, hidden_vars, save_bar,
 
 def main(model_name, gene_name, gene_id, ae_result, col_mask, save_dir: Path, save_bar, save_scatter, gene_model,
          num_workers, fold, test_split, random_state, shuffle, top_rate):
-
     gene: DataFrame
 
     with wandb.init(name=model_name, project="XAE4Exp"):
