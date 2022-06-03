@@ -57,7 +57,6 @@ def predict_shap_values(phen, unique, unique_count, gene, hidden_vars, test_spli
     #                                                        random_state=random_state, n_estimators=100,
     #                                                        n_jobs=num_workers)
 
-    print(f"x_train type: {type(x_train)} x_test type: {type(x_test)}")
     print(f"\nx_train: {x_train.shape} y_train: {y_train.shape} phen_train: {phen_train.shape}\n dm: {dm.column_mask}")
     dm.fit(x_train, fold)
     my_model.fit(dm.transform(x_train, fold), y_train)
@@ -99,7 +98,7 @@ def create_gene_model(model_name: str, gene_model: Path, shap_values, gene_names
 
 def plot_shap_values(model_name: str, node: int, values, x_test: Union[ndarray, DataFrame, List], names: ndarray,
                      plot_type: str, plot_size, save_shap: Path):
-    print(save_shap)
+    print(f"save_shap ")
     filename = f"{node:02}-{model_name}-{plot_type}.png"
     filename = save_shap.joinpath(filename)
     print(f"Creating {filename} ...")
@@ -154,9 +153,12 @@ def main(model_name, gene_name, gene_id, ae_result, col_mask, save_dir: Path, sa
         wandb.config.update = {"architecture": platform.platform(),
                                "Note": f"stratify splitting if there more than 2 phenotype and each category has more "
                                        f"than 1 element; random_state={random_state}"}
-        create_dir(save_dir.joinpath(save_bar).parent)
-        create_dir(save_dir.joinpath(save_scatter).parent)
-        create_dir(save_dir.joinpath(gene_model).parent)
+        save_bar = save_dir.joinpath(save_bar)
+        save_scatter = save_dir.joinpath(save_scatter)
+        gene_model = save_dir.joinpath(gene_model)
+        create_dir(save_bar.parent)
+        create_dir(save_scatter.parent)
+        create_dir(gene_model.parent)
         geno_id: DataFrame
 
         mask: pd.DataFrame = get_data(col_mask)
