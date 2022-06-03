@@ -142,7 +142,7 @@ def main(args):
                                  args.save_dir.joinpath(args.save_bar),
                                  args.save_dir.joinpath(args.save_scatter), args.save_dir.joinpath(args.gene_model),
                                  args.num_workers, args.fold, args.val_split,
-                                 args.random_state, args.shuffle, args.top_rate)
+                                 args.random_state, args.shuffle, args.boost, args.top_rate)
 
         wandb.finish()
 

@@ -27,7 +27,7 @@ def get_last_model(directory: Path):
     return file_path
 
 
-def predict_shap_values(phen, unique, unique_count, gene, hidden_vars, test_split, shuffle, random_state,
+def predict_shap_values(boost, phen, unique, unique_count, gene, hidden_vars, test_split, shuffle, random_state,
                         num_workers, dm, fold, sample_num, ids, top_num, gene_model, model_name, save_bar,
                         save_scatter, column_num, i) -> Tuple[int, float]:
     print(f'**** Processing {i + 1} out of {column_num} columns ****')
@@ -52,11 +52,12 @@ def predict_shap_values(phen, unique, unique_count, gene, hidden_vars, test_spli
                                                              stratify=phen,
                                                              random_state=random_state)
 
-    # my_model = xgb.XGBRegressor(booster="gbtree", max_depth=20, random_state=random_state, eval_metric="rmse",
-    #                            n_estimators=100, objective='reg:squarederror')
-    my_model: RandomForestRegressor = RandomForestRegressor(bootstrap=True, oob_score=False, max_depth=20,
-                                                            random_state=random_state, n_estimators=100,
-                                                            n_jobs=num_workers)
+    my_model = xgb.XGBRegressor(booster="gbtree", max_depth=20, random_state=random_state,
+                                eval_metric="rmse",
+                                n_estimators=100, objective='reg:squarederror') if boost else \
+        RandomForestRegressor(bootstrap=True, oob_score=False, max_depth=20,
+                              random_state=random_state, n_estimators=100,
+                              n_jobs=num_workers)
 
     print(f"\nx_train: {x_train.shape} y_train: {y_train.shape} phen_train: {phen_train.shape}\n dm: {dm.column_mask}")
     dm.fit(x_train, fold)
@@ -126,14 +127,14 @@ def process_shap_values(save_bar: Path, save_scatter: Path, gene_model: Path, mo
 
 
 def create_shap_tree_val(model_name, dm, phen, gene, ids, hidden_vars, save_bar, save_scatter, gene_model,
-                         num_workers, fold, test_split, random_state, shuffle, top_rate):
+                         num_workers, fold, test_split, random_state, shuffle, boost: bool, top_rate):
     column_num: int = len(hidden_vars.columns)
     sample_num: int = len(gene.index)
     top_num: int = int(top_rate * len(gene.columns))
 
     result = []
     unique, unique_count = np.unique(phen, return_counts=True)
-    params = ((phen, unique, unique_count, gene, hidden_vars[i], test_split, shuffle,
+    params = ((boost, phen, unique, unique_count, gene, hidden_vars[i], test_split, shuffle,
                random_state, num_workers, dm, fold, sample_num, ids, top_num, gene_model,
                model_name, save_bar, save_scatter, column_num, i) for i in range(column_num))
     for r in map(lambda p: predict_shap_values(*p), params):
@@ -148,7 +149,7 @@ def create_shap_tree_val(model_name, dm, phen, gene, ids, hidden_vars, save_bar,
 
 
 def main(model_name, gene_name, gene_id, ae_result, col_mask, save_dir: Path, save_bar, save_scatter, gene_model,
-         num_workers, fold, test_split, random_state, shuffle, top_rate):
+         num_workers, fold, test_split, random_state, shuffle, boost: bool, top_rate):
     gene: DataFrame
 
     with wandb.init(name=model_name, project="XAE4Exp"):
@@ -179,7 +180,7 @@ def main(model_name, gene_name, gene_id, ae_result, col_mask, save_dir: Path, sa
         # dm = DataNormalization(column_mask=mask.to_numpy().flatten(), column_names=gene.columns.to_numpy())
         dm = DataNormalization(column_mask=mask.to_numpy().flatten())
         create_shap_tree_val(model_name, dm, phen, gene, ids, hidden_vars, save_bar, save_scatter, gene_model,
-                             num_workers, fold, test_split, random_state, shuffle, top_rate)
+                             num_workers, fold, test_split, random_state, shuffle, boost, top_rate)
 
         wandb.finish()
 
@@ -193,6 +194,8 @@ def add_shap_arguments(parse):
                        help='path to save gene module e.g. ./shap/gene_model')
     parse.add_argument("-tr", "--top_rate", type=float, default=0.2,
                        help='test set split ratio. default is 0.2')
+    parse.add_argument("--boost", action='store_true', default=False,
+                       help="whether to use RandomForrestRegressor or XGBRegressor. default is")
 
 
 if __name__ == '__main__':
