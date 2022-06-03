@@ -148,6 +148,9 @@ def create_shap_tree_val(model_name, dm, phen, gene, ids, hidden_vars, save_bar,
 
 def main(model_name, gene_name, gene_id, ae_result, col_mask, save_dir: Path, save_bar, save_scatter, gene_model,
          num_workers, fold, test_split, random_state, shuffle, top_rate):
+
+    gene: DataFrame
+
     with wandb.init(name=model_name, project="XAE4Exp"):
         # wandb configuration
         wandb.config.update = {"architecture": platform.platform(),
