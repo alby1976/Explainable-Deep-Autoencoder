@@ -114,7 +114,7 @@ def plot_shap_values(model_name: str, node: int, values, x_test: Union[ndarray, 
 def process_shap_values(save_bar: Path, save_scatter: Path, gene_model: Path, model_name: str, x_test, shap_values,
                         gene_names, sample_num, top_num, node):
     print(f"save_bar: {save_bar}\nsave_scatter: {save_scatter}\ngene_model: {gene_model}\nmodel_name: {model_name}\n"
-          f"x_test:\n{x_test}\nshap_values:\n{shap_values}\ngene_names:{gene_names}\n")
+          f"ene_names:{gene_names.shape}\n")
     # save shap_gene_model
     create_gene_model(model_name, gene_model, shap_values, gene_names, sample_num, top_num, node)
 
