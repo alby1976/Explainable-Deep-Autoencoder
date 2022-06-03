@@ -99,6 +99,7 @@ def create_gene_model(model_name: str, gene_model: Path, shap_values, gene_names
 
 def plot_shap_values(model_name: str, node: int, values, x_test: Union[ndarray, DataFrame, List], names: ndarray,
                      plot_type: str, plot_size, save_shap: Path):
+    print(save_shap)
     filename = f"{node:02}-{model_name}-{plot_type}.png"
     filename = save_shap.joinpath(filename)
     print(f"Creating {filename} ...")
