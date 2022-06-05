@@ -210,10 +210,10 @@ class AutoGenoShallow(pl.LightningModule):
         print(f"input_features: {self.input_features} hidden_features: {self.hidden_layer} "
               f"smallest_layer: {self.smallest_layer}")
 
-        self.e1 = f.leaky_relu(nn.Linear(self.input_features, self.hidden_layer))
-        self.e2 = f.leaky_relu(nn.Linear(self.hidden_layer, self.smallest_layer))
-        self.d1 = f.leaky_relu(nn.Linear(self.smallest_layer, self.hidden_layer))
-        self.d2 = torch.sigmoid(nn.Linear(self.hidden_layer, self.output_features))
+        self.e1 = nn.Sequential(nn.Linear(self.input_features, self.hidden_layer), nn.LeakyReLU())
+        self.e2 = nn.Sequential(nn.Linear(self.hidden_layer, self.smallest_layer), nn.LeakyReLU())
+        self.d1 = nn.Sequential(nn.Linear(self.smallest_layer, self.hidden_layer), nn.LeakyReLU())
+        self.d2 = nn.Sequential(nn.Linear(self.hidden_layer, self.output_features), nn.Sigmoid())
         '''
         self.training_r2score_node = tm.R2Score(num_outputs=self.input_features,
                                                 multioutput='variance_weighted', compute_on_step=False)
