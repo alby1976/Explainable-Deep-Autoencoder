@@ -210,10 +210,10 @@ class AutoGenoShallow(pl.LightningModule):
         print(f"input_features: {self.input_features} hidden_features: {self.hidden_layer} "
               f"smallest_layer: {self.smallest_layer}")
 
-        self.e1 = nn.Linear(self.input_features, self.hidden_layer)
-        self.e2 = nn.Linear(self.hidden_layer, self.smallest_layer)
-        self.d1 = nn.Linear(self.smallest_layer, self.hidden_layer)
-        self.d2 = nn.Linear(self.hidden_layer, self.output_features)
+        self.e1 = f.leaky_relu(nn.Linear(self.input_features, self.hidden_layer))
+        self.e2 = f.leaky_relu(nn.Linear(self.hidden_layer, self.smallest_layer))
+        self.d1 = f.leaky_relu(nn.Linear(self.smallest_layer, self.hidden_layer))
+        self.d2 = torch.sigmoid(nn.Linear(self.hidden_layer, self.output_features))
         '''
         self.training_r2score_node = tm.R2Score(num_outputs=self.input_features,
                                                 multioutput='variance_weighted', compute_on_step=False)
@@ -256,23 +256,16 @@ class AutoGenoShallow(pl.LightningModule):
 
     # define forward function
     def forward(self, x: Tensor) -> Tensor:
-        # encoding
-        x = f.leaky_relu(self.e1(x))
-        y = f.leaky_relu(self.e2(x))
-
-        # decoding
-        x = f.leaky_relu(self.d1(y))
-        x = torch.sigmoid(self.d2(x))
-        return x
+        return self.d2(self.d1(self.e2(self.e1(x))))
 
     def reg_forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
         # encoding
-        x = f.leaky_relu(self.e1(x))
-        y = f.leaky_relu(self.e2(x))
+        x = self.e1(x)
+        y = self.e2(x)
 
         # decoding
-        x = f.leaky_relu(self.d1(y))
-        x = torch.sigmoid(self.d2(x))
+        x = self.d1(y)
+        x = self.d2(x)
         return x, y
 
     # define training step
