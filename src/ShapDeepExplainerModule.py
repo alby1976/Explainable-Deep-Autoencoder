@@ -18,7 +18,8 @@ def create_shap_values(model: AutoGenoShallow, model_name: str, gene_model: Path
     create_dir(gene_model)
     create_dir(save_bar)
     create_dir(save_scatter)
-    model.decoder = nn.Identity()
+    model.d1 = nn.Identity()
+    model.d2 = nn.Identity()
     print(f"model type: {type(model)} device: {model.device}\n{model}\n\n")
 
     data = model.train_dataloader()
