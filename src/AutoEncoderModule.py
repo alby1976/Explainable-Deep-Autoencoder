@@ -255,7 +255,7 @@ class AutoGenoShallow(pl.LightningModule):
         '''
 
     # define forward function
-    def forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
+    def forward(self, x: Tensor) -> Tensor:
         # encoding
         x = f.leaky_relu(self.e1(x))
         y = f.leaky_relu(self.e2(x))
