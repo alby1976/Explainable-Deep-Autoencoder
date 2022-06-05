@@ -8,10 +8,13 @@ from typing import Any, Dict, Optional, Tuple
 
 # 3rd party modules
 import numpy as np
+import pandas as pd
 import pl_bolts.datamodules
 import pytorch_lightning as pl
 import torch
 import torchmetrics as tm
+from numpy import ndarray
+from pandas import DataFrame, Series
 from pytorch_lightning.utilities.types import EVAL_DATALOADERS, TRAIN_DATALOADERS
 from sklearn.model_selection import train_test_split
 from torch import nn, Tensor
@@ -33,6 +36,10 @@ class LambdaLayer(nn.Module):
 
 
 class GPDataModule(pl_bolts.datamodules.SklearnDataModule):
+    x: DataFrame
+    y: Optional[Series]
+    gene_names: ndarray
+
     def __init__(self, data_dir: Path, val_split: float, test_split: float, filter_str: str, transformed_data: Path,
                  num_workers: int, random_state: int, fold: bool, shuffle: bool, batch_size: int,
                  pin_memory: bool, drop_last: bool, version: int):

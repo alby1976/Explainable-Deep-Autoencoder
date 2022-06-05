@@ -126,8 +126,10 @@ def process_shap_values(save_bar: Path, save_scatter: Path, gene_model: Path, mo
     plot_shap_values(model_name, node, shap_values, x_test, gene_names, "dot", "auto", save_scatter)
 
 
-def create_shap_tree_val(model_name, dm, phen, gene, ids, hidden_vars, save_bar, save_scatter, gene_model,
-                         num_workers, fold, test_split, random_state, shuffle, boost: bool, top_rate):
+def create_shap_tree_val(model_name: str, dm: DataNormalization, phen: ndarray, gene: DataFrame, ids: ndarray,
+                         hidden_vars: DataFrame, save_bar: Path, save_scatter: Path, gene_model: Path,
+                         num_workers: int, fold: bool, test_split: float, random_state: int, shuffle: bool,
+                         boost: bool, top_rate: float):
     column_num: int = len(hidden_vars.columns)
     sample_num: int = len(gene.index)
     top_num: int = int(top_rate * len(gene.columns))
@@ -179,8 +181,8 @@ def main(model_name, gene_name, gene_id, ae_result, col_mask, save_dir: Path, sa
         print(f"gene: {gene.shape}\n{gene.columns.to_numpy()}")
         # dm = DataNormalization(column_mask=mask.to_numpy().flatten(), column_names=gene.columns.to_numpy())
         dm = DataNormalization(column_mask=mask.to_numpy().flatten())
-        create_shap_tree_val(model_name, dm, phen, gene, ids, hidden_vars, save_bar, save_scatter, gene_model,
-                             num_workers, fold, test_split, random_state, shuffle, boost, top_rate)
+        create_shap_tree_val(model_name, dm, phen.to_numpy(), gene, ids, hidden_vars, save_bar, save_scatter,
+                             gene_model, num_workers, fold, test_split, random_state, shuffle, boost, top_rate)
 
         wandb.finish()
 
