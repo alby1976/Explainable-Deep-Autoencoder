@@ -2,7 +2,7 @@
 import argparse
 import platform
 from pathlib import Path
-from typing import Any, Dict, Tuple, Union, List
+from typing import Any, Dict, Tuple, Union, List, Optional
 
 import numpy as np
 import pandas as pd
@@ -35,12 +35,12 @@ def predict_shap_values(boost, phen, unique, unique_count, gene, hidden_vars, te
     x_test: Any
     y_train: Any
     y_test: Any
-    phen_train: Any = None
-    phen_test: Any
+    phen_train: Optional[ndarray]
+    phen_test: Optional[ndarray]
     if phen is not None and unique.size > 1 and np.min(unique_count) > 1:
         x_train, x_test, y_train, y_test, phen_train, phen_test = train_test_split(gene.values,
                                                                                    hidden_vars.values,
-                                                                                   phen.to_numpy(),
+                                                                                   phen,
                                                                                    test_size=test_split,
                                                                                    stratify=phen,
                                                                                    random_state=random_state)
@@ -59,7 +59,7 @@ def predict_shap_values(boost, phen, unique, unique_count, gene, hidden_vars, te
                               random_state=random_state, n_estimators=100,
                               n_jobs=num_workers)
 
-    print(f"\nx_train: {x_train.shape} y_train: {y_train.shape} phen_train: {phen_train.shape}\n dm: {dm.column_mask}")
+    print(f"\nx_train: {x_train.shape} y_train: {y_train.shape}\n dm:\n{dm.column_mask}")
     dm.fit(x_train, fold)
     my_model.fit(dm.transform(x_train, fold), y_train)
     y_pred = my_model.predict(dm.transform(x_test, fold))
