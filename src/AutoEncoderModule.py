@@ -8,7 +8,6 @@ from typing import Any, Dict, Optional, Tuple
 
 # 3rd party modules
 import numpy as np
-import pandas as pd
 import pl_bolts.datamodules
 import pytorch_lightning as pl
 import torch
