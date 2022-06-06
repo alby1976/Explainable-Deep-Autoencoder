@@ -87,8 +87,10 @@ def create_gene_model(model_name: str, gene_model: Path, shap_values, gene_names
     gene_module = pd.DataFrame(gene_module)
     gene_module = gene_module.head(top_num)
     masking: Union[ndarray, bool] = gene_module[[1]] != -np.inf
+    print
+    print(f"\nwithout np.all:\n{gene_module[masking]}\nnp.all:\n{gene_module[masking.all(axis=1)]}\n")
     gene_module = gene_module[masking.all(axis=1)]
-    if len(gene_module.index) > 0:
+    if len(gene_module.index) > 1/4 * top_num:
         filename = f"{model_name}-shap({node:02}).csv"
         print(f'Creating {gene_model.joinpath(filename)} ...')
         gene_module.to_csv(gene_model.joinpath(filename), header=True, index=False, sep='\t')
