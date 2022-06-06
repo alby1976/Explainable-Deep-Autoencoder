@@ -89,6 +89,7 @@ def create_gene_model(model_name: str, gene_model: Path, shap_values, gene_names
     masking: Union[ndarray, bool] = gene_module[[1]] != -np.inf
     print(f"\nwithout np.all:\n{gene_module[masking]}\nnp.all:\n{gene_module[masking.all(axis=1)]}\n")
     gene_module = gene_module[masking.all(axis=1)]
+    print(gene_module)
     if len(gene_module.index) > 1/4 * top_num:
         filename = f"{model_name}-shap({node:02}).csv"
         print(f'Creating {gene_model.joinpath(filename)} ...')
