@@ -71,7 +71,7 @@ def predict_shap_values(boost, phen, unique, unique_count, gene, hidden_vars, te
     # process shap values and generate gene model
     features, bar, scatter = process_shap_values(save_bar, save_scatter, gene_model, model_name, x_test, shap_values,
                                                  ids, sample_num, top_num, i)
-    summary_tbl.add_row(i, bar, scatter, features, r2)
+    summary_tbl.add_row(i, wandb.Image(bar), wandb.Image(scatter), features, r2)
     return i, r2
 
 

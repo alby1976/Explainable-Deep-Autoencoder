@@ -73,14 +73,17 @@ def create_shap_values(model: AutoGenoShallow, model_name: str, gene_model: Path
     columns = ["Node", "SHAP Summary Plot - Bar\nTop 20", "SHAP Summary Plot - Scatter\nTop 20 Features",
                "Number of Features"]
     summary_tbl: Table = wandb.Table(columns=columns)
+    node = 0
     # with ThreadPoolExecutor(max_workers=num_workers) as pool:
     params = ((save_bar, save_scatter, gene_model, model_name, x_test, shap_value, gene_names,
-               sample_size, top_num, node, summary_tbl) for node, shap_value in enumerate(shap_values))
+               sample_size, top_num, node) for node, shap_value in enumerate(shap_values))
     print(f"params:\n{params}\n\n")
     # print(f"index:\n{top_index}\n\n")
     # for _ in pool.map(lambda p: process_shap_values(*p), params):
-    for _ in map(lambda p: process_shap_values(*p), params):
-        pass
+    for features, bar, scatter in map(lambda p: process_shap_values(*p), params):
+        summary_tbl.add_row(node, wandb.Image(bar), wandb.Image(scatter), features)
+        node += 1
+
     print("\n\t....Finish processing....")
     tmp = f"{model_name}-summary)"
     wandb.log({tmp: summary_tbl})
