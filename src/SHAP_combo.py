@@ -123,9 +123,9 @@ def process_shap_values(save_bar: Path, save_scatter: Path, gene_model: Path, mo
     create_gene_model(model_name, gene_model, shap_values, gene_names, sample_num, top_num, node)
 
     # generate bar char
-    plot_shap_values(model_name, node, shap_values, x_test, gene_names, "bar", (30,45), save_bar)  # (width, height)
+    plot_shap_values(model_name, node, shap_values, x_test, gene_names, "bar", (30, 45), save_bar)  # (width, height)
     # generate scatter chart
-    plot_shap_values(model_name, node, shap_values, x_test, gene_names, "dot", (30,45), save_scatter)
+    plot_shap_values(model_name, node, shap_values, x_test, gene_names, "dot", (30, 45), save_scatter)
 
 
 def create_shap_tree_val(model_name: str, dm: DataNormalization, phen: ndarray, gene: DataFrame, ids: ndarray,
@@ -149,7 +149,6 @@ def create_shap_tree_val(model_name: str, dm: DataNormalization, phen: ndarray, 
     tmp = f"{model_name}-r2)"
     tbl = wandb.Table(dataframe=r2_scores)
     wandb.log({tmp: tbl})
-    pass
 
 
 def main(model_name, gene_name, gene_id, ae_result, col_mask, save_dir: Path, save_bar, save_scatter, gene_model,
