@@ -118,16 +118,18 @@ def plot_shap_values(model_name: str, node: int, values, x_test: Union[ndarray, 
 
 
 def process_shap_values(save_bar: Path, save_scatter: Path, gene_model: Path, model_name: str, x_test, shap_values,
-                        gene_names, sample_num, top_num, node):
+                        gene_names, sample_num, top_num, node) -> Tuple[int, str, str]:
     print(f"save_bar: {save_bar}\nsave_scatter: {save_scatter}\ngene_model: {gene_model}\nmodel_name: {model_name}\n"
           f"ene_names:{gene_names.shape}\n")
     # save shap_gene_model
-    create_gene_model(model_name, gene_model, shap_values, gene_names, sample_num, top_num, node)
+    num_features = create_gene_model(model_name, gene_model, shap_values, gene_names, sample_num, top_num, node)
 
     # generate bar char
-    plot_shap_values(model_name, node, shap_values, x_test, gene_names, "bar", (35, 40), save_bar)  # (width, height)
+    bar = plot_shap_values(model_name, node, shap_values, x_test, gene_names, "bar", (35, 40), save_bar)  # (width, height)
     # generate scatter chart
-    plot_shap_values(model_name, node, shap_values, x_test, gene_names, "dot", (35, 40), save_scatter)
+    scatter = plot_shap_values(model_name, node, shap_values, x_test, gene_names, "dot", (35, 40), save_scatter)
+
+    return num_features, bar, scatter
 
 
 def create_shap_tree_val(model_name: str, dm: DataNormalization, phen: ndarray, gene: DataFrame, ids: ndarray,
@@ -143,16 +145,9 @@ def create_shap_tree_val(model_name: str, dm: DataNormalization, phen: ndarray, 
 
     # create a Table with the same columns as above,
     # plus confidence scores for all labels
-    columns = ["i  d", "image", "guess", "truth"]
+    columns = ["Node", "SHAP Summary Plot - Bar\nTop 20", "SHAP Summary Plot - Scatter\nTop 20 Features",
+               "Number of Features", "R2 Score"]
     summary_tbl = wandb.Table(columns=columns)
-
-    # run inference on every image, assuming my_model returns the
-    # predicted label, and the ground truth labels are available
-    for img_id, img in enumerate(mnist_test_data):
-        true_label = mnist_test_data_labels[img_id]
-        guess_label = my_model.predict(img)
-        summary_tbl.add_data(img_id, wandb.Image(img), \
-                               guess_label, true_label)
 
     params = ((boost, phen, unique, unique_count, gene, hidden_vars[i], test_split, shuffle,
                random_state, num_workers, dm, fold, sample_num, ids, top_num, gene_model,
