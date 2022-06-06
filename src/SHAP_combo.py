@@ -90,14 +90,14 @@ def create_gene_model(model_name: str, gene_model: Path, shap_values, gene_names
     print(f"\nwithout np.all:\n{gene_module[masking]}\nnp.all:\n{gene_module[masking.all(axis=1)]}\n")
     gene_module = gene_module[masking.all(axis=1)]
     print(gene_module)
-    if len(gene_module.index) > 1/4 * top_num:
-        filename = f"{model_name}-shap({node:02}).csv"
-        print(f'Creating {gene_model.joinpath(filename)} ...')
-        gene_module.to_csv(gene_model.joinpath(filename), header=True, index=False, sep='\t')
-        tbl = wandb.Table(dataframe=gene_module)
-        tmp = f"{model_name}-shap({node:02})"
-        wandb.log({tmp: tbl})
-        print(f"...{gene_model.joinpath(filename)} Done ...\n")
+    # if len(gene_module.index) > 1/4 * top_num:
+    filename = f"{model_name}-shap({node:02}).csv"
+    print(f'Creating {gene_model.joinpath(filename)} ...')
+    gene_module.to_csv(gene_model.joinpath(filename), header=True, index=False, sep='\t')
+    tbl = wandb.Table(dataframe=gene_module)
+    tmp = f"{model_name}-shap({node:02})"
+    wandb.log({tmp: tbl})
+    print(f"...{gene_model.joinpath(filename)} Done ...\n")
 
 
 def plot_shap_values(model_name: str, node: int, values, x_test: Union[ndarray, DataFrame, List], names: ndarray,
