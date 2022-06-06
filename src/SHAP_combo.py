@@ -69,8 +69,8 @@ def predict_shap_values(boost, phen, unique, unique_count, gene, hidden_vars, te
     x_test = dm.transform(x_test, fold)
     shap_values = explainer.shap_values(x_test)
     # process shap values and generate gene model
-    process_shap_values(save_bar, save_scatter, gene_model, model_name, x_test, shap_values, ids, sample_num,
-                        top_num, i)
+    features, bar, scatter = process_shap_values(save_bar, save_scatter, gene_model, model_name, x_test, shap_values,
+                                                 ids, sample_num, top_num, i)
 
     return i, r2
 
@@ -114,7 +114,7 @@ def plot_shap_values(model_name: str, node: int, values, x_test: Union[ndarray, 
     image: Image = wandb.Image(str(filename), caption="Top 20 features based on SHAP_values")
     wandb.log({tmp: image})
     print(f"{filename} Done")
-    return filename
+    return str(filename)
 
 
 def process_shap_values(save_bar: Path, save_scatter: Path, gene_model: Path, model_name: str, x_test, shap_values,
@@ -125,7 +125,8 @@ def process_shap_values(save_bar: Path, save_scatter: Path, gene_model: Path, mo
     num_features = create_gene_model(model_name, gene_model, shap_values, gene_names, sample_num, top_num, node)
 
     # generate bar char
-    bar = plot_shap_values(model_name, node, shap_values, x_test, gene_names, "bar", (35, 40), save_bar)  # (width, height)
+    bar = plot_shap_values(model_name, node, shap_values, x_test, gene_names, "bar", (35, 40),
+                           save_bar)  # (width, height)
     # generate scatter chart
     scatter = plot_shap_values(model_name, node, shap_values, x_test, gene_names, "dot", (35, 40), save_scatter)
 
@@ -157,7 +158,7 @@ def create_shap_tree_val(model_name: str, dm: DataNormalization, phen: ndarray, 
 
     r2_scores = pd.DataFrame(result, columns=['node', 'R^2'])
     r2_scores.to_csv(f'{gene_model}-r2.csv', header=True, index=False)
-    tmp = f"{model_name}-r2)"
+    tmp = f"{model_name}-summary-r2)"
     wandb.log({tmp: summary_tbl})
 
 
