@@ -15,7 +15,7 @@ from numpy import ndarray
 from pandas import DataFrame
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
-from wandb import Image
+from wandb import Image, Table
 
 from CommonTools import create_dir, get_phen, get_data, DataNormalization, convert_gene_id_to_name
 
@@ -29,7 +29,7 @@ def get_last_model(directory: Path):
 
 def predict_shap_values(boost, phen, unique, unique_count, gene, hidden_vars, test_split, shuffle, random_state,
                         num_workers, dm, fold, sample_num, ids, top_num, gene_model, model_name, save_bar,
-                        save_scatter, column_num, i) -> Tuple[int, float]:
+                        save_scatter, column_num, i, summary_tbl: Table) -> Tuple[int, float]:
     print(f'**** Processing {i + 1} out of {column_num} columns ****')
     x_train: Any
     x_test: Any
@@ -71,7 +71,7 @@ def predict_shap_values(boost, phen, unique, unique_count, gene, hidden_vars, te
     # process shap values and generate gene model
     features, bar, scatter = process_shap_values(save_bar, save_scatter, gene_model, model_name, x_test, shap_values,
                                                  ids, sample_num, top_num, i)
-
+    summary_tbl.add_row(i, bar, scatter, features, r2)
     return i, r2
 
 
@@ -148,11 +148,11 @@ def create_shap_tree_val(model_name: str, dm: DataNormalization, phen: ndarray, 
     # plus confidence scores for all labels
     columns = ["Node", "SHAP Summary Plot - Bar\nTop 20", "SHAP Summary Plot - Scatter\nTop 20 Features",
                "Number of Features", "R2 Score"]
-    summary_tbl = wandb.Table(columns=columns)
+    summary_tbl: Table = wandb.Table(columns=columns)
 
     params = ((boost, phen, unique, unique_count, gene, hidden_vars[i], test_split, shuffle,
                random_state, num_workers, dm, fold, sample_num, ids, top_num, gene_model,
-               model_name, save_bar, save_scatter, column_num, i) for i in range(column_num))
+               model_name, save_bar, save_scatter, column_num, i, summary_tbl) for i in range(column_num))
     for r in map(lambda p: predict_shap_values(*p), params):
         result.append(r)
 
