@@ -81,7 +81,7 @@ def create_shap_values(model: AutoGenoShallow, model_name: str, gene_model: Path
     # print(f"index:\n{top_index}\n\n")
     # for _ in pool.map(lambda p: process_shap_values(*p), params):
     for features, bar, scatter in map(lambda p: process_shap_values(*p), params):
-        summary_tbl.add_row(node, wandb.Image(bar), wandb.Image(scatter), features)
+        summary_tbl.add_data(node, wandb.Image(bar), wandb.Image(scatter), features)
         node += 1
 
     print("\n\t....Finish processing....")
