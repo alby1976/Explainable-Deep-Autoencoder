@@ -136,6 +136,9 @@ def create_shap_tree_val(model_name: str, dm: DataNormalization, phen: ndarray, 
                          hidden_vars: DataFrame, save_bar: Path, save_scatter: Path, gene_model: Path,
                          num_workers: int, fold: bool, test_split: float, random_state: int, shuffle: bool,
                          boost: bool, top_rate: float):
+    create_dir(save_bar.parent)
+    create_dir(save_scatter.parent)
+    create_dir(gene_model.parent)
     column_num: int = len(hidden_vars.columns)
     sample_num: int = len(gene.index)
     top_num: int = int(top_rate * len(gene.columns))
