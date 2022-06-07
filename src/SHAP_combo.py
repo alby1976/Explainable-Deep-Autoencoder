@@ -49,7 +49,6 @@ def predict_shap_values(boost, phen, unique, unique_count, gene, hidden_vars, te
                                                              hidden_vars.values,
                                                              test_size=test_split,
                                                              shuffle=shuffle,
-                                                             stratify=phen,
                                                              random_state=random_state)
 
     my_model = xgb.XGBRegressor(booster="gbtree", max_depth=20, random_state=random_state,
