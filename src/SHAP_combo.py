@@ -85,6 +85,58 @@ def create_gene_model(model_name: str, gene_model: Path, shap_values, gene_names
     gene_module = gene_module[::-1]  # [starting index: stopping index: stepcount]
     gene_module = pd.DataFrame(gene_module)
     gene_module = gene_module.head(top_num)
+
+    df.replace([np.inf, -np.inf], np.nan, inplace=True)
+
+    Examples
+
+df = pd.DataFrame({"name": ['Alfred', 'Batman', 'Catwoman'],
+                   "toy": [np.nan, 'Batmobile', 'Bullwhip'],
+                   "born": [pd.NaT, pd.Timestamp("1940-04-25"),
+                            pd.NaT]})
+df
+       name        toy       born
+0    Alfred        NaN        NaT
+1    Batman  Batmobile 1940-04-25
+2  Catwoman   Bullwhip        NaT
+Drop the rows where at least one element is missing.
+
+df.dropna()
+     name        toy       born
+1  Batman  Batmobile 1940-04-25
+Drop the columns where at least one element is missing.
+
+df.dropna(axis='columns')
+       name
+0    Alfred
+1    Batman
+2  Catwoman
+Drop the rows where all elements are missing.
+
+df.dropna(how='all')
+       name        toy       born
+0    Alfred        NaN        NaT
+1    Batman  Batmobile 1940-04-25
+2  Catwoman   Bullwhip        NaT
+Keep only the rows with at least 2 non-NA values.
+
+df.dropna(thresh=2)
+       name        toy       born
+1    Batman  Batmobile 1940-04-25
+2  Catwoman   Bullwhip        NaT
+Define in which columns to look for missing values.
+
+df.dropna(subset=['name', 'toy'])
+       name        toy       born
+1    Batman  Batmobile 1940-04-25
+2  Catwoman   Bullwhip        NaT
+Keep the DataFrame with valid entries in the same variable.
+
+df.dropna(inplace=True)
+df
+     name        toy       born
+1  Batman  Batmobile 1940-04-25
+
     masking: Union[ndarray, bool] = gene_module[[1]] != -np.inf
     print(f"\nwithout np.all:\n{gene_module[masking]}\nnp.all:\n{gene_module[masking.all(axis=1)]}\n")
     gene_module = gene_module[masking.all(axis=1)]
