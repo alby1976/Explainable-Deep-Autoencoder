@@ -80,7 +80,7 @@ def create_gene_model(model_name: str, gene_model: Path, shap_values, gene_names
     shap_values_mean = np.sum(abs(shap_values), axis=0) / sample_num
     # *calculate ln^|shap_values_mean|
 
-    nan = np.vectorize(lambda x: np.log(x) if np.isneginf(np.log(x)) else np.nan)
+    nan = np.vectorize(lambda x: np.nan if np.isneginf(np.log(x)) else np.log(x))
     shap_values_ln = nan(shap_values_mean)
     gene_module: Union[ndarray, DataFrame] = np.stack((gene_names, shap_values_ln), axis=0)
     gene_module = gene_module.T
