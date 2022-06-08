@@ -78,7 +78,8 @@ def create_gene_model(model_name: str, gene_model: Path, shap_values, gene_names
                       top_num: int, node: int) -> int:
     # **generate gene model
     shap_values_mean = np.sum(abs(shap_values), axis=0) / sample_num
-    shap_values_ln = np.log(shap_values_mean)  # *calculate ln^|shap_values_mean|
+    # *calculate ln^|shap_values_mean|
+    shap_values_ln = (lambda x: x if np.isneginf(x) else np.nan)(np.log(shap_values_mean))
     gene_module: Union[ndarray, DataFrame] = np.stack((gene_names, shap_values_ln), axis=0)
     gene_module = gene_module.T
     gene_module = gene_module[np.argsort(gene_module[:, 1])]
@@ -87,7 +88,7 @@ def create_gene_model(model_name: str, gene_model: Path, shap_values, gene_names
     gene_module = gene_module.head(top_num)
     print(f"Before filter:\n{gene_module}\n")
 
-    gene_module.replace([np.inf, -np.inf], np.nan, inplace=True)
+    gene_module.replace(np.log(0), np.nan, inplace=True)
     gene_module.dropna(inplace=True)
     print(f"After filter:\n{gene_module}\n")
 
