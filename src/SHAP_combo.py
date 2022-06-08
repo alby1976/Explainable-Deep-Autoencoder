@@ -86,11 +86,7 @@ def create_gene_model(model_name: str, gene_model: Path, shap_values, gene_names
     gene_module = gene_module[::-1]  # [starting index: stopping index: stepcount]
     gene_module = pd.DataFrame(gene_module)
     gene_module = gene_module.head(top_num)
-    print(f"Before filter:\n{gene_module}\n")
-
-    gene_module.replace(np.log(0), np.nan, inplace=True)
-    gene_module.dropna(inplace=True)
-    print(f"After filter:\n{gene_module}\n")
+    print(f"gene_module:\n{gene_module}\n")
 
     # if len(gene_module.index) > 1/4 * top_num:
     filename = f"{model_name}-shap({node:02}).csv"
