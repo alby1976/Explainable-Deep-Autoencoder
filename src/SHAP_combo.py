@@ -90,7 +90,7 @@ def create_gene_model(model_name: str, gene_model: Path, shap_values, gene_names
     gene_module = gene_module.head(top_num)
     print(f"before gene_module:\n{gene_module}\n")
 
-    gene_module.dropna(inplace=True)  # drop rows that contain a nan
+    gene_module.dropna(subset=[1]).reset_index(drop=True)  # drop rows that contain a nan
     print(f"after gene_module:\n{gene_module}\n")
     # if len(gene_module.index) > 1/4 * top_num:
     filename = f"{model_name}-shap({node:02}).csv"
