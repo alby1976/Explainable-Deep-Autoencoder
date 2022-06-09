@@ -124,7 +124,6 @@ def main(args):
             wandb.log({"AE_out": tbl})
 
         del trainer
-        del hidden_layer
         del tbl
 
         gc.collect()

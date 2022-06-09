@@ -180,9 +180,6 @@ def main(model_name, gene_name, gene_id, ae_result, col_mask, save_dir: Path, sa
         save_bar = save_dir.joinpath(save_bar)
         save_scatter = save_dir.joinpath(save_scatter)
         gene_model = save_dir.joinpath(gene_model)
-        create_dir(save_bar.parent)
-        create_dir(save_scatter.parent)
-        create_dir(gene_model.parent)
         geno_id: DataFrame
 
         mask: pd.DataFrame = get_data(col_mask)
