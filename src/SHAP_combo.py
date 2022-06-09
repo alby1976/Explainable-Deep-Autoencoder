@@ -80,17 +80,18 @@ def create_gene_model(model_name: str, gene_model: Path, shap_values, gene_names
     shap_values_mean = np.sum(abs(shap_values), axis=0) / sample_num
     # *calculate ln^|shap_values_mean|
 
-    nan = np.vectorize(lambda x: np.nan if np.isneginf(np.log(x)) else np.log(x))
-    shap_values_ln = nan(shap_values_mean)
+    shap_values_ln = np.log(shap_values_mean)
     gene_module: Union[ndarray, DataFrame] = np.stack((gene_names, shap_values_ln), axis=0)
     gene_module = gene_module.T
     gene_module = gene_module[np.argsort(gene_module[:, 1])]
     gene_module = gene_module[::-1]  # [starting index: stopping index: stepcount]
+
+    convert_nan = np.vectorize(lambda x: np.nan if np.isneginf(np.log(x)) else np.log(x))
     gene_module = pd.DataFrame(gene_module)
     gene_module = gene_module.head(top_num)
     print(f"before gene_module:\n{gene_module}\n")
 
-    gene_module.dropna(subset=[1]).reset_index(drop=True)  # drop rows that contain a nan
+    gene_module = gene_module.dropna(subset=[1]).reset_index(drop=True)  # drop rows that contain a nan
     print(f"after gene_module:\n{gene_module}\n")
     # if len(gene_module.index) > 1/4 * top_num:
     filename = f"{model_name}-shap({node:02}).csv"
