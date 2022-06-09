@@ -31,6 +31,7 @@ def predict_shap_values(boost, phen, unique, unique_count, gene, hidden_vars, te
                         num_workers, dm, fold, sample_num, ids, top_num, gene_model, model_name, save_bar,
                         save_scatter, column_num, i, summary_tbl: Table) -> Tuple[int, float]:
     print(f'**** Processing {i + 1} out of {column_num} columns ****')
+    print(f"hidden_layer:\n{hidden_vars}")
     x_train: Any
     x_test: Any
     y_train: Any
@@ -59,6 +60,7 @@ def predict_shap_values(boost, phen, unique, unique_count, gene, hidden_vars, te
                               n_jobs=num_workers)
 
     print(f"\nx_train: {x_train.shape} y_train: {y_train.shape}\n dm:\n{dm.column_mask}")
+    print(f"y_train: {y_train}\n")
     dm.fit(x_train, fold)
     my_model.fit(dm.transform(x_train, fold), y_train)
     y_pred = my_model.predict(dm.transform(x_test, fold))
