@@ -86,9 +86,9 @@ def create_gene_model(model_name: str, gene_model: Path, shap_values, gene_names
     gene_module = gene_module[np.argsort(gene_module[:, 1])]
     gene_module = gene_module[::-1]  # [starting index: stopping index: stepcount]
 
-    convert_nan = np.vectorize(lambda x: np.nan if np.isneginf(np.log(x)) else np.log(x))
     gene_module = pd.DataFrame(gene_module)
     gene_module = gene_module.head(top_num)
+    gene_module = gene_module.replace(to_replace=[-np.inf], value=np.nan)
     print(f"before gene_module:\n{gene_module}\n")
 
     gene_module = gene_module.dropna(subset=[1]).reset_index(drop=True)  # drop rows that contain a nan
