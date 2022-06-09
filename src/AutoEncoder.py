@@ -132,10 +132,18 @@ def main(args):
             torch.cuda.empty_cache()
 
         if args.deep:
+            del hidden_layer
+            del df
+
+            gc.collect()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+
             create_shap_values(model, args.name + "_Shap", args.save_dir.joinpath(args.gene_model),
                                args.save_dir.joinpath(args.save_bar),
                                args.save_dir.joinpath(args.save_scatter), args.top_rate)
         else:
+            print (f"hidden layer: {df.shape}\n{df}\n")
             mask: List[bool] = model.dataset.dm.column_mask
             create_shap_tree_val(args.name + "_Shap", model.dataset.dm,
                                  model.dataset.y.to_numpy(), model.dataset.x, model.dataset.gene_names[mask], df,
