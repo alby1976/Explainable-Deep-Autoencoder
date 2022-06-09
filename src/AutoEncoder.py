@@ -124,7 +124,6 @@ def main(args):
             wandb.log({"AE_out": tbl})
 
         del trainer
-        del hidden_layer
         del tbl
 
         gc.collect()
@@ -136,6 +135,12 @@ def main(args):
                                args.save_dir.joinpath(args.save_bar),
                                args.save_dir.joinpath(args.save_scatter), args.top_rate)
         else:
+            def create_shap_tree_val(model_name: str, dm: DataNormalization, phen: ndarray, gene: DataFrame,
+                                     ids: ndarray,
+                                     hidden_vars: DataFrame, save_bar: Path, save_scatter: Path, gene_model: Path,
+                                     num_workers: int, fold: bool, test_split: float, random_state: int, shuffle: bool,
+                                     boost: bool, top_rate: float):
+
             mask: List[bool] = model.dataset.dm.column_mask
             create_shap_tree_val(args.name + "_Shap", model.dataset.dm,
                                  model.dataset.y.to_numpy(), model.dataset.x, model.dataset.gene_names[mask], df,
