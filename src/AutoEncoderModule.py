@@ -413,7 +413,7 @@ class AutoGenoShallow(pl.LightningModule):
         values = inputs
         for model_child in model_children:
             # print(f"model_child:\n{model_child}\nvalues: {values.size()}")
-            values = f.leaky_relu(model_child(values))
+            values = model_child(values)
             loss += torch.mean(torch.abs(values))
         return loss
 
