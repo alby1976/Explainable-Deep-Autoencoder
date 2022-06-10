@@ -6,7 +6,7 @@ import os
 import sys
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
-from typing import List, Union, Optional
+from typing import List, Union
 
 import numpy as np
 import pandas as pd
@@ -19,8 +19,8 @@ from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.loggers import WandbLogger
 
 from AutoEncoderModule import AutoGenoShallow
-from CommonTools import create_dir, float_or_none, DataNormalization
-from SHAP_combo import add_shap_arguments, create_shap_tree_val
+from CommonTools import create_dir, float_or_none
+from SHAP_combo import add_shap_arguments, run_tree_shap
 from ShapDeepExplainerModule import create_shap_values
 
 _DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -125,31 +125,25 @@ def main(args):
 
         del trainer
         del tbl
+        del hidden_layer
+        del df
 
         gc.collect()
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
 
         if args.deep:
-            del hidden_layer
-            del df
-
-            gc.collect()
-            if torch.cuda.is_available():
-                torch.cuda.empty_cache()
-
             create_shap_values(model, args.name + "_Shap", args.save_dir.joinpath(args.gene_model),
                                args.save_dir.joinpath(args.save_bar),
                                args.save_dir.joinpath(args.save_scatter), args.top_rate)
         else:
-            print (f"hidden layer: {df.shape}\n{df}\n")
-            mask: List[bool] = model.dataset.dm.column_mask
-            create_shap_tree_val(args.name + "_Shap", DataNormalization(column_mask=mask),
-                                 model.dataset.y.to_numpy(), model.dataset.x, model.dataset.gene_names[mask], df,
-                                 args.save_dir.joinpath(args.save_bar),
-                                 args.save_dir.joinpath(args.save_scatter), args.save_dir.joinpath(args.gene_model),
-                                 args.num_workers, args.fold, args.val_split,
-                                 args.random_state, args.shuffle, args.boost, args.top_rate)
+            column_mask: Path = args.transformed_data.parent
+            column_mask = column_mask.joinpath(f'{args.data.stem}_column_mask.csv')
+            run_tree_shap(args.name + "_Shap", None, args.data, args.save_dir.joinpath(f"{args.name}-output.csv"),
+                          column_mask,
+                          args.save_dir, args.save_bar, args.save_scatter, args.gene_model,
+                          args.num_workers, args.fold, args.val_split,
+                          args.random_state, args.shuffle, args.boost, args.top_rate)
 
         wandb.finish()
 

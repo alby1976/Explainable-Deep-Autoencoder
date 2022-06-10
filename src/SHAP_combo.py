@@ -171,6 +171,13 @@ def create_shap_tree_val(model_name: str, dm: DataNormalization, phen: ndarray, 
     wandb.log({tmp: summary_tbl})
 
 
+def run_tree_shap(model_name, gene_name, gene_id, ae_result, col_mask, save_dir: Path, save_bar, save_scatter,
+                  gene_model,
+                  num_workers, fold, test_split, random_state, shuffle, boost: bool, top_rate):
+    main(model_name, gene_name, gene_id, ae_result, col_mask, save_dir, save_bar, save_scatter, gene_model,
+         num_workers, fold, test_split, random_state, shuffle, boost, top_rate)
+
+
 def main(model_name, gene_name, gene_id, ae_result, col_mask, save_dir: Path, save_bar, save_scatter, gene_model,
          num_workers, fold, test_split, random_state, shuffle, boost: bool, top_rate):
     gene: DataFrame
