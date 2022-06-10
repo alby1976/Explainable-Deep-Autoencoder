@@ -19,7 +19,7 @@ from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.loggers import WandbLogger
 
 from AutoEncoderModule import AutoGenoShallow
-from CommonTools import create_dir, float_or_none
+from CommonTools import create_dir, float_or_none, DataNormalization
 from SHAP_combo import add_shap_arguments, create_shap_tree_val
 from ShapDeepExplainerModule import create_shap_values
 
@@ -144,7 +144,7 @@ def main(args):
         else:
             print (f"hidden layer: {df.shape}\n{df}\n")
             mask: List[bool] = model.dataset.dm.column_mask
-            create_shap_tree_val(args.name + "_Shap", model.dataset.dm,
+            create_shap_tree_val(args.name + "_Shap", DataNormalization(column_mask=mask),
                                  model.dataset.y.to_numpy(), model.dataset.x, model.dataset.gene_names[mask], df,
                                  args.save_dir.joinpath(args.save_bar),
                                  args.save_dir.joinpath(args.save_scatter), args.save_dir.joinpath(args.gene_model),
