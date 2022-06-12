@@ -137,6 +137,7 @@ def main(args):
                                args.save_dir.joinpath(args.save_bar),
                                args.save_dir.joinpath(args.save_scatter), args.top_rate)
         else:
+            del model
             column_mask: Path = args.transformed_data.parent
             column_mask = column_mask.joinpath(f'{args.data.stem}_column_mask.csv')
             run_tree_shap(args.name + "_Shap", None, args.data, args.save_dir.joinpath(f"{args.name}-output.csv"),

@@ -439,10 +439,12 @@ class AutoGenoShallow(pl.LightningModule):
         parser.add_argument("-rp", "--reg_param", type=float,
                             help='regulation parameter for lasso e.g 0.0005')
         parser.add_argument("--data", type=Path,
-                            default=Path(__file__).absolute().parent.parent.joinpath("data_example.csv"),
+                            # default=Path(__file__).absolute().parent.parent.joinpath("data_example.csv"),
+                            default=Path("./data_example.csv"),
                             help='original datafile e.g. ./data_example.csv')
         parser.add_argument("-td", "--transformed_data", type=Path,
-                            default=Path(__file__).absolute().parent.parent.joinpath("data_QC.csv"),
+                            # default=Path(__file__).absolute().parent.parent.joinpath("data_QC.csv"),
+                            default=Path("./data_QC.csv"),
                             help='filename of original x after quality control e.g. ./data_QC.csv')
         parser.add_argument("--fold", action="store_true", default=False,
                             help='selecting this flag causes the x to be transformed to change fold relative to '
